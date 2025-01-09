@@ -1,0 +1,6 @@
+export const entidades = {
+  AUTORIZACIONES: "AUTORIZACIONES",
+  EMPRESAS: "EMPRESAS",
+  ROLES: "ROLES",
+  USUARIOS: "USUARIOS",
+};

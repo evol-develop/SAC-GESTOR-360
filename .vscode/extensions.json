@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "usernamehw.errorlens", // Error Lens
+    "dsznajder.es7-react-js-snippets",  // ES7 + React/Redux/React-Native snippets
+    "dbaeumer.vscode-eslint",  // ESLint
+    "heybourn.headwind",  // Headwind
+    "ms-vscode.vscode-typescript-next",  // JavaScript and TypeScript Nightly
+    "esbenp.prettier-vscode",  // Prettier - Code formatter
+    "yoavbls.pretty-ts-errors", // Pretty TypeScript Errors
+    "burkeholland.simple-react-snippets",  // Simple React Snippets
+    "bradlc.vscode-tailwindcss",  // Tailwind CSS IntelliSense
+  ],
+}
