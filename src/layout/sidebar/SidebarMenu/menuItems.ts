@@ -5,11 +5,21 @@ import {
   LuHouse,
   LuShieldCheck,
   LuUserCog,
-  LuUsers,
+  LuUsers, LuUserRound 
 } from "react-icons/lu";
+import { IoIosAlert } from "react-icons/io";
 import type { IconType } from "react-icons";
-
+import { IoAlertCircleOutline } from "react-icons/io5";
+import { RiCustomerService2Fill } from "react-icons/ri";
+import { GrServices } from "react-icons/gr";
+import { FaUsers } from "react-icons/fa6";
+import { MdOutlineAttachMoney } from "react-icons/md";
 import { MenuEnums } from "./MenuEnums";
+import { FaListCheck } from "react-icons/fa6";
+import { TbUserDollar } from "react-icons/tb";
+import { MdOutlineFactCheck } from "react-icons/md";
+import { SiCodefactor } from "react-icons/si";
+import { IoCellularOutline } from "react-icons/io5";
 
 export type MenuItem = {
   id?: number;
@@ -38,12 +48,70 @@ const menuItems: MenuItems[] = [
     ],
   },
   {
+    heading: "Procesos",
+    items: [
+      {
+        id: MenuEnums.Tickets,
+        Icon: LuHouse,
+      },
+    ],
+  },
+  {
     heading: "Configuración",
     items: [
       {
         name: "Catálogos",
         Icon: LuFolder,
-        items: [],
+        items: [
+          {
+            id: MenuEnums.Alertas,
+            Icon: IoAlertCircleOutline,
+          },
+          {
+            id: MenuEnums.Clientes,
+            Icon: LuUserRound  ,
+          },
+          // {
+          //   id: MenuEnums.ClientesServicios,
+          //   Icon: RiCustomerService2Fill,
+          // },
+          {
+            id: MenuEnums.Facturacion,
+            Icon: MdOutlineFactCheck,
+          },
+          // {
+          //   id: MenuEnums.FacturacionComplementos,
+          //   Icon: SiCodefactor,
+          // },
+          {
+            id: MenuEnums.Lineas,
+            Icon: IoCellularOutline,
+          },
+          {
+            id: MenuEnums.Servicios,
+            Icon: GrServices,
+          },
+          {
+            id: MenuEnums.SubLineas,
+            Icon: LuShieldCheck,
+          },
+          {
+            id: MenuEnums.TiposClientes,
+            Icon: FaUsers,
+          },
+          // {
+          //   id: MenuEnums.Ventas,
+          //   Icon:TbUserDollar ,
+          // },
+          // {
+          //   id: MenuEnums.VentasDetalles,
+          //   Icon: FaListCheck,
+          // },
+          // {
+          //   id: MenuEnums.VentasPagos,
+          //   Icon: MdOutlineAttachMoney,
+          // },
+        ],
       },
       {
         name: "Administración",

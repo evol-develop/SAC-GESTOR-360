@@ -16,6 +16,7 @@ type FormInputProps = {
   placeholder?: string;
   required?: boolean;
   type?: React.HTMLInputTypeAttribute | undefined;
+  className?: string;
 };
 
 const FormInput = ({
@@ -25,6 +26,8 @@ const FormInput = ({
   type = "text",
   placeholder,
   required = false,
+  className,
+
 }: FormInputProps) => {
   return (
     <FormField
@@ -32,13 +35,14 @@ const FormInput = ({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
+          <FormLabel className="text-xs">{label}</FormLabel>
           <FormControl>
             <Input
               {...field}
               type={type || "text"}
               placeholder={placeholder || ""}
               required={required}
+              className={className}
             />
           </FormControl>
           <FormMessage />

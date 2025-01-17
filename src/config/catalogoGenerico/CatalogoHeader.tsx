@@ -130,10 +130,10 @@ export const CatalogoHeader = ({
   };
 
   return (
-    <div className="sm:flex-row container flex flex-col items-center justify-between w-full px-4 mx-auto mb-4">
+    <div className="container flex flex-col items-center justify-between w-full px-4 mx-auto mb-4 sm:flex-row">
       <div>
-        <H3 className="sm:text-left text-center">{titulos.titulo}</H3>
-        <P className="sm:text-left text-center">{titulos.descripcion}</P>
+        <H3 className="text-center sm:text-left">{titulos.titulo}</H3>
+        <P className="text-center sm:text-left">{titulos.descripcion}</P>
       </div>
       <div>
         {showCreateButton && (
@@ -146,13 +146,13 @@ export const CatalogoHeader = ({
                 onClick={handleCreateItemOpen}
                 size="sm"
                 type="button"
-                className="sm:mt-0 mt-4"
+                className="mt-4 sm:mt-0"
               >
                 <LuPlus />
                 {"Crear " + titulos.nombreItem}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl">
+            <DialogContent className="w-full max-w-[70vw] min-h-[50vh]">
               <DialogHeader>
                 <DialogTitle>
                   {titulos.tituloModal === undefined ||

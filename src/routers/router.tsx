@@ -41,6 +41,19 @@ const StatusMaintenance = Loader(
   lazy(() => import("@/content/pages/Status/Maintenance"))
 );
 
+//CATALOGOS 
+const ManagementClientes = Loader(lazy(() => import("@/content/catalogos/clientes")));
+const ManagementAlertas = Loader(lazy(() => import("@/content/catalogos/alertas")));
+const ManagementFacturacion = Loader(lazy(() => import("@/content/catalogos/facturacion")));
+const ManagementLineas = Loader(lazy(() => import("@/content/catalogos/lineas")));
+const ManagementSublineas = Loader(lazy(() => import("@/content/catalogos/sublineas")));
+const ManagementServicios = Loader(lazy(() => import("@/content/catalogos/servicios")));
+const ManagementTipos = Loader(lazy(() => import("@/content/catalogos/tiposclientes")));
+
+//PROCESOS
+const ManagementTickets = Loader(lazy(() => import("@/content/procesos/tickets")));
+
+
 export const Router = () => {
   return (
     <Routes>
@@ -72,6 +85,16 @@ export const Router = () => {
           path="configuracion/autorizaciones"
           element={<ManagementAutorizaciones />}
         />
+
+        {/* Rutas de estado */}
+        <Route path="configuracion/clientes" element={<ManagementClientes />} />
+        <Route path="configuracion/alertas" element={<ManagementAlertas />} />
+        <Route path="configuracion/facturacion" element={<ManagementFacturacion />} />
+        <Route path="configuracion/lineas" element={<ManagementLineas />} />
+        <Route path="configuracion/sublineas" element={<ManagementSublineas />} />
+        <Route path="configuracion/servicios" element={<ManagementServicios />} />
+        <Route path="configuracion/tipos" element={<ManagementTipos />} />
+        <Route path="procesos/tickets" element={<ManagementTickets />} />
       </Route>
       <Route path="*" element={<Navigate to="/status/404" replace />} />
     </Routes>

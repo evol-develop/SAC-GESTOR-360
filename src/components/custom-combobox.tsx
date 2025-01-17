@@ -156,18 +156,18 @@ export const ComboboxForm = ({
                         option.label === field.value
                     )?.label
                   : placeholder}
-                <LuChevronsUpDown className="shrink-0 w-4 h-4 ml-2 opacity-50" />
+                <LuChevronsUpDown className="w-4 h-4 ml-2 opacity-50 shrink-0" />
               </Button>
             </FormControl>
             {open && (
-              <div className="bg-primary-foreground absolute z-50 w-full mt-1 border rounded shadow-md">
+              <div className="absolute z-50 w-full mt-1 border rounded shadow-md bg-primary-foreground">
                 <Input
                   ref={inputRef}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Buscar..."
                 />
-                <ul ref={listRef} className="max-h-60 overflow-y-auto">
+                <ul ref={listRef} className="overflow-y-auto max-h-60">
                   {filteredOptions.map((option) => (
                     <li
                       key={option.value}

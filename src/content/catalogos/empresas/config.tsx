@@ -3,21 +3,8 @@ import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { LuCirclePlus, LuLoaderCircle } from "react-icons/lu";
-
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import {Form,FormControl,FormField,FormItem,FormLabel,} from "@/components/ui/form";
+import {Card,CardContent,CardDescription,CardHeader,CardTitle,} from "@/components/ui/card";
 import axios from "@/lib/utils/axios";
 import { PAGE_SLOT } from "./constants";
 import { usePage } from "@/hooks/usePage";
@@ -73,6 +60,18 @@ export const OperacionesFormulario = () => {
   ): Promise<any> => {
     const valores = values.values as EmpresaInterface;
     valores.isActive = true;
+
+    if (valores.pictureURL !== "" && valores.pictureURL instanceof File) {
+      try {
+        const uploaded = await uploadImage(valores.pictureURL, "EMPRESAS");
+        valores.pictureURL = uploaded;
+      } catch (error) {
+        console.error(error);
+      }
+    } else {
+      delete valores.pictureURL;
+    }
+
     const response = await axios.post<ResponseInterface>(
       "api/empresas/PostEmpresa",
       valores
@@ -273,7 +272,7 @@ export const Formulario = ({
                     control={generalForm.control}
                     name="isActive"
                     render={({ field }) => (
-                      <FormItem className="place-self-end flex items-center gap-2">
+                      <FormItem className="flex items-center gap-2 place-self-end">
                         <FormLabel>
                           {field.value ? "Activo" : "Inactivo"}
                         </FormLabel>
@@ -358,7 +357,7 @@ export const Formulario = ({
             </CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-2">
-            <div className="items-top flex space-x-2">
+            <div className="flex space-x-2 items-top">
               <Checkbox
                 id="agregaReporte"
                 checked={AgregandoReporte}
@@ -370,7 +369,7 @@ export const Formulario = ({
               <div className="grid gap-1.5 leading-none">
                 <label
                   htmlFor="agregaReporte"
-                  className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-sm font-medium leading-none"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
                   Agregar Reporte
                 </label>

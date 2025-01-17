@@ -2,7 +2,7 @@ import { entidades } from "@/config/entities";
 
 export const PAGE_SLOT = entidades.EMPRESAS;
 
-export const ENDPOINTDELETE = "/api/empresas/delete";
+export const ENDPOINTDELETE = "/api/empresas/DeleteEmpresa/";
 
 export const titulos = {
   titulo: "Administración de Empresas",

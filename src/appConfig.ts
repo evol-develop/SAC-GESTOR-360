@@ -11,4 +11,5 @@ export const appConfig = {
   /* HASH CONTRASEÑAS */ SECRET_KEY:
     "36e9a0a225c3021eb51ba801af143fab5ed5aecf27f5f9b723d04b8b8accda5a8c5f8ebdf6776650e47a38866c2de30590c2cd0ac5bb9a6136b1c16ede02ea7d",
   // Cambiar si se cambia el proyecto
+  
 };

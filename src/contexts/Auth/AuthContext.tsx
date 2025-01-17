@@ -101,6 +101,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         { userName, password }
       );
 
+      console.log(response.data);
+
       if (!response.data || !response.data.isSuccess) {
         throw new Error(response.data?.message || "Error desconocido");
       }

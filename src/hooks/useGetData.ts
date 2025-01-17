@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { usePage } from "./usePage";
 import { createSlot } from "@/store/slices/page";
-import axiosIns from "@/lib/utils/axios";
+import axiosIns, { axiosIns2 }  from "@/lib/utils/axios";
 import axios from "axios";
 
 type GetDataProps = {
@@ -17,20 +17,37 @@ type GetDataProps = {
    * @type {string}
    */
   slot: string;
+    /**
+   * Slot de la página
+   * @example 'users'
+   * @type {string}
+   */
+  facturacion?: boolean;
 };
 
-export const useGetData = ({ ruta, slot }: GetDataProps) => {
+export const useGetData = ({ ruta, slot, facturacion }: GetDataProps) => {
   const { init, dispatch } = usePage(slot);
 
   useEffect(() => {
     const controller = new AbortController(); // Reemplaza CancelToken por AbortController
     const getData = async () => {
       try {
-        const response = await axiosIns.get(ruta, {
-          signal: controller.signal,
-        });
 
-        dispatch(createSlot({ [slot]: response.data.result }));
+        if(facturacion){
+          const response = await axiosIns2.get(ruta, {
+            signal: controller.signal,
+          });
+  
+          dispatch(createSlot({ [slot]: response.data.result }));
+        }
+        else{
+          const response = await axiosIns.get(ruta, {
+            signal: controller.signal,
+          });
+  
+          dispatch(createSlot({ [slot]: response.data.result }));
+        }
+
       } catch (err) {
         if (axios.isCancel(err) || (err as Error).name === "CanceledError") {
           console.error("Error Request:", (err as Error).message);

@@ -1,21 +1,8 @@
 import * as z from "zod";
 import { toast } from "sonner";
 import { SubmitHandler, useForm } from "react-hook-form";
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
+import { Card,CardContent, CardDescription,CardHeader,CardTitle,} from "@/components/ui/card";
+import {Form,FormControl,FormField,FormItem,FormLabel,} from "@/components/ui/form";
 import axios from "@/lib/utils/axios";
 import { RootState } from "@/store/store";
 import { createUser } from "@/api/authApi";
@@ -29,7 +16,8 @@ import { ComboboxForm } from "@/components/custom-combobox";
 import { PropsFormulario } from "@/interfaces/formInterface";
 import { ResponseInterface } from "@/interfaces/responseInterface";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UsuarioAdicionalesInterface } from "@/interfaces/UsuarioAdicionalesInterface";
+import { clienteInterface } from "@/interfaces/catalogos/clienteInterface";
+import { act } from "react";
 
 const phoneRegExp = /^\d{10}$/;
 
@@ -47,18 +35,8 @@ const validationSchema = z
       .max(120)
       .min(1, "El correo es un dato requerido")
       .email("El correo no es válido"),
-    password: z
-      .string()
-      // .min(6, "La contraseña debe de tener al menos 6 caracteres")
-      .optional(),
-    confirmPassword: z.string().optional(),
-    userRol: z.string().max(120).min(1, "El rol es un dato requerido"),
     activo: z.boolean(),
   })
-  .refine((data) => data.password === data.confirmPassword, {
-    path: ["confirmPassword"],
-    message: "Las contraseñas no coinciden",
-  });
 
 const validationSegSchema = z
   .object({
@@ -78,17 +56,41 @@ export const OperacionesFormulario = () => {
     values: any,
     idEmpresa: string | number
   ): Promise<any> => {
-    const valores = values.values as UsuarioAdicionalesInterface;
+    const valores = values.values as clienteInterface;
     // const userRol = values.globalState.ROL;
 
     const valoresForm = {
-      email: valores.email,
+      id : valores.id,
+      id_empresa: idEmpresa,
       nombre: valores.nombre,
-      apellido: valores.apellido,
-      password: valores.password,
-      userRoll: valores.userRol,
-      empresaId: idEmpresa,
+      rfc: valores.rfc,
+      cp: valores.cp,
+      id_tipo_cliente: valores.id_tipo_cliente,
+      domicilio: valores.domicilio,
+      colonia: valores.colonia,
+      estado: valores.estado,
+      ciudad: valores.ciudad,
       telefono: valores.telefono,
+      celular: valores.celular,
+      email: valores.email,
+      email2: valores.email2,
+      limite_credito: valores.limite_credito,
+      descuento_default: valores.descuento_default,
+      dias_credito: valores.dias_credito,
+      id_alerta: valores.id_alerta,
+      curp: valores.curp,
+      facturar: valores.facturar,
+      retener_iva: valores.retener_iva,
+      retener_isr: valores.retener_isr,
+      porcentaje_retencion_iva: valores.porcentaje_retencion_iva,
+      porcentaje_retencion_isr: valores.porcentaje_retencion_isr,
+      metodo_pago: valores.metodo_pago,
+      id_forma_pago: valores.id_forma_pago,
+      fecha_registro: valores.fecha_registro,
+      enviar_cobranza: valores.enviar_cobranza,
+      nombreComercial: valores.nombreComercial,
+      fecha_final: valores.fecha_final,
+      
     };
 
     try {
@@ -117,18 +119,41 @@ export const OperacionesFormulario = () => {
     values: any,
     idEmpresa: string | number
   ): Promise<any> => {
-    const valores = values.values as UsuarioAdicionalesInterface;
+    const valores = values.values as clienteInterface;
     // const userRol = values.globalState.ROL;
 
     const valoresForm = {
-      email: valores.email,
+      id : valores.id,
+      id_empresa: idEmpresa,
       nombre: valores.nombre,
-      apellido: valores.apellido,
-      password: valores.password,
-      userRoll: valores.userRol,
-      empresaId: idEmpresa,
+      rfc: valores.rfc,
+      cp: valores.cp,
+      id_tipo_cliente: valores.id_tipo_cliente,
+      domicilio: valores.domicilio,
+      colonia: valores.colonia,
+      estado: valores.estado,
+      ciudad: valores.ciudad,
       telefono: valores.telefono,
-      activo: valores.activo,
+      celular: valores.celular,
+      email: valores.email,
+      email2: valores.email2,
+      limite_credito: valores.limite_credito,
+      descuento_default: valores.descuento_default,
+      dias_credito: valores.dias_credito,
+      id_alerta: valores.id_alerta,
+      curp: valores.curp,
+      facturar: valores.facturar,
+      retener_iva: valores.retener_iva,
+      retener_isr: valores.retener_isr,
+      porcentaje_retencion_iva: valores.porcentaje_retencion_iva,
+      porcentaje_retencion_isr: valores.porcentaje_retencion_isr,
+      metodo_pago: valores.metodo_pago,
+      id_forma_pago: valores.id_forma_pago,
+      fecha_registro: valores.fecha_registro,
+      enviar_cobranza: valores.enviar_cobranza,
+      nombreComercial: valores.nombreComercial,
+      fecha_final: valores.fecha_final,
+      
     };
 
     try {
@@ -159,14 +184,8 @@ export const Formulario = ({
   const generalForm = useForm<z.infer<typeof validationSchema>>({
     resolver: zodResolver(validationSchema),
     defaultValues: {
-      activo: dataModal.id !== undefined ? dataModal.activo : true,
-      email: dataModal.email || "",
-      nombre: dataModal.nombre || "",
-      apellido: dataModal.apellido || "",
-      telefono: dataModal.telefono || "",
-      userRol: dataModal.userRoll || "",
-      password: "",
-      confirmPassword: "",
+  
+      
     },
   });
 
@@ -200,20 +219,20 @@ export const Formulario = ({
 
   return (
     <Tabs defaultValue="general" className="w-full">
-      <TabsList className="grid w-full grid-cols-2">
+      {/* <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="general">General</TabsTrigger>
         {isEditing && <TabsTrigger value="seguridad">Seguridad</TabsTrigger>}
-      </TabsList>
+      </TabsList> */}
       <TabsContent value="general">
         <Form {...generalForm}>
           <form onSubmit={generalForm.handleSubmit(onSubmit)}>
             <Card className="max-h-[50dvh] overflow-y-auto">
-              <CardHeader>
+              {/* <CardHeader>
                 <CardTitle>General</CardTitle>
                 <CardDescription>
-                  Agrega o actualiza la información del usuario.
+                  Agrega o actualiza la información del cliente.
                 </CardDescription>
-              </CardHeader>
+              </CardHeader> */}
               <CardContent className="relative grid grid-cols-1 gap-2">
                 {dataModal.id !== undefined && (
                   <FormField
@@ -242,17 +261,65 @@ export const Formulario = ({
                   placeholder="Ej. Pedro"
                   required
                 />
+
+            <FormInput
+                  form={generalForm}
+                  name="nombreComercial"
+                  label="Nombre comercial"
+                  placeholder="Ej. Pedro"
+                  required
+                />
+
                 <FormInput
                   form={generalForm}
-                  name="apellido"
-                  label="Apellido"
+                  name="rfc"
+                  label="RFC"
                   placeholder="Ej. Pérez"
                   required
                 />
                 <FormInput
                   form={generalForm}
-                  name="email"
-                  label="Correo Electrónico"
+                  name="curp"
+                  label="CURP"
+                  placeholder=""
+                  required
+                />
+                <FormInput
+                  form={generalForm}
+                  name="CP"
+                  label="Código Postal"
+                  placeholder=""
+                  required
+                />
+
+<FormInput
+                  form={generalForm}
+                  name="CP"
+                  label="REGIMEN FISCAL"
+                  placeholder=""
+                  required
+                />
+
+<FormInput
+                  form={generalForm}
+                  name="CP"
+                  label="USO DE CFDI"
+                  placeholder=""
+                  required
+                />
+
+<FormInput
+                  form={generalForm}
+                  name="CP"
+                  label="TIPO CLIENTE"
+                  placeholder=""
+                  required
+                />
+
+                <FormInput
+                  form={generalForm}
+                  name="curp"
+                  label="Cupr"
                   placeholder="Ej. correo@email.com"
                   type="email"
                   required
