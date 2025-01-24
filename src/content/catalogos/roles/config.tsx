@@ -89,7 +89,7 @@ export const OperacionesFormulario = () => {
     const valores = values.values as RolInterface;
 
     const valoresForm = {
-      id: valores.id,
+      id: values.dataModal.id,
       nombre: valores.nombre,
       empresaId: idEmpresa,
       activo: valores.activo,
@@ -152,7 +152,7 @@ export const Formulario = ({
                     control={generalForm.control}
                     name="activo"
                     render={({ field }) => (
-                      <FormItem className="place-self-end flex items-center gap-2">
+                      <FormItem className="flex items-center gap-2 place-self-end">
                         <FormLabel>
                           {field.value ? "Activo" : "Inactivo"}
                         </FormLabel>

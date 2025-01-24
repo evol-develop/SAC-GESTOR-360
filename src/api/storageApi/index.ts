@@ -36,3 +36,4 @@ export const uploadImage = async (file: File, path = "images") => {
     throw error;
   }
 };
+

@@ -32,4 +32,5 @@ export interface clienteInterface {
     activo: boolean;
     id_regimen_fiscal:number
     id_uso_cfdi: number;
+    password:string;
   }

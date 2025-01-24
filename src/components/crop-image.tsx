@@ -7,14 +7,18 @@ import FormInput from "./form-base";
 import { Button } from "@/components/ui/button";
 import { cropImageToFile } from "@/lib/utils/cropImageToFile";
 import { FaFilePdf, FaFileWord, FaFileExcel, FaFileAlt, FaFileImage } from 'react-icons/fa'; // Íconos para distintos tipos de archivo
+import { on } from "events";
 
 type CropImageProps = {
   form: UseFormReturn<any, any, undefined>;
   name: string;
   setValue: UseFormSetValue<any>;
+  onImageCropped?: (croppedFile: string) => void;
+  showPreview?: boolean ;
+  handleFile?: (file: File) => void;
 };
 
-export const CropImage = ({ form, name, setValue }: CropImageProps) => {
+export const CropImage = ({ form, name, setValue,onImageCropped, showPreview= true, handleFile }: CropImageProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [image, setImage] = useState<string | null>(null);
   const [crop, setCrop] = useState<Crop>({
@@ -39,6 +43,7 @@ export const CropImage = ({ form, name, setValue }: CropImageProps) => {
     } else {
       // Si no es imagen, solo muestra el nombre del archivo o un ícono representativo
       setImage(null);
+      handleFile && handleFile(file);
     }
   }, []);
 
@@ -66,6 +71,8 @@ export const CropImage = ({ form, name, setValue }: CropImageProps) => {
         completedCrop,
         "image.jpg"
       );
+
+      onImageCropped && onImageCropped(URL.createObjectURL(croppedFile));
       setCroppedImage(URL.createObjectURL(croppedFile));
       setValue(name, croppedFile);
     }
@@ -77,11 +84,11 @@ export const CropImage = ({ form, name, setValue }: CropImageProps) => {
       if (file.type.startsWith("image/")) {
         // Si es una imagen, muestra la vista previa
         return croppedImage ? (
-          <img
-            src={croppedImage}
-            alt="Cropped"
-            className="object-contain h-auto max-w-full rounded-md aspect-square"
-          />
+          showPreview && <img
+          src={croppedImage}
+          alt="Cropped"
+          className="object-contain h-auto max-w-full rounded-md aspect-square"
+        />
         ) : (
           <div className="flex items-center justify-center p-2 border rounded-md aspect-square border-muted">
             <p className="text-sm text-center text-muted-foreground">
@@ -103,7 +110,7 @@ export const CropImage = ({ form, name, setValue }: CropImageProps) => {
         }
 
         return (
-          <div className="flex items-center justify-center p-2 border rounded-md aspect-square border-muted">
+          showPreview && <div className="flex items-center justify-center p-2 border rounded-md aspect-square border-muted">
             <div className="text-center text-muted-foreground">
               {icon}
               <p className="mt-2 text-sm">{file.name}</p>

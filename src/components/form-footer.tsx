@@ -27,6 +27,7 @@ const FormFooter = ({
         type="submit"
         disabled={form.formState.isSubmitting}
         variant="outline"
+        className="text-xs"
       >
         {form.formState.isSubmitting ? (
           <LuLoaderCircle className="animate-spin" />

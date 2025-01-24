@@ -18,6 +18,7 @@ import { datosSATInterface } from "@/interfaces/catalogos/datosSATInterface";
 import { alertasInterface } from "@/interfaces/catalogos/alertasInterface";
 import { tipoClientes } from "@/interfaces/catalogos/tipoClientes";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { createUser } from "@/api/authApi";
 
 const phoneRegExp = /^\d{10}$/;
 
@@ -59,16 +60,21 @@ const validationSchema = z
     fecha_final: z.string().optional(),
     id_regimen_fiscal: z.number().optional(),
     id_uso_cfdi: z.number().optional(),
-    
+    password: z.string().min(6, "La contraseña es requerida").max(10),
+    password2: z.string().min(6, "La contraseña es requerida").max(10),
 
     limite_credito: z
     .preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
-  descuento_default: z
+    descuento_default: z
     .preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
-  dias_credito: z
+    dias_credito: z
     .preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
 
   })
+  .refine((data) => data.password === data.password2, {
+    path: ["password2"],
+    message: "Las contraseñas no coinciden",
+  });
 
 export const OperacionesFormulario = () => {
   
@@ -113,7 +119,7 @@ export const OperacionesFormulario = () => {
       activo : valores.activo,
       id_regimen_fiscal: valores.id_regimen_fiscal,
       id_uso_cfdi: valores.id_uso_cfdi,
-      
+      password : valores.password
     };
 
     try {
@@ -122,7 +128,12 @@ export const OperacionesFormulario = () => {
         valoresForm
       );
 
-      console.log(response.data);
+      if (response.data.isSuccess) 
+      {
+        console.log("Creando usuario en firebase");
+        await createUser(valores.email);
+      }
+
 
       return response.data;
     } catch (err) {
@@ -173,6 +184,7 @@ export const OperacionesFormulario = () => {
       activo : valores.activo,
       id_regimen_fiscal: valores.id_regimen_fiscal,
       id_uso_cfdi: valores.id_uso_cfdi,
+      password : valores.password
     };
 
     try {
@@ -238,8 +250,8 @@ export const Formulario = ({
       fecha_final: dataModal.fecha_final,
       activo : dataModal.activo,
       id_regimen_fiscal: dataModal.id_regimen_fiscal,
-      id_uso_cfdi: dataModal.id_uso_cfdi
-
+      id_uso_cfdi: dataModal.id_uso_cfdi,
+      password : dataModal.password
     },
   });
 
@@ -252,15 +264,14 @@ export const Formulario = ({
 
         <Form {...generalForm}>
           <form onSubmit={generalForm.handleSubmit(onSubmit)} >
-            <Card className="max-h-[50dvh] overflow-y-auto">
-           
-
+            <Card className="h-[560px] w-full overflow-y-auto">
+        
             <Tabs defaultValue="general" className="w-full gap-3">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="general">Datos Generales</TabsTrigger>
-              <TabsTrigger value="domicilio">Datos del Domicilio</TabsTrigger>
-              <TabsTrigger value="fiscales">Datos Fiscales</TabsTrigger>
-              <TabsTrigger value="ingreso">Datos de ingreso</TabsTrigger>
+              <TabsTrigger value="general">Datos generales</TabsTrigger>
+              {/* <TabsTrigger value="domicilio">Datos del Domicilio</TabsTrigger> */}
+              <TabsTrigger value="fiscales">Datos fiscales y de ingreso</TabsTrigger>
+              {/* <TabsTrigger value="ingreso">Datos de ingreso</TabsTrigger> */}
             </TabsList>
 
             <TabsContent value="general">
@@ -377,7 +388,7 @@ export const Formulario = ({
                 form={generalForm}
                 name="nombreComercial"
                 label="Nombre comercial"
-                className="w-72"
+                className="w-50"
                 type="text"
               />
                </CardContent>
@@ -420,32 +431,21 @@ export const Formulario = ({
                   className="w-72"
                 />
 
-                <FormInput
-                  form={generalForm}
-                  name="email"
-                  label="Email"
-                  placeholder=""
-                  type="email"
-                  className="w-72"
-                />
-
-                <FormInput
+              <FormInput
                   form={generalForm}
                   name="email2"
-                  label="Email 2"
+                  label="Correo (para envio de facturas)"
                   placeholder=""
                   type="email"
                   className="w-72"
                 />
-                
-            </CardContent>
-                  
-            </TabsContent>
 
-            <TabsContent value="domicilio">
-            <CardContent className="relative grid grid-cols-3 gap-3">
+              </CardContent>
+              <TabsList className="grid w-full grid-cols-4">
+              </TabsList>
+              <CardContent className="relative grid grid-cols-3 gap-3">
 
-              
+
               <FormInput
                   form={generalForm}
                   name="cp"
@@ -488,9 +488,16 @@ export const Formulario = ({
                   placeholder=""
                   className="w-72"
                 />
-                </CardContent>
-
+                
+                
+            </CardContent>
+                  
             </TabsContent>
+
+            {/* <TabsContent value="domicilio">
+            <CardContent className="relative grid grid-cols-3 gap-3">
+            </CardContent>
+            </TabsContent> */}
 
             <TabsContent value="fiscales">
              <CardContent className="relative grid grid-cols-3 gap-3">
@@ -502,6 +509,7 @@ export const Formulario = ({
                   placeholder=""
                   type="number"
                   className="w-72"
+                 
                 />
 
                 <FormInput
@@ -657,6 +665,39 @@ export const Formulario = ({
                 </SelectContent>
               </Select>
               </div>
+              </CardContent>
+
+            <TabsList className="grid w-full grid-cols-4">
+            </TabsList>
+          
+              <CardContent className="relative grid grid-cols-3 gap-3 py-3">
+              <FormInput
+                  form={generalForm}
+                  name="email"
+                  label="Correo para ingresar al sistema"
+                  placeholder=""
+                  type="email"
+                  className="w-72"
+                />
+
+                <FormInput
+                  form={generalForm}
+                  name="password"
+                  label="Ingrese una contraseña"
+                  placeholder=""
+                  type="password"
+                  className="w-72"
+                />
+
+                <FormInput
+                  form={generalForm}
+                  name="password2"
+                  label="Confirme la contraseña"
+                  placeholder=""
+                  type="password2"
+                  className="w-72"
+                />
+
               <br></br>
               <br></br>
               <div className="absolute bottom-0 right-0">
@@ -669,10 +710,13 @@ export const Formulario = ({
               </CardContent>
             </TabsContent>
 
-            <TabsContent value="ingreso">
-            </TabsContent>
+            {/* <TabsContent value="ingreso">
+            <CardContent className="relative grid grid-cols-3 gap-3">
+            </CardContent>
+            </TabsContent> */}
 
             </Tabs>
+
             </Card>
           </form>
         </Form>
