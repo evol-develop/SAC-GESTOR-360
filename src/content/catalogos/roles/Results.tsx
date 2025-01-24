@@ -24,6 +24,7 @@ import { ENDPOINTDELETE, PAGE_SLOT, titulos } from "./constants";
 import { AutorizacionesEnum } from "@/components/Autorizar/enums";
 import { RolInterface } from "@/interfaces/entidades/rolInterface";
 import { getItemActiveLabel } from "@/config/catalogoGenerico/utils";
+import { DataTableColumnHeader } from "@/config/catalogoGenerico/data-table-column-header";
 
 export const Results = () => {
   const { dispatch } = usePage();
@@ -101,17 +102,30 @@ export const Results = () => {
 
   const columns: ColumnDef<RolInterface>[] = [
     {
+      id: "Nombre",
       accessorKey: "nombre",
-      header: "Nombre",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Nombre" />
+      ),
+      cell: ({ row }) => <span className="text-xs">{row.original.nombre}</span>,
     },
     {
       id: "Estado",
       accessorKey: "activo",
-      header: "Estado",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Estado" />
+      ),
       cell: ({ row }) => getItemActiveLabel(row.original.activo),
     },
     {
-      header: "Permisos",
+      id: "Permisos",
+      header: () => (
+        <div className="flex items-center space-x-2">
+          <Button variant="ghost" size="sm" className="h-8 -ml-3">
+            <span>Permisos</span>
+          </Button>
+        </div>
+      ),
       cell: ({ row }) => (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -132,7 +146,14 @@ export const Results = () => {
       ),
     },
     {
-      header: "Autorizaciones",
+      id: "Autorizaciones",
+      header: () => (
+        <div className="flex items-center space-x-2">
+          <Button variant="ghost" size="sm" className="h-8 -ml-3">
+            <span>Autorizaciones</span>
+          </Button>
+        </div>
+      ),
       cell: ({ row }) => (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -153,7 +174,14 @@ export const Results = () => {
       ),
     },
     {
-      header: "Acciones",
+      id: "Acciones",
+      header: () => (
+        <div className="flex items-center space-x-2">
+          <Button variant="ghost" size="sm" className="h-8 -ml-3">
+            <span>Acciones</span>
+          </Button>
+        </div>
+      ),
       cell: ({ row }) => (
         <Acciones
           item={row.original}
@@ -176,7 +204,7 @@ export const Results = () => {
         PAGE_SLOT={PAGE_SLOT}
         data={data}
         columns={columns}
-        filtro="nombre"
+        filtro="Nombre"
       />
       <DeleteDialog
         openConfirmDelete={openConfirmDelete}

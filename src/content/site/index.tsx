@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet-async";
 
+import { format } from "date-fns";
 import { appConfig } from "@/appConfig";
-import { words } from "@/lib/utils/words";
 import { useAuth } from "@/hooks/useAuth";
 import { H3, Small, Muted } from "@/components/typography";
 
@@ -17,16 +17,7 @@ const Index = () => {
         <Small>
           Administra tu empresa, usuarios y más desde el menú lateral.
         </Small>
-        <Muted>
-          {words.dateToUpperCase(
-            new Date().toLocaleDateString("es-MX", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })
-          )}
-        </Muted>
+        <Muted>{format(new Date(), "PPPP")}</Muted>
       </div>
     </>
   );

@@ -7,6 +7,7 @@ import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import { store } from "./store/store.ts";
 import { AuthProvider } from "./contexts/Auth/AuthContext.tsx";
+import { NotificationProvider } from "./contexts/Notifications/index.tsx";
 
 import "./index.css";
 import "react-image-crop/dist/ReactCrop.css";
@@ -16,9 +17,11 @@ createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
       <Provider store={store}>
         <AuthProvider>
-          <HelmetProvider>
-            <App />
-          </HelmetProvider>
+          <NotificationProvider>
+            <HelmetProvider>
+              <App />
+            </HelmetProvider>
+          </NotificationProvider>
         </AuthProvider>
       </Provider>
     </BrowserRouter>

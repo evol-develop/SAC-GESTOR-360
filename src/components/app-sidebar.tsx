@@ -2,7 +2,7 @@ import { Link } from "react-router";
 
 import {
   Sidebar,
-  SidebarFooter,
+  // SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sidebar";
 import { appConfig } from "@/appConfig";
 import SidebarMenuContent from "@/layout/sidebar/SidebarMenu";
-import { NavUser } from "@/layout/sidebar/SidebarMenu/nav-user";
+// import { NavUser } from "@/layout/sidebar/SidebarMenu/nav-user";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -24,7 +24,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <div className="aspect-square size-8 flex items-center justify-center rounded-lg">
                   <img
                     className="size-full object-contain"
-                    alt="EvolSoft"
+                    alt="logo-evolsoft"
                     src="/logo/evolsoft.png"
                   />
                 </div>
@@ -40,9 +40,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarMenuContent />
-      <SidebarFooter>
+      {/* <SidebarFooter>
         <NavUser />
-      </SidebarFooter>
+      </SidebarFooter> */}
       <SidebarRail />
     </Sidebar>
   );

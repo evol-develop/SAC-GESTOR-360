@@ -1,3 +1,6 @@
+import { es } from "date-fns/locale";
+import { setDefaultOptions } from "date-fns";
+
 import { Router } from "@/routers/router";
 import { Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -5,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 
 function App() {
+  setDefaultOptions({ locale: es });
   return (
     <ThemeProvider storageKey="vite-ui-theme" defaultTheme="light">
       <TooltipProvider>

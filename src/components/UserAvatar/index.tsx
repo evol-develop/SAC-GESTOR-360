@@ -5,10 +5,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import axios from "@/lib/utils/axios";
 import { useAuth } from "@/hooks/useAuth";
-import { UsersInterface } from "@/interfaces/userInterface";
-import { ResponseInterface } from "@/interfaces/responseInterface";
+import { ResponseInterface, userResult } from "@/interfaces/responseInterface";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type UserAvatarProps = {
@@ -20,10 +20,10 @@ type UserAvatarProps = {
   userId?: string;
   /**
    * Objeto del usuario
-   * @type {UsersInterface}
+   * @type {userResult}
    * @description El objeto del usuario no es necesario si se pasa el id del usuario en userId
    */
-  dataUsuario?: UsersInterface;
+  dataUsuario?: userResult;
   withTooltip?: boolean;
   className?: string;
   rounded?:
@@ -36,6 +36,8 @@ type UserAvatarProps = {
     | "rounded-2xl"
     | "rounded-3xl"
     | "rounded-full";
+  showAvatar?: boolean;
+  styles?: React.CSSProperties;
 };
 
 type User = {
@@ -56,6 +58,8 @@ const UserAvatar = ({
   withTooltip,
   rounded = "rounded-lg",
   className,
+  showAvatar = true,
+  styles,
 }: UserAvatarProps) => {
   const { user: userAuth } = useAuth();
   const [user, setUser] = useState<User>({
@@ -107,12 +111,21 @@ const UserAvatar = ({
     }
   }, [userId, dataUsuario, userAuth]);
 
+  if (!showAvatar) {
+    return <span>{user.nombre}</span>;
+  }
+
   if (withTooltip) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
           <Avatar
-            className={`w-8 h-8 cursor-default select-none ${rounded} ${className}`}
+            style={styles}
+            className={cn(
+              "w-8 h-8 cursor-default select-none",
+              rounded,
+              className
+            )}
           >
             <AvatarImage
               src={user.avatar}
@@ -120,7 +133,10 @@ const UserAvatar = ({
               className="rounded-none"
             />
             <AvatarFallback className="bg-primary text-primary-foreground rounded-none">
-              {user.nombre.slice(0, 2)}
+              {user.nombre
+                .split(" ")
+                .map((chunk) => chunk[0])
+                .join("")}
             </AvatarFallback>
           </Avatar>
         </TooltipTrigger>
@@ -143,7 +159,10 @@ const UserAvatar = ({
           className="rounded-none"
         />
         <AvatarFallback className="bg-primary text-primary-foreground rounded-none">
-          {user.nombre.slice(0, 2)}
+          {user.nombre
+            .split(" ")
+            .map((chunk) => chunk[0])
+            .join("")}
         </AvatarFallback>
       </Avatar>
     );

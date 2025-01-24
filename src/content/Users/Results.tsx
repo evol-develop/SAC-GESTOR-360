@@ -9,9 +9,11 @@ import { RootState } from "@/store/store";
 import UserAvatar from "@/components/UserAvatar";
 import { useAppSelector } from "@/hooks/storeHooks";
 import { ENDPOINTDELETE, PAGE_SLOT } from "./constants";
-import { UsersInterface } from "@/interfaces/userInterface";
+import { userResult } from "@/interfaces/responseInterface";
 import { useItemManagement } from "@/hooks/useItemManagement";
 import { getItemActiveLabel } from "@/config/catalogoGenerico/utils";
+import { DataTableColumnHeader } from "@/config/catalogoGenerico/data-table-column-header";
+import { Button } from "@/components/ui/button";
 
 export const Results = () => {
   const data =
@@ -25,10 +27,12 @@ export const Results = () => {
     handleEditItem,
   } = useItemManagement({ deleteEndpoint: ENDPOINTDELETE, PAGE_SLOT });
 
-  const columns: ColumnDef<UsersInterface>[] = [
+  const columns: ColumnDef<userResult>[] = [
     {
-      id: "usuario",
-      header: "Usuario",
+      id: "Usuario",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Usuario" />
+      ),
       accessorKey: "fullName",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
@@ -37,7 +41,7 @@ export const Results = () => {
             withTooltip
             rounded="rounded-full"
           />
-          <span>
+          <span className="text-xs">
             {row.original.nombre} {row.original.apellido}
           </span>
         </div>
@@ -46,15 +50,28 @@ export const Results = () => {
     {
       id: "Correo Electrónico",
       accessorKey: "email",
-      header: "Correo Electrónico",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Correo Electrónico" />
+      ),
+      cell: ({ row }) => <span className="text-xs">{row.original.email}</span>,
     },
     {
       id: "Estado",
-      header: "Estado",
+      accessorKey: "activo",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Estado" />
+      ),
       cell: ({ row }) => getItemActiveLabel(row.original.activo),
     },
     {
-      header: "Acciones",
+      id: "Acciones",
+      header: () => (
+        <div className="flex items-center space-x-2">
+          <Button variant="ghost" size="sm" className="h-8 -ml-3">
+            <span>Acciones</span>
+          </Button>
+        </div>
+      ),
       cell: ({ row }) => (
         <Acciones
           item={row.original}
@@ -70,7 +87,8 @@ export const Results = () => {
         PAGE_SLOT={PAGE_SLOT}
         data={data}
         columns={columns}
-        filtro="usuario"
+        filtro="Usuario"
+        showSendUsuarioMessage
       />
       <DeleteDialog
         openConfirmDelete={openConfirmDelete}

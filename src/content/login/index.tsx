@@ -33,7 +33,7 @@ const LoginBasic = () => {
       <Helmet>
         <title> {appConfig.NOMBRE} - Iniciar Sesión</title>
       </Helmet>
-      <div className="min-h-svh bg-muted md:p-10 flex flex-col items-center justify-center gap-6 p-6">
+      <div className="min-h-svh md:p-10 flex items-center justify-center w-full p-6">
         <div className="flex flex-col w-full max-w-sm gap-4">
           <Logo className="size-16" />
           {vista ? (

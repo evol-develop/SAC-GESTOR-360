@@ -6,16 +6,31 @@ import { usePage } from "@/hooks/usePage";
 import { authReducer } from "./AuthReducer";
 import { setInfoEmpresa } from "@/store/slices/Empresa";
 import { firebaseAuth } from "@/firebase/firebase-config";
-import { UserInterface } from "@/interfaces/userInterface";
 import { createSlotPermisos } from "@/store/slices/Permisos";
 import { EmpresaInterface } from "@/interfaces/empresaInterface";
 import { ResponseInterface } from "@/interfaces/responseInterface";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 
+type authUser = {
+  accessToken: string;
+  activo: boolean;
+  apellido: string;
+  avatar: string | null;
+  email: string;
+  empresa: EmpresaInterface | null;
+  fullName: string;
+  id: string;
+  nombre: string;
+  role: string;
+  telefono: string | null;
+  userRoll: string;
+  username: string;
+};
+
 export interface AuthState {
   isAuthenticated: boolean;
   isInitialized: boolean;
-  user?: UserInterface;
+  user?: authUser;
   error?: string;
 }
 
@@ -25,7 +40,7 @@ const initialAuthState: AuthState = {
 };
 
 interface AuthContextInterface {
-  user: UserInterface | undefined;
+  user: authUser | undefined;
   idEmpresa: string | number;
   authState: AuthState;
   login: (userName: string, password: string) => Promise<void>;
@@ -62,7 +77,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         `/api/roles/getpermisosbyusuario/${user.email}`
       );
 
-      const updatedUser: UserInterface = {
+      const updatedUser: authUser = {
         ...user,
         ...userResponse.data.result,
       };
@@ -123,16 +138,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       );
 
-      const userAuthenticated: UserInterface = {
-        username: user.userName,
-        nombre: user.fullName,
+      const userAuthenticated: authUser = {
         accessToken,
-        email: user.userName,
-        role: user.userRol,
+        activo: user.activo,
+        apellido: user.apellido,
         avatar: user.avatar || "",
-        permisos: user.permisos,
-        expiration: user.expiration,
+        email: user.userName,
         empresa: user.empresa,
+        fullName: user.fullName,
+        id: user.id,
+        nombre: user.nombre,
+        role: user.userRol,
+        telefono: user.telefono,
+        userRoll: user.userRol,
+        username: user.username,
       };
 
       dispatch({ type: "LOGIN", payload: { user: userAuthenticated } });

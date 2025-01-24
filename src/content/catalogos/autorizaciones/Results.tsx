@@ -16,6 +16,7 @@ import { ENDPOINTDELETE, PAGE_SLOT } from "./constants";
 import { useItemManagement } from "@/hooks/useItemManagement";
 import { DeleteDialog, ResultsCatalogo } from "@/config/catalogoGenerico";
 import { AutorizacionInterface } from "@/interfaces/entidades/autorizacionesInterface";
+import { DataTableColumnHeader } from "@/config/catalogoGenerico/data-table-column-header";
 
 export const Results = () => {
   const { dispatch } = usePage(PAGE_SLOT);
@@ -42,14 +43,19 @@ export const Results = () => {
 
   const columns: ColumnDef<any>[] = [
     {
+      id: "Descripción",
       accessorKey: "descripcion",
-      header: "Descripción",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Descripción" />
+      ),
       cell: ({ row }) => row.getValue("descripcion"),
     },
     {
-      id: "activo",
+      id: "Estado",
       accessorKey: "activo",
-      header: "Estatus",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Estado" />
+      ),
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <Tooltip>
@@ -78,7 +84,7 @@ export const Results = () => {
         PAGE_SLOT={PAGE_SLOT}
         data={data}
         columns={columns}
-        filtro="descripcion"
+        filtro="Descripción"
       />
       <DeleteDialog
         openConfirmDelete={openConfirmDelete}

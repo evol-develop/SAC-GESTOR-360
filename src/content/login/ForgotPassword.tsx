@@ -116,14 +116,17 @@ export default function ForgotPassword({
                   "Enviar Correo de Recuperación"
                 )}
               </Button>
-              <Button
-                variant="link"
-                onClick={setVista}
-                className="px-0"
-                type="button"
-              >
-                Iniciar Sesión
-              </Button>
+              <div className="-mt-2 text-sm text-center">
+                ¿Recuperaste tu contraseña o recordaste tu acceso?{" "}
+                <Button
+                  variant="link"
+                  onClick={setVista}
+                  className="p-0 m-0"
+                  type="button"
+                >
+                  Inicia Sesión
+                </Button>
+              </div>
             </form>
           </Form>
         </CardContent>

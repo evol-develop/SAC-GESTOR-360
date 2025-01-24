@@ -18,29 +18,34 @@ interface Props {
    * @example 'nombre'
    */
   filtro: string;
+  showSendUsuarioMessage?: boolean;
+  showSendEmpresaMessage?: boolean;
 }
 export const ResultsCatalogo = ({
   PAGE_SLOT,
   data,
   columns,
   filtro,
+  showSendUsuarioMessage,
+  showSendEmpresaMessage,
 }: Props) => {
   const { openConfirmDelete, closeConfirmDelete, handleDeleteCompleted } =
     useCatalogo(PAGE_SLOT, data);
 
   return (
-    <Card className="container w-full px-4 py-2 mx-auto">
-      <Loading />
-      {data.length === 0 ? (
-        <P>No existen resultados para mostrar</P>
-      ) : (
-        <GridCatalogo data={data} columns={columns} filtro={filtro} />
-      )}
+    <div className="container mx-auto">
+      <GridCatalogo
+        data={data}
+        columns={columns}
+        filtro={filtro}
+        showSendUsuarioMessage={showSendUsuarioMessage}
+        showSendEmpresaMessage={showSendEmpresaMessage}
+      />
       <DeleteDialog
         openConfirmDelete={openConfirmDelete}
         closeConfirmDelete={closeConfirmDelete}
         handleDeleteCompleted={handleDeleteCompleted}
       />
-    </Card>
+    </div>
   );
 };

@@ -10,23 +10,23 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useState } from "react";
-import { LuChevronDown } from "react-icons/lu";
 
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { PropsResults } from "./ConfigCatalogo";
+import { Separator } from "@/components/ui/separator";
+import { DataTableToolbar } from "./data-table-toolbar";
+import { DataTablePagination } from "./data-table-pagination";
 
-export const GridCatalogo = ({ data, columns, filtro }: PropsResults) => {
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+export const GridCatalogo = ({
+  data,
+  columns,
+  filtro,
+  showSendUsuarioMessage,
+  showSendEmpresaMessage,
+}: PropsResults) => {
   const [rowSelection, setRowSelection] = useState({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   const table = useReactTable({
     data,
@@ -35,8 +35,8 @@ export const GridCatalogo = ({ data, columns, filtro }: PropsResults) => {
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     state: {
@@ -48,67 +48,43 @@ export const GridCatalogo = ({ data, columns, filtro }: PropsResults) => {
   });
 
   return (
-    <div className="w-full">
-      <div className="sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4 flex flex-col py-4 space-y-4">
-        <Input
-          placeholder={`Filtrar ${filtro}...`}
-          value={(table.getColumn(filtro)?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn(filtro)?.setFilterValue(event.target.value)
-          }
-          className="sm:max-w-sm w-full"
-        />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="sm:w-auto sm:mt-0 w-full mt-2">
-              Columnas <LuChevronDown className="w-4 h-4 ml-2" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[200px]">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div className="border rounded-md">
+    <div className="w-full space-y-4">
+      <DataTableToolbar
+        filtro={filtro}
+        table={table}
+        showSendUsuarioMessage={showSendUsuarioMessage}
+        showSendEmpresaMessage={showSendEmpresaMessage}
+      />
+      <div className="overflow-hidden border rounded-md">
         <div className="sm:block hidden">
-          <div className="bg-muted px-4 py-3 grid grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-4">
+          <div className="p-2 grid grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-2">
             {table.getHeaderGroups().map((headerGroup) =>
               headerGroup.headers.map((header) => (
                 <div key={header.id} className="text-sm font-medium">
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                  {header.isPlaceholder ? (
+                    <span></span>
+                  ) : (
+                    flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )
+                  )}
                 </div>
               ))
             )}
           </div>
+          <Separator />
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (
               <div
                 key={row.id}
-                className="grid grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-4 px-4 py-3 border-t"
+                className="grid grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-2 p-2 border-t m-0 odd:bg-muted"
               >
                 {row.getVisibleCells().map((cell) => (
-                  <div key={cell.id} className="flex items-center">
+                  <div
+                    key={cell.id}
+                    className="flex items-center text-left [&[align=center]]:text-center [&[align=right]]:text-right text-sm"
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </div>
                 ))}
@@ -121,16 +97,16 @@ export const GridCatalogo = ({ data, columns, filtro }: PropsResults) => {
         <div className="sm:hidden">
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (
-              <div key={row.id} className="last:border-b-0 border-b">
+              <div key={row.id} className="even:bg-muted">
                 {row.getVisibleCells().map((cell) => (
-                  <div key={cell.id} className="flex justify-between gap-4 p-4">
-                    <div className="flex items-center text-sm font-medium">
+                  <div key={cell.id} className="grid grid-cols-2 p-4">
+                    <div className="flex items-center justify-start w-full text-sm font-medium">
                       {flexRender(
                         cell.column.columnDef.header,
                         cell.getContext() as any
                       )}
                     </div>
-                    <div className="flex items-center">
+                    <div className="flex items-center justify-end w-full">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -145,30 +121,7 @@ export const GridCatalogo = ({ data, columns, filtro }: PropsResults) => {
           )}
         </div>
       </div>
-      <div className="sm:flex-row sm:space-y-0 flex flex-col items-center justify-between py-4 space-y-4">
-        <div className="text-muted-foreground sm:text-left sm:w-auto w-full text-sm text-center">
-          {table.getFilteredSelectedRowModel().rows.length} de{" "}
-          {table.getFilteredRowModel().rows.length} resultado(s) seleccionado(s)
-        </div>
-        <div className="sm:justify-end sm:w-auto flex justify-center w-full space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Anterior
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Siguiente
-          </Button>
-        </div>
-      </div>
+      <DataTablePagination table={table} />
     </div>
   );
 };

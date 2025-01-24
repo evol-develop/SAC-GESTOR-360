@@ -24,39 +24,8 @@ export interface PropsResults {
   data: any[];
   columns: ColumnDef<any>[];
   filtro: string;
-  selectedItems?: any[];
-  filteredItems?: any[];
-  selectedAllItems?: boolean;
-  selectedSomeItems?: boolean;
-  selectedBulkActions?: boolean;
-  page?: number;
-  limit?: number;
-  query?: string;
-  busquedaPor?: string;
-  entidad?: string;
-  handleSelectAllItem?: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSelectOneItem?: (
-    event: React.ChangeEvent<HTMLInputElement>,
-    id: number
-  ) => void;
-  handleConfirmDelete?: (item: any) => void;
-  handlePageChange?: (
-    event: React.MouseEvent<HTMLButtonElement, MouseEvent> | null,
-    page: number
-  ) => void;
-  handleLimitChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  handleEditCompleted?: (item: any) => void;
-  handleEditItem?: (Item: any) => void;
-  handleQueryChange?: (event: any) => void;
-  EncabezadoGrid?: () => JSX.Element;
-  GridResult?: (
-    key: any,
-    item: any,
-    isItemSelected: boolean,
-    handleEditItem: () => void,
-    handleConfirmDelete: () => void
-  ) => JSX.Element;
-  CardResult?: (key: any, item: any, isItemSelected: boolean) => JSX.Element;
+  showSendUsuarioMessage?: boolean;
+  showSendEmpresaMessage?: boolean;
 }
 
 type AccionesProps = {

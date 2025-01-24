@@ -5,7 +5,10 @@ import {
   LuHouse,
   LuShieldCheck,
   LuUserCog,
-  LuUsers, LuUserRound 
+  LuUsers,
+  LuUserRound,
+  LuBell,
+  LuClipboardList,
 } from "react-icons/lu";
 import { IoIosAlert } from "react-icons/io";
 import type { IconType } from "react-icons";
@@ -69,7 +72,7 @@ const menuItems: MenuItems[] = [
           },
           {
             id: MenuEnums.Clientes,
-            Icon: LuUserRound  ,
+            Icon: LuUserRound,
           },
           // {
           //   id: MenuEnums.ClientesServicios,
@@ -134,6 +137,14 @@ const menuItems: MenuItems[] = [
             Icon: LuUsers,
           },
         ],
+      },
+      {
+        id: MenuEnums.Notificaciones,
+        Icon: LuBell,
+      },
+      {
+        id: MenuEnums.Tareas,
+        Icon: LuClipboardList,
       },
     ],
   },

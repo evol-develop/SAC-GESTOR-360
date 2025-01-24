@@ -1,13 +1,29 @@
 import { AuthState } from "@/contexts/Auth/AuthContext";
-import { UserInterface } from "@/interfaces/userInterface";
+import { EmpresaInterface } from "@/interfaces/empresaInterface";
+
+type authUser = {
+  accessToken: string;
+  activo: boolean;
+  apellido: string;
+  avatar: string | null;
+  email: string;
+  empresa: EmpresaInterface | null;
+  fullName: string;
+  id: string;
+  nombre: string;
+  role: string;
+  telefono: string | null;
+  userRoll: string;
+  username: string;
+};
 
 export type AuthAction =
-  | { type: "LOGIN"; payload: { user: UserInterface } }
+  | { type: "LOGIN"; payload: { user: authUser } }
   | { type: "LOGIN_ERROR"; payload: { error: string } }
   | { type: "LOGOUT" }
   | {
       type: "INITIALIZE";
-      payload: { isAuthenticated: boolean; user: UserInterface | undefined };
+      payload: { isAuthenticated: boolean; user: authUser | undefined };
     }
   | { type: "ERROR"; payload: { error: string } };
 

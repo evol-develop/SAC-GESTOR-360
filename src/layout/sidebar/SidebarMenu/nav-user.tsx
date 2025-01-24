@@ -1,3 +1,5 @@
+import { LuChevronsUpDown, LuLogOut, LuMoon, LuSun } from "react-icons/lu";
+
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -20,12 +22,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import UserAvatar from "@/components/UserAvatar";
 import { useTheme } from "@/components/theme-provider";
-import { LuChevronsUpDown, LuLogOut, LuMoon, LuSun } from "react-icons/lu";
 
 export function NavUser() {
   const { setTheme } = useTheme();
-  const { authState, logout } = useAuth();
-  const { user } = authState;
+  const { user, logout } = useAuth();
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -59,13 +59,6 @@ export function NavUser() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {/* <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <LuBell />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator /> */}
             <DropdownMenuGroup>
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>

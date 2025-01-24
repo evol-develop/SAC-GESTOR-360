@@ -1,7 +1,7 @@
 import * as z from "zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { LuLoaderCircle } from "react-icons/lu";
+import { LuCircleAlert, LuLoaderCircle } from "react-icons/lu";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import {
@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertTitle } from "@/components/ui/alert";
 
 const formSchema = z.object({
   email: z
@@ -42,7 +43,7 @@ export default function FormularioLogin({
   className,
   ...props
 }: FormularioLoginProps) {
-  const { login } = useAuth();
+  const { login, authState } = useAuth();
   const [isSubmitting, setSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -68,8 +69,8 @@ export default function FormularioLogin({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl">Bienvenido/a de vuelta</CardTitle>
+        <CardHeader>
+          <CardTitle className="text-2xl">Bienvenido/a de vuelta</CardTitle>
           <CardDescription>
             Inicia sesión en tu cuenta para continuar
           </CardDescription>
@@ -77,6 +78,17 @@ export default function FormularioLogin({
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
+              {authState.error && (
+                <Alert
+                  variant="destructive"
+                  className="flex items-center w-full h-auto gap-2"
+                >
+                  <LuCircleAlert className="size-4 !static" />
+                  <AlertTitle className="!p-0 mb-0">
+                    Error - {authState.error}
+                  </AlertTitle>
+                </Alert>
+              )}
               <FormField
                 control={form.control}
                 name="email"
@@ -98,8 +110,16 @@ export default function FormularioLogin({
                 control={form.control}
                 name="password"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="gap-y-2 flex flex-wrap items-center justify-between space-y-0">
                     <FormLabel>Contraseña</FormLabel>
+                    <Button
+                      variant="link"
+                      onClick={setVista}
+                      className="w-auto h-auto p-0 m-0"
+                      type="button"
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </Button>
                     <FormControl>
                       <Input {...field} type="password" />
                     </FormControl>
@@ -118,14 +138,6 @@ export default function FormularioLogin({
                 ) : (
                   "Iniciar Sesión"
                 )}
-              </Button>
-              <Button
-                variant="link"
-                onClick={setVista}
-                className="px-0"
-                type="button"
-              >
-                ¿Olvidaste tu contraseña?
               </Button>
             </form>
           </Form>

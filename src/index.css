@@ -65,3 +65,38 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Personalización Scrollbar */
+* {
+  scrollbar-width: thin; /* Para Firefox */
+  scrollbar-color: hsl(var(--border)) transparent; /* Thumb y track */
+}
+
+/* Estilo para navegadores basados en Webkit (Chrome, Edge, Safari) */
+*::-webkit-scrollbar {
+  width: 8px; /* Ancho del scrollbar */
+  height: 8px; /* Altura del scrollbar horizontal */
+}
+
+*::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  background: transparent; /* Color del track (fondo del scrollbar) */
+  -webkit-border-radius: 10px;
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: hsl(var(--border)); /* Color del thumb (barra deslizante) */
+  transition: background 0.3s ease; /* Transición suave para hover */
+  -webkit-border-radius: 10px;
+  border-radius: 10px;
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary)); /* Color más oscuro al hacer hover */
+}
+
+*::-webkit-scrollbar-button {
+  display: none; /* Oculta las flechas en navegadores basados en Webkit (Chrome, Edge, Safari) */
+}

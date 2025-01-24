@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { appConfig } from "@/appConfig";
-import { Arrow } from "@radix-ui/react-tooltip";
 
 const Logo = ({ className }: { className?: string }) => {
   return (
@@ -22,13 +21,12 @@ const Logo = ({ className }: { className?: string }) => {
         >
           <img
             className="object-contain w-full"
-            alt="EvolSoft"
+            alt="logo-evolsoft"
             src="/logo/evolsoft.png"
           />
         </Link>
       </TooltipTrigger>
       <TooltipContent>
-        <Arrow />
         <div className="text-primary-foreground font-bold text-center">
           {appConfig.NOMBRE}
         </div>
