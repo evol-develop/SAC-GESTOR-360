@@ -1,6 +1,6 @@
 import * as z from "zod";
 import { Card,CardContent} from "@/components/ui/card";
-import {Form} from "@/components/ui/form";
+import {Form,FormLabel} from "@/components/ui/form";
 import axios from "@/lib/utils/axios";
 import FormInput from "@/components/form-base";
 import FormFooter from "@/components/form-footer";
@@ -19,38 +19,36 @@ import { RootState } from "@/store/store";
 import { useAuth } from "@/hooks/useAuth";
 import { FaFileAlt, FaFileExcel, FaFilePdf, FaFileWord } from "react-icons/fa";
 import { toast } from "sonner";
-import {
-  addItemSlot,
-  createSlot,
-  setDataModal,
-  setIsEditing,
-  setIsOpenModal,
-  setModalSize,
-  updateItemSlot,
-} from "@/store/slices/page";
+import {addItemSlot,createSlot,setDataModal,setIsEditing,setIsOpenModal,setModalSize,updateItemSlot,} from "@/store/slices/page";
 import { usePage } from "@/hooks/usePage";
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation } from 'swiper/modules';
+import 'swiper/css';//NO QUITAR AUNQUE MARQUE ERROR
+import 'swiper/css/navigation'; //NO QUITAR AUNQUE MARQUE ERROR
+import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from "@/components/ui/select"
+import { clienteInterface } from "@/interfaces/catalogos/clienteInterface";
+import { serviciosInterface } from "@/interfaces/catalogos/serviciosInterfaces";
+import { useGetData } from "@/hooks/useGetData";
+import { useEffect, useState } from "react";
+import { PAGE_SLOT } from "./constants";
+import { Button } from "@/components/ui/button";
+import { LuLoaderCircle } from "react-icons/lu";
+import { CardFooter } from "@/components/ui/card";
 
 const validationSchema = z
   .object({
     descripcion: z.string().max(120).min(1, "La descripción es un dato requerido"),
     titulo: z.string().max(120).min(1, "El título es un dato requerido"),
+    clienteId: z.number().int(),
+    servicioId: z.number().int(),
   })
 
 
 export const Formulario = () => {
+  const { dispatch } = usePage();
+  const { authState: { user },logout,} = useAuth();
 
-  const { dispatch } = usePage("TICKETS");
-  
-  const handleCreateItemSuccess = (isSuccess: boolean, message: string) => {
-    if (isSuccess) {
-      toast.success(message);
-    } else {
-      toast.error(message);
-    }
-    dispatch(setIsOpenModal(false));
-    dispatch(setDataModal({}));
-    dispatch(setModalSize("lg"));
-  };
+  console.log(user)
   
   const dataModal = useAppSelector((state: RootState) => state.page.dataModal);
   const { idEmpresa } = useAuth();
@@ -58,7 +56,10 @@ export const Formulario = () => {
   const [audioList, setAudioList] = React.useState<{ url: string; id: string; tipo:string; blob:Blob ; nombre:string }[]>([]);
   const [imageList, setImageList] = React.useState<{ url: string; id: string; tipo:string; blob:Blob ; nombre:string}[]>([]);
   const [archivosList, setArchivosList] = React.useState<{ url: string; id: string; tipo:string; nombre:string; blob:Blob}[]>([]);
-
+  const Cliente =  useAppSelector((state: RootState) => state.page.slots.clienteId);
+  const servicios =useAppSelector((state: RootState) => state.page.slots.SERVICIOS as serviciosInterface[] );
+  const clientes =useAppSelector((state: RootState) => state.page.slots.CLIENTES as clienteInterface[] );
+  
   const addAudioElement = (blob: Blob) => {
     const url = URL.createObjectURL(blob);
     const id = new Date().toISOString(); 
@@ -94,7 +95,6 @@ export const Formulario = () => {
     setArchivosList((prevList) => [...prevList, { id: id, url: URL.createObjectURL(croppedFile), tipo: croppedFile.type.toString(), nombre: croppedFile.name, blob: croppedFile }]);
   };
 
-
   const eliminarAudio = (id: string) => {
     setAudioList((prevList) => prevList.filter((audio) => audio.id !== id));
   };
@@ -128,233 +128,304 @@ export const Formulario = () => {
     }
   };
 
+  const onSubmit: SubmitHandler<any> = async (valores) => {
+    console.log(valores);
+    
+    try {          
+      await uploadFile(audioList, "AUDIOS_TICKETS");
 
-    const onSubmit1: SubmitHandler<any> = async (valores) => {
-      console.log(valores);
-      
-      try {          
-        await uploadFile(audioList, "AUDIOS_TICKETS");
-  
-        await uploadFile(imageList, "IMAGENES_TICKETS");
-  
-        await uploadFile(archivosList,"ARCHIVOS_TICKETS");
-  
-        const valoresForm = {
-          id : valores.id,
-          id_empresa: idEmpresa,
-          id_cliente: idEmpresa,
-          descripcion: valores.descripcion,
-          titulo: valores.titulo,
-          activo: valores.activo,
-          archivos: fileList,
-        };
-  
-        console.log(valoresForm);
-  
-          const response = await axios.post<ResponseInterface>(
-            "/api/tickets/create",
-            valoresForm
-          );
-         
-          // handleCreateItemSuccess(response.data.isSuccess, response.data.message);
+      await uploadFile(imageList, "IMAGENES_TICKETS");
 
- 	  return response.data;
-  
-      } catch (err) {
-        
-        console.error(err);
-        throw new Error("Error al actualizar al registrar el ticket");
+      await uploadFile(archivosList,"ARCHIVOS_TICKETS");
+
+      var clienteId = "";
+
+      //COMPROBAR QUE TIPO DE ROL TIENE EL USUARIO LOGUEADO
+      if(user?.userRoll != "Cliente"){
+        clienteId = valores.clienteId;
+      }else{
+        clienteId = user?.id.toString();
       }
+
+      const valoresForm = {
+        id : valores.id,
+        empresaId: idEmpresa,
+        clienteId: clienteId,
+        descripcion: valores.descripcion,
+        titulo: valores.titulo,
+        activo: valores.activo,
+        archivos: fileList,
+        servicioId: valores.servicioId,
+        
+      };
+
+      console.log(valoresForm);
+
+        const response = await axios.post<ResponseInterface>(
+          "/api/tickets/create",
+          valoresForm
+        );
+        
+        toast.success(response.data.message);
+
+        generalForm.reset();
+        setArchivosList([]);
+        setAudioList([]);
+        setImageList([]);
+
+
+
+        return response.data;
+
+    } catch (err) {
       
-    };
+      console.error(err);
+      throw new Error("Error al actualizar al registrar el ticket");
+    }
+    
+  };
       
   const generalForm = useForm<z.infer<typeof validationSchema>>({
     resolver: zodResolver(validationSchema),
     defaultValues: {
-    descripcion: dataModal.descripcion,
-    titulo: dataModal.titulo,
+      descripcion: dataModal.descripcion,
+      titulo: dataModal.titulo,
+      clienteId: dataModal.clienteId,  // Asegura un valor inicial
+      servicioId: dataModal.servicioId,
     },
   });
   
+  const crearSlot = (value: string) => {
+   
+    dispatch(createSlot({ ["clienteId"]: parseInt(value) }));
+    generalForm.setValue("clienteId", parseInt(value));
+    dispatch(createSlot({"SERVICIOS": []}));
+    
+  };
+
+  const CargaServicios = async () => {
+    try {
+      const response = await axios.get(
+        `/api/servicios/getServiciosByCliente/${Cliente}`,
+        {
+          headers: { "Content-Type": "application/text" },
+        }
+      );
+
+      if (response.data.isSuccess && Array.isArray(response.data.result)) {
+        // Mapear los servicios obtenidos
+        const servicios = response.data.result.map((item:any) => ({
+          id: item.servicio?.id,
+          descripcion: item.servicio?.descripcion || "",
+        }));
+  
+        dispatch(createSlot({ SERVICIOS: servicios }));
+      }
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (Cliente) {
+      console.log(Cliente.get)
+      generalForm.setValue("clienteId", parseInt(Cliente));
+      CargaServicios();
+    }
+  }, [Cliente]);
+
+  function onSubmit1(valores: any) {
+    console.log("hello!", valores);
+  }
+  
+  const onError = (valores: any) => {
+    console.log(valores);
+  };
+
   return (
-    <><div className="flex items-center justify-center mb-2">
+    <>
+    
+    <div className="flex items-center justify-center ">
       <h1 className="text-xl font-bold text-center sm:text-left">
         Generación de Tickets
       </h1>
     </div>
-    <div className="flex flex-col items-stretch justify-center space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
-        <div className="flex-grow order-2 w-full max-w-lg px-4 mt-4 mb-0 sm:order-2 sm:mt-0">
-          <Card className="mb-0 shadow h-full min-h-[40px]" >
-            <CardContent >
-              <div className="space-y-2">
-                
-               
-              <div className="min-h-48">
-              {audioList.length > 0 && (
-                <>
-                  <div className="grid grid-cols-2 gap-2 p-2 text-xs font-bold ">
-                    {audioList.length} audio{audioList.length > 1 && "s"} adjunto{audioList.length > 1 && "s"}
-                  </div>
-                  <div className="overflow-y-auto max-h-36">
-                    <div className="grid grid-cols-2 gap-4"> {/* Aquí hemos cambiado space-y-4 por grid-cols-2 */}
-                      {audioList.map((audio) => (
-                        <div key={audio.id} className="flex items-center justify-between">
-                          {/* Reproductor de audio */}
-                          <Reproductor audioUrl={audio.url} />
-                          {/* Botón de eliminación */}
-                          <button
-                            onClick={() => eliminarAudio(audio.id)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <FaTrash size={20} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-              </div>
-              
-              <div className="min-h-32">
-              {archivosList.length > 0 && (
-                <>
-                  <div className="grid grid-cols-1 gap-4 p-2 text-xs font-bold">
-                    {archivosList.length} archivo{archivosList.length > 1 && "s"} adjunto{archivosList.length > 1 && "s"}
-                  </div>
-                  <div className="overflow-y-auto max-h-40">
-                    <div className="flex w-full mt-2 space-x-4 overflow-x-auto md:mt-0">
-                      {archivosList.map((archivo) => {
-                        let icon;
-                        if (archivo.tipo === "application/pdf") {
-                          icon = <FaFilePdf size={30} />;
-                        } else if (archivo.tipo === "application/msword" || archivo.tipo === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
-                          icon = <FaFileWord size={30} />;
-                        } else if (archivo.tipo === "application/vnd.ms-excel" || archivo.tipo === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
-                          icon = <FaFileExcel size={30} />;
-                        } else {
-                          icon = <FaFileAlt size={30} />;
-                        }
 
-                        return (
-                          <div
-                            key={archivo.id}
-                            className="relative flex items-center justify-center w-20 h-20 border rounded-md border-muted">
-                            <div className="flex flex-col items-center justify-center space-y-1 text-center text-muted-foreground">
-                                <button
-                                  onClick={() => eliminarArchivo(archivo.id)}
-                                  className="absolute top-[-5px] right-[-10px] z-10 p-1 text-red-500 transition-opacity duration-200 opacity-100 hover:text-red-700">
-                                  <FaTimes size={16} />
-                                </button>
-                              <div className="relative group">
-                                {icon}
-                                {/* Tooltip */}
-                                <div className="absolute top-0 z-0 hidden px-2 py-1 text-xs text-white transform bg-black rounded -translate-x-1/4 left-1/4 group-hover:block">
-                                  {archivo.nombre}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </>
-              )}
-              </div>
+    <Form {...generalForm}>
+     <form onSubmit={generalForm.handleSubmit(onSubmit)}>
+     <div className="flex flex-col w-full h-full md:flex-row">
 
-              {imageList.length > 0 && (
-              <>
-                <div className="grid grid-cols-1 gap-4 p-2 text-xs font-bold">
-                  {imageList.length} imágen{imageList.length > 1 && "es"} adjunta{imageList.length > 1 && "s"}
-                </div>
-                <div className="overflow-y-auto max-h-38">
-                  <div className="flex w-full mt-2 space-x-4 overflow-x-auto md:mt-0">
-                    {imageList.map((croppedImage) => (
-                      <div key={croppedImage.url} className="relative flex items-center justify-center w-20 h-20 border rounded-md border-muted">
-                        <button
-                          onClick={() => eliminarImagen(croppedImage.url)}
-                          className="absolute top-[-5px] right-[-10px] z-10 p-1 text-red-500 transition-opacity duration-200 opacity-100 hover:text-red-700"
-                        >
-                          <FaTimes size={16} />
-                        </button>
-                        <img
-                          src={croppedImage.url}
-                          alt="Cropped"
-                          className="object-contain w-full h-full rounded-md"
-                        />
-                      </div>
+     <div className="w-full h-full px-4 md:w-1/2">
+        <div className="h-full min-h-[200px]">
+          <div className="grid grid-cols-1 gap-4 p-1">
+
+          {user?.userRoll != "Cliente" && 
+                <div className="max-w-96">
+                <FormLabel className="text-xs">Cliente</FormLabel>
+                <Select name="clienteId" onValueChange={crearSlot} key={generalForm.watch("clienteId")}>
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={clientes && clientes.length > 0
+                        ? clientes.find((x) => x.id === generalForm.watch("clienteId"))
+                          ?.nombre || "Seleccione un cliente"
+                        : "Cargando..."} />
+                  </SelectTrigger>
+                  <SelectContent >
+                    {clientes && clientes.map((item: { id: number; nombre: string; }) => (
+                      <SelectItem key={item.id} value={item.id.toString()}>
+                        {item.nombre}
+                      </SelectItem>
                     ))}
-                  </div>
-                </div>
-              </>
-            )}
-
-
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            }
+            
+            <div className="max-w-96">
+            <FormLabel className="text-xs">Servicios contratados </FormLabel>
+            <Select name="servicioId" onValueChange={(value) => generalForm.setValue("servicioId", parseInt(value))}  key={generalForm.watch("servicioId")}>
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={servicios && servicios.length > 0
+                    ? servicios.find((x) => x.id === generalForm.watch("servicioId"))
+                      ?.descripcion || "Seleccione un servicio"
+                    : "Cargando..."} />
+              </SelectTrigger>
+              <SelectContent>
+                {servicios && servicios.map((item: { id: number; descripcion: string; }) => (
+                  <SelectItem key={item.id} value={item.id.toString()}>
+                    {item.descripcion}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="flex-grow order-1 w-full max-w-lg px-4 sm:order-1">
-          <Form {...generalForm}>
-            <form onSubmit={generalForm.handleSubmit(onSubmit1)}>
-              <Card className="mb-0 shadow h-full min-h-[300px]">
-                <CardContent className="grid grid-cols-1 gap-4 p-6">
-                  <FormInput
-                    form={generalForm}
-                    name="titulo"
-                    label="Título"
-                    placeholder=""
-                    required />
+            <FormInput
+              form={generalForm}
+              name="titulo"
+              label="Título del ticket"
+              placeholder=""
+              required />
 
-                  <label className="block text-xs font-medium text-black ">
-                    Descripción
-                  </label>
-                  <textarea
-                    {...generalForm.register("descripcion")}
-                    placeholder="Escribe aquí..."
-                    required
-                    className="w-full h-32 p-1 text-sm border rounded-md resize-none text-muted-foreground border-muted focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                  <div className="flex p-4 mb-2 space-x-4">
-                    <div className="flex items-center justify-center h-20 w-50">
-                      <CropImage
-                        form={generalForm}
-                        name="pictureURL"
-                        setValue={generalForm.setValue}
-                        onImageCropped={handleImageCropped}
-                        showPreview={false}
-                        handleFile={handleFile}
-                      />
-                    </div>
+            <label className="block text-xs font-medium text-black ">
+              Descripción del problema
+            </label>
+            <textarea
+              {...generalForm.register("descripcion")}
+              placeholder="Escribe aquí..."
+              required
+              className="w-full h-48 p-1 mb-5 text-sm border rounded-md shadow resize-none text-muted-foreground border-muted focus:outline-none focus:ring-2 focus:ring-primary"
+            />
 
-                    <div className="flex items-center justify-center h-20">
-                      <React.StrictMode>
-                        <AudioRecorder
-                          onRecordingComplete={addAudioElement}
-                          audioTrackConstraints={{
-                            noiseSuppression: true,
-                            echoCancellation: true,
-                          }}
-                          downloadOnSavePress={false}
-                          downloadFileExtension="webm"
-                        />
-                      </React.StrictMode>
-                    </div>
-                  </div>
-
-                  <FormFooter
-                    showButton={false}
-                    handleCreateItemClose={null}
-                    form={generalForm}
-                    dataModal={dataModal} />
-                </CardContent>
-              </Card>
-            </form>
-          </Form>
+          </div>
         </div>
       </div>
+        
+        <div className="w-full h-full px-4 md:w-1/2"> 
+          <div className="mb-0 h-full min-h-[30px] mt-4 ">
+            
+              <div className="p-1 shadow min-h-80">
+                {/* Carrusel de Audios */}
+                {audioList.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-bold">{audioList.length} Audio(s) </h3>
+                    <Swiper navigation modules={[Navigation]} spaceBetween={10} slidesPerView={3}>
+                      {audioList.map((audio) => (
+                        <SwiperSlide key={audio.id} className="flex items-center justify-between p-2 border rounded-md">
+                          <button onClick={() => eliminarAudio(audio.id)} className="absolute text-red-500 top-1 right-1">
+                            <FaTimes size={16} />
+                          </button>
+                          <Reproductor audioUrl={audio.url} style={{ width: "100%" }} />
+                        </SwiperSlide>
+                      ))}
+                    </Swiper>
+                  </div>
+                )}
+
+                {/* Carrusel de Archivos */}
+                {archivosList.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-bold">{archivosList.length} Archivo(s) </h3>
+                    <Swiper navigation modules={[Navigation]} spaceBetween={10} slidesPerView={3}>
+                      {archivosList.map((archivo) => (
+                        <SwiperSlide key={archivo.id} className="relative p-2 border rounded-md">
+                          <button onClick={() => eliminarArchivo(archivo.id)} className="absolute text-red-500 top-1 right-1">
+                            <FaTimes size={16} />
+                          </button>
+                          <div className="flex flex-col items-center">
+                            <FaFileAlt size={30} />
+                            <p className="text-xs truncate max-w-[100px]">{archivo.nombre}</p>
+                          </div>
+                        </SwiperSlide>
+                      ))}
+                    </Swiper>
+                  </div>
+                )}
+
+                {/* Carrusel de Imágenes */}
+                {imageList.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-bold">{imageList.length} Imágen(es) </h3>
+                    <Swiper navigation modules={[Navigation]} spaceBetween={10} slidesPerView={3}>
+                      {imageList.map((croppedImage) => (
+                        <SwiperSlide key={croppedImage.url} className="relative p-2 border rounded-md">
+                          <button onClick={() => eliminarImagen(croppedImage.url)} className="absolute text-red-500 top-1 right-1">
+                            <FaTimes size={16} />
+                          </button>
+                          <img src={croppedImage.url} alt="Imagen Adjunta" className="object-contain w-24 h-24 rounded-md" />
+                        </SwiperSlide>
+                      ))}
+                    </Swiper>
+                  </div>
+                )}
+              </div>
+
+              {/* Botones en la parte inferior derecha */}
+              <div className="flex flex-col items-end gap-2 mt-2 right-4 ">
+              <CropImage
+                  form={generalForm}
+                  name="pictureURL"
+                  setValue={generalForm.setValue}
+                  onImageCropped={handleImageCropped}
+                  showPreview={false}
+                  handleFile={handleFile}
+                  height="61px"
+                  width="80%"
+                />
+              
+              <div style={{marginTop:'-8%'}}  >
+              <AudioRecorder
+                  onRecordingComplete={addAudioElement}
+                  audioTrackConstraints={{
+                    noiseSuppression: true,
+                    echoCancellation: true,
+                  }}
+                  downloadOnSavePress={false}
+                  downloadFileExtension="webm"
+                />
+              </div>
+
+              </div>
+
+              <div className="flex flex-col items-end mt-10 right-4"  >
+                <CardFooter className="flex justify-end gap-2">
+                  <Button
+                    type="submit"
+                    className="text-xs"
+                  >
+                  {generalForm.formState.isSubmitting && (<LuLoaderCircle className="animate-spin" />)}
+                    Generar ticket
+                    
+                  </Button>
+                </CardFooter>
+              </div>
+          </div>
+        </div>
+        </div>
+      </form>
+      </Form>
     </>
   );
 

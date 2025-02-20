@@ -30,48 +30,8 @@ import { PropsFormulario } from "@/interfaces/formInterface";
 import { ResponseInterface } from "@/interfaces/responseInterface";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UsuarioAdicionalesInterface } from "@/interfaces/UsuarioAdicionalesInterface";
+import { useEffect, useState } from "react";
 
-const phoneRegExp = /^\d{10}$/;
-
-const validationSchema = z
-  .object({
-    nombre: z.string().max(120).min(1, "El nombre es un dato requerido"),
-    apellido: z.string().max(120).min(1, "El apellido es un dato requerido"),
-    telefono: z
-      .string()
-      .max(10)
-      .min(1, "El teléfono es un dato requerido")
-      .regex(phoneRegExp, "El teléfono debe ser de 10 dígitos"),
-    email: z
-      .string()
-      .max(120)
-      .min(1, "El correo es un dato requerido")
-      .email("El correo no es válido"),
-    password: z
-      .string()
-      // .min(6, "La contraseña debe de tener al menos 6 caracteres")
-      .optional(),
-    confirmPassword: z.string().optional(),
-    userRol: z.string().max(120).min(1, "El rol es un dato requerido"),
-    activo: z.boolean(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    path: ["confirmPassword"],
-    message: "Las contraseñas no coinciden",
-  });
-
-const validationSegSchema = z
-  .object({
-    password: z
-      .string()
-      .max(255)
-      .min(6, "La contraseña debe de tener al menos 6 caracteres"),
-    confirmPassword: z.string().max(255),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    path: ["confirmPassword"],
-    message: "Las contraseñas no coinciden",
-  });
 
 export const OperacionesFormulario = () => {
   const createItemCatalogo = async (
@@ -156,6 +116,59 @@ export const Formulario = ({
 }: PropsFormulario) => {
   const isEditing = useAppSelector((state: RootState) => state.page.isEditing);
 
+  
+const phoneRegExp = /^\d{10}$/;
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+const validationSchema = z
+  .object({
+    nombre: z.string().max(120).min(1, "El nombre es un dato requerido"),
+    apellido: z.string().max(120).min(1, "El apellido es un dato requerido"),
+    telefono: z
+      .string()
+      .max(10)
+      .min(1, "El teléfono es un dato requerido")
+      .regex(phoneRegExp, "El teléfono debe ser de 10 dígitos"),
+    email: z
+      .string()
+      .max(120)
+      .min(1, "El correo es un dato requerido")
+      .email("El correo no es válido"),
+      password: isEditing
+      ? z.string().optional() // No es obligatorio si `isEditing` es true
+      : z
+          .string()
+          .min(8, "La contraseña debe tener al menos 8 caracteres")
+          .regex(passwordRegex, {
+            message:
+              "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial",
+          }),
+    confirmPassword: z.string().optional(),
+    userRol: z.string().max(120).min(1, "El rol es un dato requerido"),
+    activo: z.boolean(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Las contraseñas no coinciden",
+  });
+
+const validationSegSchema = z
+  .object({
+    password: z
+      .string()
+      .max(255)
+      .min(6, "La contraseña debe de tener al menos 6 caracteres")
+      .regex(passwordRegex, {
+        message:
+          "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial",
+      }),
+    confirmPassword: z.string().max(255),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Las contraseñas no coinciden",
+  });
+  
   const generalForm = useForm<z.infer<typeof validationSchema>>({
     resolver: zodResolver(validationSchema),
     defaultValues: {
@@ -183,8 +196,9 @@ export const Formulario = ({
     confirmPassword: string;
   }> = async (values) => {
     if (values.password === values.confirmPassword) {
+      const encodedPass = encodeURIComponent(btoa(values.password));
       const response = await axios.post<ResponseInterface>(
-        `api/user/updatepassautorizacion/${encrypt(values.password)}`
+        `api/user/updatepassautorizacion/${encodedPass}`
       );
 
       if (response.data.isSuccess) {
@@ -198,6 +212,16 @@ export const Formulario = ({
     }
   };
 
+
+  //console.log(isEditing); 
+
+  function onSubmit1(valores: any) {
+    console.log("hello!", valores);
+  }
+  
+  const onError = (valores: any) => {
+    console.log(valores);
+  };
   return (
     <Tabs defaultValue="general" className="w-full">
       <TabsList className="grid w-full grid-cols-2">

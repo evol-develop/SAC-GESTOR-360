@@ -130,7 +130,7 @@ export const CatalogoHeader = ({
   };
 
   return (
-    <div className="sm:flex-row container flex flex-col items-center justify-between mx-auto mb-4">
+    <div className="container flex flex-col items-center justify-between mx-auto mb-4 sm:flex-row">
       <div>
         <h2 className="text-2xl font-bold tracking-tight">{titulos.titulo}</h2>
         <p className="text-muted-foreground">{titulos.descripcion}</p>
@@ -146,7 +146,7 @@ export const CatalogoHeader = ({
                 onClick={handleCreateItemOpen}
                 size="sm"
                 type="button"
-                className="sm:mt-0 mt-4"
+                className="mt-4 sm:mt-0"
               >
                 <LuPlus />
                 {"Crear " + titulos.nombreItem}

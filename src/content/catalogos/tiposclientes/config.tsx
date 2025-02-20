@@ -10,9 +10,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { PropsFormulario } from "@/interfaces/formInterface";
 import { ResponseInterface } from "@/interfaces/responseInterface";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import {alertasInterface} from "@/interfaces/catalogos/alertasInterface";
 import { SubmitHandler, useForm } from "react-hook-form";
-
+import { tipoClientes } from "@/interfaces/catalogos/tipoClientes";
 
 const validationSchema = z
   .object({
@@ -27,12 +26,12 @@ export const OperacionesFormulario = () => {
     values: any,
     idEmpresa: string | number
   ): Promise<any> => {
-    const valores = values.values as alertasInterface;
+    const valores = values.values as tipoClientes;
     
 
     const valoresForm = {
       id : valores.id,
-      id_empresa: idEmpresa,
+      empresaId: idEmpresa,
       descripcion: valores.descripcion,
       activo: valores.activo,
       
@@ -49,7 +48,7 @@ export const OperacionesFormulario = () => {
     } catch (err) {
      
       console.error(err);
-      throw new Error("Error al actualizar la informacion del usuario");
+      throw new Error("Error al guardar el tipo de cliente");
     }
   };
 
@@ -57,11 +56,11 @@ export const OperacionesFormulario = () => {
     values: any,
     idEmpresa: string | number
   ): Promise<any> => {
-    const valores = values.values as alertasInterface;
+    const valores = values.values as tipoClientes;
   
     const valoresForm = {
       id : values.dataModal.id,
-      id_empresa: idEmpresa,
+      empresaId: idEmpresa,
       descripcion: valores.descripcion,
       activo: valores.activo,
       
@@ -75,7 +74,7 @@ export const OperacionesFormulario = () => {
       return response.data;
     } catch (error) {
       console.error(error);
-      throw `Error al actualizar la alerta`;
+      throw `Error al actualizar el tipo de cliente`;
     }
   };
 

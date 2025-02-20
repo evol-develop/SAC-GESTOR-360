@@ -16,9 +16,11 @@ type CropImageProps = {
   onImageCropped?: (croppedFile: string) => void;
   showPreview?: boolean ;
   handleFile?: (file: File) => void;
+  height?: string;
+  width?: string;
 };
 
-export const CropImage = ({ form, name, setValue,onImageCropped, showPreview= true, handleFile }: CropImageProps) => {
+export const CropImage = ({ form, name, setValue,onImageCropped, showPreview= true, handleFile, height="161px", width="100%" }: CropImageProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [image, setImage] = useState<string | null>(null);
   const [crop, setCrop] = useState<Crop>({
@@ -125,7 +127,7 @@ export const CropImage = ({ form, name, setValue,onImageCropped, showPreview= tr
 
   return (
     <div>
-      <div className="md:flex-row h-[161px] flex flex-col gap-2">
+      <div className="flex flex-col gap-2 md:flex-row" style={{ height, width }}>
         <div
           {...getRootProps()}
           className="flex items-center justify-center w-full p-4 text-center border border-dashed rounded-md cursor-pointer border-muted md:w-3/4"

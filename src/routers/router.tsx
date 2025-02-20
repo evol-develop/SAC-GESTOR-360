@@ -74,6 +74,10 @@ const ManagementTickets = Loader(
   lazy(() => import("@/content/procesos/tickets"))
 );
 
+const ConsultaTickets = Loader(
+  lazy(() => import("@/content/procesos/consultaTickets"))
+);
+
 export const Router = () => {
   return (
     <Routes>
@@ -116,6 +120,7 @@ export const Router = () => {
 
         <Route path="procesos">
           <Route path="tickets" element={<ManagementTickets />} />
+          <Route path="consultaTickets" element={<ConsultaTickets />} />
         </Route>
 
         <Route

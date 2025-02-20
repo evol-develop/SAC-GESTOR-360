@@ -64,7 +64,7 @@ const CreateTask = () => {
       <DialogTrigger asChild>
         <Button
           variant="default"
-          className="lg:px-3 sm:w-auto w-full h-8 px-2 ml-auto"
+          className="w-full h-8 px-2 ml-auto lg:px-3 sm:w-auto"
         >
           <LuPlus />
           Asignar tarea

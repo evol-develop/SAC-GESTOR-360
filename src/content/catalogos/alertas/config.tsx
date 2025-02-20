@@ -32,7 +32,7 @@ export const OperacionesFormulario = () => {
 
     const valoresForm = {
       id : valores.id,
-      id_empresa: idEmpresa,
+      empresaId: idEmpresa,
       descripcion: valores.descripcion,
       activo: valores.activo,
       
@@ -61,7 +61,7 @@ export const OperacionesFormulario = () => {
   
     const valoresForm = {
       id : values.dataModal.id,
-      id_empresa: idEmpresa,
+      empresaId: idEmpresa,
       descripcion: valores.descripcion,
       activo: valores.activo,
       

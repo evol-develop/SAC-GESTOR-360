@@ -20,8 +20,7 @@ import { DataTableColumnHeader } from "@/config/catalogoGenerico/data-table-colu
 
 export const Results = () => {
   const { dispatch } = usePage(PAGE_SLOT);
-  const data =
-    useAppSelector((state: RootState) => state.page.slots.AUTORIZACIONES) || [];
+  const data = useAppSelector((state: RootState) => state.page.slots.AUTORIZACIONES) || [];
 
   const handleChangeEstatus = async (item: AutorizacionInterface) => {
     const response = await axios.post(
@@ -38,6 +37,8 @@ export const Results = () => {
     }
   };
 
+  console.log(data);
+
   const { openConfirmDelete, handleDeleteCompleted, closeConfirmDelete } =
     useItemManagement({ deleteEndpoint: ENDPOINTDELETE, PAGE_SLOT });
 
@@ -48,7 +49,7 @@ export const Results = () => {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Descripción" />
       ),
-      cell: ({ row }) => row.getValue("descripcion"),
+      cell: ({ row }) => row.original.descripcion,
     },
     {
       id: "Estado",

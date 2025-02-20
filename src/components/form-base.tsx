@@ -18,6 +18,7 @@ type FormInputProps = {
   type?: React.HTMLInputTypeAttribute | undefined;
   className?: string;
   focus?: boolean;
+  disabled?: boolean;
 };
 
 const FormInput = ({
@@ -29,7 +30,7 @@ const FormInput = ({
   required = false,
   className,
   focus,
-
+  disabled=false,
 }: FormInputProps) => {
   return (
     <FormField
@@ -46,6 +47,7 @@ const FormInput = ({
               required={required}
               className={className}
               onFocus={() => focus && form.setFocus(name)}
+              disabled={disabled}
             />
           </FormControl>
           <FormMessage />

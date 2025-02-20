@@ -17,7 +17,7 @@ export function DataTableToolbar<TData>({
   const isFiltered = table.getState().columnFilters.length > 0;
 
   return (
-    <div className="sm:flex-row flex flex-col items-center flex-1 gap-2">
+    <div className="flex flex-col items-center flex-1 gap-2 sm:flex-row">
       <Input
         placeholder="Filtrar tareas..."
         value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
@@ -44,7 +44,7 @@ export function DataTableToolbar<TData>({
         <Button
           variant="outline"
           onClick={() => table.resetColumnFilters()}
-          className="lg:px-3 sm:w-auto w-full h-8 px-2"
+          className="w-full h-8 px-2 lg:px-3 sm:w-auto"
         >
           Limpiar filtros
           <LuX />

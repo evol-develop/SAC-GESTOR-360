@@ -1,6 +1,7 @@
 import React from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { LuPencil, LuTrash2 } from "react-icons/lu";
+import { GrView } from "react-icons/gr";
 
 import {
   Tooltip,
@@ -35,7 +36,7 @@ type AccionesProps = {
    * @description Item
    */
   item: any;
-
+  editButton?: boolean;
   /**
    * handleEditItem
    * @type {(item: any) => void}
@@ -62,16 +63,22 @@ type AccionesProps = {
    * @requires deleteButton
    */
   handleConfirmDelete?: (item: any) => void;
+  viewButton?: boolean;
+  handleConfirmView?: (item: any) => void;
 };
 
 export const Acciones = ({
   item,
+  editButton = true,
   handleEditItem,
   deleteButton = false,
   handleConfirmDelete,
+  viewButton = false,
+  handleConfirmView,
 }: AccionesProps) => {
   return (
     <div className="flex items-center justify-start space-x-2">
+      {editButton && handleEditItem && (
       <Tooltip>
         <TooltipTrigger asChild>
           <Button onClick={() => handleEditItem(item)} size="icon">
@@ -80,6 +87,7 @@ export const Acciones = ({
         </TooltipTrigger>
         <TooltipContent side="left">Editar</TooltipContent>
       </Tooltip>
+      )}
       {deleteButton && handleConfirmDelete && (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -92,6 +100,20 @@ export const Acciones = ({
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right">Eliminar</TooltipContent>
+        </Tooltip>
+      )}
+      {viewButton && handleConfirmView && (
+        <Tooltip>
+          <TooltipTrigger  asChild>
+            <Button
+              onClick={() => handleConfirmView(item)}
+              
+              size="icon"
+            >
+              <GrView />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Ver movimientos del ticket</TooltipContent>
         </Tooltip>
       )}
     </div>

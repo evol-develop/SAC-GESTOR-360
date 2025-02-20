@@ -16,96 +16,72 @@ import { ComboboxForm } from "@/components/custom-combobox";
 import { PropsFormulario } from "@/interfaces/formInterface";
 import { ResponseInterface } from "@/interfaces/responseInterface";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { clienteInterface } from "@/interfaces/catalogos/clienteInterface";
-import { act } from "react";
-
-const phoneRegExp = /^\d{10}$/;
+import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from "@/components/ui/select";
+import { serviciosInterface } from "@/interfaces/catalogos/serviciosInterfaces";
+import {lineasInterface} from "@/interfaces/catalogos/lineasInterface";
+import {sublineasInterface} from "@/interfaces/catalogos/sublineasInterface";
+import { Checkbox } from "@/components/ui/checkbox"
+import { datosSATInterface } from "@/interfaces/catalogos/datosSATInterface";
+import { useEffect, useState } from "react";
 
 const validationSchema = z
   .object({
-    nombre: z.string().max(120).min(1, "El nombre es un dato requerido"),
-    apellido: z.string().max(120).min(1, "El apellido es un dato requerido"),
-    telefono: z
-      .string()
-      .max(10)
-      .min(1, "El teléfono es un dato requerido")
-      .regex(phoneRegExp, "El teléfono debe ser de 10 dígitos"),
-    email: z
-      .string()
-      .max(120)
-      .min(1, "El correo es un dato requerido")
-      .email("El correo no es válido"),
-    activo: z.boolean(),
+    precio: z
+        .preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
+    descripcion: z.string().max(120).min(1, "La descripción es un dato requerido"),
+    frecuencia: z.string().min(1, "La frecuencia es obligatoria").optional(),
+    capturar_cantidad: z.boolean(),
+    lineaId: z.number(),
+    sublineaId: z.number(),
+    id_unidad: z.number(),
+    tasa_iva: z.string(),
+    aplica_iva:z.boolean().optional(),
+    clave_sat:z.string(),
+    aplica_ieps:z.boolean(),
+    obj_imp:z.string().optional(),
+    tasa_ieps: z
+        .preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
+    porcentaje_retencion_isr: z
+        .preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
+    porcentaje_retencion_iva: z
+        .preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
+    activo: z.boolean().optional(),
   })
-
-const validationSegSchema = z
-  .object({
-    password: z
-      .string()
-      .max(255)
-      .min(6, "La contraseña debe de tener al menos 6 caracteres"),
-    confirmPassword: z.string().max(255),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    path: ["confirmPassword"],
-    message: "Las contraseñas no coinciden",
-  });
 
 export const OperacionesFormulario = () => {
   const createItemCatalogo = async (
     values: any,
     idEmpresa: string | number
   ): Promise<any> => {
-    const valores = values.values as clienteInterface;
+    const valores = values.values as serviciosInterface;
     // const userRol = values.globalState.ROL;
 
     const valoresForm = {
       id : valores.id,
-      id_empresa: idEmpresa,
-      nombre: valores.nombre,
-      rfc: valores.rfc,
-      cp: valores.cp,
-      id_tipo_cliente: valores.id_tipo_cliente,
-      domicilio: valores.domicilio,
-      colonia: valores.colonia,
-      estado: valores.estado,
-      ciudad: valores.ciudad,
-      telefono: valores.telefono,
-      celular: valores.celular,
-      email: valores.email,
-      email2: valores.email2,
-      limite_credito: valores.limite_credito,
-      descuento_default: valores.descuento_default,
-      dias_credito: valores.dias_credito,
-      id_alerta: valores.id_alerta,
-      curp: valores.curp,
-      factura: valores.factura,
-      retener_iva: valores.retener_iva,
-      retener_isr: valores.retener_isr,
-      porcentaje_retencion_iva: valores.porcentaje_retencion_iva,
-      porcentaje_retencion_isr: valores.porcentaje_retencion_isr,
-      metodo_pago: valores.metodo_pago,
-      id_forma_pago: valores.id_forma_pago,
-      fecha_registro: valores.fecha_registro,
-      enviar_cobranza: valores.enviar_cobranza,
-      nombreComercial: valores.nombreComercial,
-      fecha_final: valores.fecha_final,
-      
+      empresaId: idEmpresa,
+      precio: valores.precio,
+      descripcion: valores.descripcion,
+      frecuencia:valores.frecuencia,
+      capturar_cantidad: valores.capturar_cantidad,
+      lineaId: valores.lineaId,
+      sublineaId: valores.sublineaId,
+      id_unidad:valores.id_unidad,
+      tasa_iva:valores.tasa_iva,
+      aplica_iva:valores.aplica_iva,
+      clave_sat:valores.clave_sat,
+      aplica_ieps:valores.aplica_ieps,
+      obj_imp:valores.obj_imp,
+      tasa_ieps:valores.tasa_ieps,
+      porcentaje_retencion_isr:valores.porcentaje_retencion_isr,
+      porcentaje_retencion_iva:valores.porcentaje_retencion_iva,
+      activo:valores.activo
     };
 
     try {
       const response = await axios.post<ResponseInterface>(
-        "/api/user/create",
+        "/api/servicios/create",
         valoresForm
       );
-
-      console.log(response.data);
-
-      if (response.data.isSuccess) 
-      {
-        console.log("Creando usuario en firebase");
-        await createUser(valores.email);
-      }
 
       return response.data;
     } catch (err) {
@@ -119,45 +95,33 @@ export const OperacionesFormulario = () => {
     values: any,
     idEmpresa: string | number
   ): Promise<any> => {
-    const valores = values.values as clienteInterface;
-    // const userRol = values.globalState.ROL;
+    const valores = values.values as serviciosInterface;
 
     const valoresForm = {
-      id : valores.id,
-      id_empresa: idEmpresa,
-      nombre: valores.nombre,
-      rfc: valores.rfc,
-      cp: valores.cp,
-      id_tipo_cliente: valores.id_tipo_cliente,
-      domicilio: valores.domicilio,
-      colonia: valores.colonia,
-      estado: valores.estado,
-      ciudad: valores.ciudad,
-      telefono: valores.telefono,
-      celular: valores.celular,
-      email: valores.email,
-      email2: valores.email2,
-      limite_credito: valores.limite_credito,
-      descuento_default: valores.descuento_default,
-      dias_credito: valores.dias_credito,
-      id_alerta: valores.id_alerta,
-      curp: valores.curp,
-      factura: valores.factura,
-      retener_iva: valores.retener_iva,
-      retener_isr: valores.retener_isr,
-      porcentaje_retencion_iva: valores.porcentaje_retencion_iva,
-      porcentaje_retencion_isr: valores.porcentaje_retencion_isr,
-      metodo_pago: valores.metodo_pago,
-      id_forma_pago: valores.id_forma_pago,
-      fecha_registro: valores.fecha_registro,
-      enviar_cobranza: valores.enviar_cobranza,
-      nombreComercial: valores.nombreComercial,
-      fecha_final: valores.fecha_final,
-      
+      id : values.dataModal.id,
+      empresaId: idEmpresa,
+      precio: valores.precio,
+      descripcion: valores.descripcion,
+      frecuencia:valores.frecuencia,
+      capturar_cantidad: valores.capturar_cantidad,
+      lineaId: valores.lineaId,
+      sublineaId: valores.sublineaId,
+      id_unidad:valores.id_unidad,
+      tasa_iva:valores.tasa_iva,
+      aplica_iva:valores.aplica_iva,
+      clave_sat:valores.clave_sat,
+      aplica_ieps:valores.aplica_ieps,
+      obj_imp:valores.obj_imp,
+      tasa_ieps:valores.tasa_ieps,
+      porcentaje_retencion_isr:valores.porcentaje_retencion_isr,
+      porcentaje_retencion_iva:valores.porcentaje_retencion_iva,
+      activo:valores.activo,
+      linea:values.dataModal.linea,
+      sublinea:values.dataModal.sublinea
     };
 
     try {
-      const response = await axios.post<ResponseInterface>("/api/user/update", {
+      const response = await axios.post<ResponseInterface>("/api/servicios/update", {
         ...valoresForm,
       });
 
@@ -180,66 +144,96 @@ export const Formulario = ({
   handleCreateItemClose,
 }: PropsFormulario) => {
   const isEditing = useAppSelector((state: RootState) => state.page.isEditing);
+  const Servicios =useAppSelector((state: RootState) => state.page.slots.SERVICIOSPRODUCTOS as datosSATInterface[] );
+  const Unidades =useAppSelector((state: RootState) => state.page.slots.UNIDADES as datosSATInterface[] );
+  const Lineas =useAppSelector((state: RootState) => state.page.slots.LINEAS as lineasInterface[] );
+  const SubLineas =useAppSelector((state: RootState) => state.page.slots.SUBLINEAS as sublineasInterface[] );
 
+  const tasaIvaTransformada = dataModal.tasa_iva === 16 ? "2" 
+  : dataModal.tasa_iva === 0 ? "1" 
+  : String(dataModal.tasa_iva);
+
+  
   const generalForm = useForm<z.infer<typeof validationSchema>>({
     resolver: zodResolver(validationSchema),
     defaultValues: {
+      precio:dataModal.precio,
+      descripcion:dataModal.descripcion,
+      frecuencia: dataModal.frecuencia,
+      capturar_cantidad: dataModal.capturar_cantidad,
+      lineaId:dataModal.lineaId,
+      sublineaId:dataModal.sublineaId,
+      id_unidad:dataModal.id_unidad,
+      tasa_iva:tasaIvaTransformada,
+      aplica_iva:dataModal.aplica_iva,
+      clave_sat:dataModal.clave_sat,
+      aplica_ieps:dataModal.aplica_ieps,
+      obj_imp:dataModal.obj_imp,
+      tasa_ieps:dataModal.tasa_ieps,
+      porcentaje_retencion_isr:dataModal.porcentaje_retencion_isr,
+      porcentaje_retencion_iva:dataModal.porcentaje_retencion_iva,
+      activo:dataModal.activo
+    },
+  });
+
+  const frecuencias = [
+    { clave: "A", descripcion: "ANUAL" },
+    { clave: "M", descripcion: "MENSUAL" },
+    { clave: "U", descripcion: "UNICA" },
+  ];
+
   
-      
-    },
-  });
+  const tasaIvaOptions = [
+    { clave: "1", descripcion: '0.00 %' },
+    { clave: "2", descripcion: '16.00 %'},
+     { clave: "3", descripcion: 'EXENTO' }
+  ];
 
-  const seguridadForm = useForm<z.infer<typeof validationSegSchema>>({
-    resolver: zodResolver(validationSegSchema),
-    defaultValues: {
-      password: "",
-      confirmPassword: "",
-    },
-  });
+  const onSubmit2: SubmitHandler<z.infer<typeof validationSchema>> = async (values) => {
+    console.log(values);
 
-  const handleUpdatePass: SubmitHandler<{
-    password: string;
-    confirmPassword: string;
-  }> = async (values) => {
-    if (values.password === values.confirmPassword) {
-      const response = await axios.post<ResponseInterface>(
-        `api/user/updatepassautorizacion/${encrypt(values.password)}`
-      );
+    onSubmit(values);
+  }
 
-      if (response.data.isSuccess) {
-        handleCreateItemClose();
-        toast.success(response.data.message);
-      } else {
-        toast.error(response.data.message);
-      }
-    } else {
-      toast.error("Las contraseñas no coinciden");
-    }
+  const onError = (errors: any) => {
+    console.log(errors);
+    toast.error("Error al enviar el formulario");
   };
+
+  const [tasaIvaActual, setTasaIvaActual] = useState<string>(
+    'Selecciona una opcion'
+  );
+
+  function calcularTasaIvaActual() {
+    if (dataModal.aplica_iva === false) {
+      setTasaIvaActual('EXENTO');
+    } else if (dataModal.tasa_iva == 16) {
+      setTasaIvaActual('16.00 %');
+    } else if (dataModal.tasa_iva == 0) {
+      setTasaIvaActual('0.00 %');
+    }
+  }
+
+  useEffect(() => {
+    calcularTasaIvaActual();
+  },[]);
 
   return (
     <Tabs defaultValue="general" className="w-full">
-      {/* <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="general">General</TabsTrigger>
-        {isEditing && <TabsTrigger value="seguridad">Seguridad</TabsTrigger>}
-      </TabsList> */}
+   
       <TabsContent value="general">
         <Form {...generalForm}>
           <form onSubmit={generalForm.handleSubmit(onSubmit)}>
-            <Card className="max-h-[50dvh] overflow-y-auto">
-              {/* <CardHeader>
-                <CardTitle>General</CardTitle>
-                <CardDescription>
-                  Agrega o actualiza la información del cliente.
-                </CardDescription>
-              </CardHeader> */}
-              <CardContent className="relative grid grid-cols-1 gap-2">
-                {dataModal.id !== undefined && (
-                  <FormField
+            <Card className="h-[560px] w-full overflow-y-auto">
+             
+              <CardContent className="relative grid grid-cols-4 gap-2 py-3">
+
+                 {dataModal.id !== undefined && ( 
+                <FormField
                     control={generalForm.control}
                     name="activo"
                     render={({ field }) => (
-                      <FormItem className="flex items-center gap-2 place-self-end">
+                      <FormItem className="flex items-center space-x-2">
                         <FormLabel>
                           {field.value ? "Activo" : "Inactivo"}
                         </FormLabel>
@@ -252,114 +246,237 @@ export const Formulario = ({
                         </FormControl>
                       </FormItem>
                     )}
+                  />)}
+                  
+                  <FormField
+                    control={generalForm.control}
+                    name="capturar_cantidad"
+                    render={({ field }) => (
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="capturar_cantidad"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                        <div className="grid gap-1.5 leading-none">
+                          <label htmlFor="capturar_cantidad" className="text-xs font-medium leading-none">
+                            Cantidad capturable
+                          </label>
+                        </div>
+                      </div>
+                    )}
+                  /> 
+
+                  <FormField
+                      control={generalForm.control}
+                      name="aplica_ieps"
+                      render={({ field }) => (
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="aplica_ieps"
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                          <div className="grid gap-1.5 leading-none">
+                            <label htmlFor="aplica_ieps" className="text-xs font-medium leading-none">
+                              Aplica IEPS
+                            </label>
+                          </div>
+                        </div>
+                      )}
+                    />
+
+                <div className="flex items-center">
+                  
+                  <FormInput
+                    form={generalForm}
+                    name="tasa_ieps"
+                    label="Tasa IEPS(%)"
+                    placeholder=""
+                    type="number"
+                    required
+                    disabled={generalForm.watch("aplica_ieps") ? false : true}
                   />
-                )}
-                <FormInput
-                  form={generalForm}
-                  name="nombre"
-                  label="Nombre"
-                  placeholder="Ej. Pedro"
-                  required
-                />
+                
+                  </div>
 
-            <FormInput
-                  form={generalForm}
-                  name="nombreComercial"
-                  label="Nombre comercial"
-                  placeholder="Ej. Pedro"
-                  required
-                />
+                </CardContent>
+               
+                <CardContent className="relative grid grid-cols-2 gap-3 py-1">
+               
 
                 <FormInput
                   form={generalForm}
-                  name="rfc"
-                  label="RFC"
-                  placeholder="Ej. Pérez"
-                  required
-                />
-                <FormInput
-                  form={generalForm}
-                  name="curp"
-                  label="CURP"
-                  placeholder=""
-                  required
-                />
-                <FormInput
-                  form={generalForm}
-                  name="CP"
-                  label="Código Postal"
-                  placeholder=""
-                  required
-                />
-
-<FormInput
-                  form={generalForm}
-                  name="CP"
-                  label="REGIMEN FISCAL"
-                  placeholder=""
-                  required
-                />
-
-<FormInput
-                  form={generalForm}
-                  name="CP"
-                  label="USO DE CFDI"
-                  placeholder=""
-                  required
-                />
-
-<FormInput
-                  form={generalForm}
-                  name="CP"
-                  label="TIPO CLIENTE"
+                  name="descripcion"
+                  label="Descripción"
                   placeholder=""
                   required
                 />
 
                 <FormInput
                   form={generalForm}
-                  name="curp"
-                  label="Cupr"
-                  placeholder="Ej. correo@email.com"
-                  type="email"
+                  name="precio"
+                  label="Precio"
+                  placeholder=""
+                  type="number"
                   required
                 />
+                </CardContent>
+
+              <CardContent className="relative grid grid-cols-3 gap-2">
+
                 <FormInput
                   form={generalForm}
-                  name="telefono"
-                  label="Teléfono"
-                  placeholder="Ej. 1234567890"
+                  name="porcentaje_retencion_isr"
+                  label="Porcentaje retencion isr (%)"
+                  placeholder=""
+                  type="number"
                   required
                 />
 
-                {dataModal.id === undefined && (
-                  <>
-                    <FormInput
-                      form={generalForm}
-                      name="password"
-                      label="Contraseña"
-                      placeholder="********"
-                      required
-                      type="password"
-                    />
-                    <FormInput
-                      form={generalForm}
-                      name="confirmPassword"
-                      label="Confirmar Contraseña"
-                      placeholder="********"
-                      required
-                      type="password"
-                    />
-                  </>
-                )}
-
-                <ComboboxForm
-                  label="Rol de Usuario"
-                  tipo="ROL"
-                  name="userRol"
+                <FormInput
                   form={generalForm}
+                  name="porcentaje_retencion_iva"
+                  label="Porcentaje retencion iva (%)"
+                  placeholder=""
+                  type="number"
+                  required
                 />
               </CardContent>
+
+              <CardContent className="relative grid grid-cols-3 gap-6 py-2">
+
+              <div>
+                <FormLabel className="text-xs">Tasa Iva(%) </FormLabel>
+                <Select name="tasa_iva" onValueChange={(value) => generalForm.setValue("tasa_iva", value)}>
+                  <SelectTrigger >
+                  <SelectValue
+                  placeholder={tasaIvaActual}/>
+                  </SelectTrigger>
+                  <SelectContent>
+                  {tasaIvaOptions.map((metodo) => (
+                    <SelectItem key={metodo.clave} value={metodo.clave}>
+                      {metodo.descripcion}
+                    </SelectItem>
+                  ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+              <FormLabel className="text-xs">Clave sat</FormLabel>
+              <Select name="clave_sat" onValueChange={(value) => generalForm.setValue("clave_sat", value)}>
+                <SelectTrigger className="w-72">
+                <SelectValue
+                  placeholder={
+                    Servicios && Servicios.length > 0
+                      ? Servicios.find((x) => x.id.toString() === generalForm.watch("clave_sat"))
+                          ?.descripcion || "Selecciona un tipo de producto"
+                      : "Cargando..."
+                  }
+                />
+                </SelectTrigger>
+                <SelectContent>
+                    {Servicios && Servicios.map((item: { id: number; descripcion: string; clave: string  }) => (
+                    <SelectItem key={item.id} value={item.id.toString()}>
+                      {item.clave}- {item.descripcion}
+                    </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              </div>
+              
+              <div>
+              <FormLabel className="text-xs">Frecuencia </FormLabel>
+              <Select name="frecuencia" onValueChange={(value) => generalForm.setValue("frecuencia", value)}>
+                <SelectTrigger >
+                <SelectValue
+                placeholder={
+                  frecuencias.find((metodo) => metodo.clave === generalForm.watch("frecuencia"))
+                    ?.descripcion || "Selecciona una frecuencia"
+                }/>
+                </SelectTrigger>
+                <SelectContent>
+                {frecuencias.map((metodo) => (
+                  <SelectItem key={metodo.clave} value={metodo.clave}>
+                    {metodo.descripcion}
+                  </SelectItem>
+                ))}
+                </SelectContent>
+              </Select>
+              </div>
+
+              <div>
+              <FormLabel className="text-xs">Línea</FormLabel>
+              <Select name="lineaId" onValueChange={(value) => generalForm.setValue("lineaId", parseInt(value))}>
+                <SelectTrigger >
+                <SelectValue
+                  placeholder={
+                    Lineas && Lineas.length > 0
+                      ? Lineas.find((x) => x.id === generalForm.watch("lineaId"))
+                          ?.descripcion || "Seleccione una línea"
+                      : "Cargando..."
+                  }
+                />
+                </SelectTrigger>
+                <SelectContent>
+                    {Lineas && Lineas.map((item: { id: number; descripcion: string }) => (
+                    <SelectItem key={item.id} value={item.id.toString()}>
+                      {item.descripcion}
+                    </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              </div>
+
+              <div>
+              <FormLabel className="text-xs">Sublínea</FormLabel>
+              <Select name="sublineaId" onValueChange={(value) => generalForm.setValue("sublineaId", parseInt(value))}>
+                <SelectTrigger >
+                <SelectValue
+                  placeholder={
+                    SubLineas && SubLineas.length > 0
+                      ? SubLineas.find((x) => x.id === generalForm.watch("sublineaId"))
+                          ?.descripcion || "Seleccione una sublínea"
+                      : "Cargando..."
+                  }
+                />
+                </SelectTrigger>
+                <SelectContent>
+                    {SubLineas && SubLineas.map((item: { id: number; descripcion: string }) => (
+                    <SelectItem key={item.id} value={item.id.toString()}>
+                      {item.descripcion}
+                    </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              </div>
+
+              <div>
+              <FormLabel className="text-xs">Unidad </FormLabel>
+              <Select name="id_unidad" onValueChange={(value) => generalForm.setValue("id_unidad", parseInt(value))}>
+                <SelectTrigger className="w-72">
+                <SelectValue
+                  placeholder={
+                    Unidades && Unidades.length > 0
+                      ? Unidades.find((x) => x.id === generalForm.watch("id_unidad"))
+                          ?.descripcion || "Selecciona una unidad"
+                      : "Cargando..."
+                  }
+                />
+                </SelectTrigger>
+                <SelectContent>
+                    {Unidades && Unidades.map((item: { id: number; descripcion: string; clave: string  }) => (
+                    <SelectItem key={item.id} value={item.id.toString()}>
+                      {item.clave}- {item.descripcion}
+                    </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              </div>
+
+              </CardContent>
+
               <FormFooter
                 handleCreateItemClose={handleCreateItemClose}
                 form={generalForm}
@@ -369,43 +486,7 @@ export const Formulario = ({
           </form>
         </Form>
       </TabsContent>
-      <TabsContent value="seguridad">
-        <Form {...seguridadForm}>
-          <form onSubmit={seguridadForm.handleSubmit(handleUpdatePass)}>
-            <Card>
-              <CardHeader>
-                <CardTitle>Seguridad</CardTitle>
-                <CardDescription>
-                  Actualiza la contraseña del usuario.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <FormInput
-                  form={seguridadForm}
-                  name="password"
-                  label="Contraseña"
-                  placeholder="********"
-                  required
-                  type="password"
-                />
-                <FormInput
-                  form={seguridadForm}
-                  name="confirmPassword"
-                  label="Confirmar Contraseña"
-                  placeholder="********"
-                  required
-                  type="password"
-                />
-              </CardContent>
-              <FormFooter
-                handleCreateItemClose={handleCreateItemClose}
-                form={seguridadForm}
-                dataModal={dataModal}
-              />
-            </Card>
-          </form>
-        </Form>
-      </TabsContent>
+
     </Tabs>
   );
 };

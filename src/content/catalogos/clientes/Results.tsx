@@ -36,26 +36,26 @@ export const Results = () => {
       accessorKey: "rfc",
       header: "RFC",
     },
-    {
-      id: "domicilio",
-      accessorKey: "domicilio",
-      header: "Domicilio",
-    },
-    {
-      id: "colonia",
-      accessorKey: "colonia",
-      header: "Colonia",
-    },
-    {
-      id: "ciudad",
-      accessorKey: "ciudad",
-      header: "Ciudad",
-    },
-    {
-      id: "estado",
-      accessorKey: "estado",
-      header: "Estado",
-    },
+    // {
+    //   id: "domicilio",
+    //   accessorKey: "domicilio",
+    //   header: "Domicilio",
+    // },
+    // {
+    //   id: "colonia",
+    //   accessorKey: "colonia",
+    //   header: "Colonia",
+    // },
+    // {
+    //   id: "ciudad",
+    //   accessorKey: "ciudad",
+    //   header: "Ciudad",
+    // },
+    // {
+    //   id: "estado",
+    //   accessorKey: "estado",
+    //   header: "Estado",
+    // },
     {
       id: "telefono",
       accessorKey: "telefono",
@@ -89,7 +89,7 @@ export const Results = () => {
         PAGE_SLOT={PAGE_SLOT}
         data={data}
         columns={columns}
-        filtro="usuario"
+        filtro="cliente"
       />
       <DeleteDialog
         openConfirmDelete={openConfirmDelete}

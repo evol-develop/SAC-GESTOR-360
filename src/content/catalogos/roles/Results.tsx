@@ -204,7 +204,7 @@ export const Results = () => {
         PAGE_SLOT={PAGE_SLOT}
         data={data}
         columns={columns}
-        filtro="Nombre"
+        filtro="rol"
       />
       <DeleteDialog
         openConfirmDelete={openConfirmDelete}

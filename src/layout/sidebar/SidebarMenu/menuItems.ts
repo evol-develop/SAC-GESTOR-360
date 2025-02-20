@@ -23,7 +23,8 @@ import { TbUserDollar } from "react-icons/tb";
 import { MdOutlineFactCheck } from "react-icons/md";
 import { SiCodefactor } from "react-icons/si";
 import { IoCellularOutline } from "react-icons/io5";
-
+import { IoTicketOutline } from "react-icons/io5";
+import { BsFileText } from "react-icons/bs";
 export type MenuItem = {
   id?: number;
   heading?: string;
@@ -55,7 +56,11 @@ const menuItems: MenuItems[] = [
     items: [
       {
         id: MenuEnums.Tickets,
-        Icon: LuHouse,
+        Icon: IoTicketOutline ,
+      },
+      {
+        id: MenuEnums.ConsultaTickets,
+        Icon: BsFileText,
       },
     ],
   },

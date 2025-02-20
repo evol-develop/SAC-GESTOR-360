@@ -12,10 +12,11 @@ import { ENDPOINTDELETE, PAGE_SLOT } from "./constants";
 import { UsersInterface } from "@/interfaces/userInterface";
 import { useItemManagement } from "@/hooks/useItemManagement";
 import { getItemActiveLabel } from "@/config/catalogoGenerico/utils";
+import { serviciosInterface } from "@/interfaces/catalogos/serviciosInterfaces";
 
 export const Results = () => {
-  const data =
-    useAppSelector((state: RootState) => state.page.slots.USUARIOS) || [];
+  const data =useAppSelector((state: RootState) => state.page.slots.SERVICIOS as serviciosInterface ) || [];
+  const unidades =useAppSelector((state: RootState) => state.page.slots.UNIDADES) || [];
 
   const {
     openConfirmDelete,
@@ -26,33 +27,44 @@ export const Results = () => {
   } = useItemManagement({ deleteEndpoint: ENDPOINTDELETE, PAGE_SLOT });
 
   const columns: ColumnDef<UsersInterface>[] = [
+    
     {
-      id: "usuario",
-      header: "Usuario",
-      accessorKey: "fullName",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <UserAvatar
-            dataUsuario={row.original}
-            withTooltip
-            rounded="rounded-full"
-          />
-          <span>
-            {row.original.nombre} {row.original.apellido}
-          </span>
-        </div>
-      ),
+      id: "descripcion",
+      accessorKey: "descripcion",
+      header: "Descripción",
     },
     {
-      id: "Correo Electrónico",
-      accessorKey: "email",
-      header: "Correo Electrónico",
+      id: "precio",
+      accessorKey: "precio",
+      header: "Precio",
     },
     {
-      id: "Estado",
-      header: "Estado",
-      cell: ({ row }) => getItemActiveLabel(row.original.activo),
+      id: "frecuencia",
+      accessorKey: "frecuencia",
+      header: "Frecuencia",
+      cell: ({ row }) => row.original.frecuencia === "A"? "Anual": row.original.frecuencia==="M"?"Mensual":"Única",
     },
+    {
+      id: "linea.descripcion",
+      accessorKey: "linea.descripcion",
+      header: "Línea",
+    },
+    {
+      id: "sublinea.descripcion",
+      accessorKey: "sublinea.descripcion",
+      header: "Sublínea",
+    },
+    {
+      id: "id_unidad",
+      accessorKey: "id_unidad",
+      header: "Unidad",
+      cell: ({ row }) => unidades.find((u) => u.id === row.original.id_unidad)?.descripcion,
+    },
+    // {
+    //   id: "Estado",
+    //   header: "Estado",
+    //   cell: ({ row }) => getItemActiveLabel(row.original.activo),
+    // },
     {
       header: "Acciones",
       cell: ({ row }) => (
@@ -63,6 +75,7 @@ export const Results = () => {
         />
       ),
     },
+
   ];
   return (
     <>
@@ -70,7 +83,7 @@ export const Results = () => {
         PAGE_SLOT={PAGE_SLOT}
         data={data}
         columns={columns}
-        filtro="usuario"
+        filtro="servicio"
       />
       <DeleteDialog
         openConfirmDelete={openConfirmDelete}

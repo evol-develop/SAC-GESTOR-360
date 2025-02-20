@@ -236,7 +236,7 @@ const GridMenu = () => {
         createSlot({ MENUS: response.data.result as MenuByRolInterface[] })
       );
 
-      dispatch(createSlot({ ModalType: "Permisos" }));
+      dispatch(createSlot({ ModalType: "PERMISOS" }));
     } catch (err) {
       console.error(err);
     }
@@ -256,6 +256,8 @@ const GridMenu = () => {
         `/api/roles/cambiarpermiso/${RolSeleccionado.id}`,
         item
       );
+
+      console.log(response.data);
 
       if (response.data.isSuccess) {
         CargaMenus();

@@ -1,10 +1,12 @@
+import { clientesServiciosInterface, serviciosInterface } from "./serviciosInterfaces";
+
 export interface clienteInterface {
     id: number;
-    id_empresa: number;
+    empresaId: number;
     nombre: string;
     rfc: string;
     cp: number;
-    id_tipo_cliente: number;
+    tiposClienteId: number;
     domicilio: string;
     colonia: string;
     estado: string;
@@ -16,7 +18,7 @@ export interface clienteInterface {
     limite_credito: number;
     descuento_default: number;
     dias_credito: number;
-    id_alerta: number;
+    alertaId: number;
     curp: string;
     facturar: boolean;
     retener_iva: boolean;
@@ -33,4 +35,6 @@ export interface clienteInterface {
     id_regimen_fiscal:number
     id_uso_cfdi: number;
     password:string;
+    clientesServicios: clientesServiciosInterface[];
+    Servicios: any[];
   }

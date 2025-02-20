@@ -19,4 +19,5 @@ export enum MenuEnums {
   Tickets = 18,
   Notificaciones = 19,
   Tareas = 20,
+  ConsultaTickets = 21,
 }

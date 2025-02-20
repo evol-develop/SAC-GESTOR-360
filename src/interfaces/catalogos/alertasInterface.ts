@@ -1,6 +1,6 @@
 export interface alertasInterface {
     id: number;
-    id_empresa: number;
+    empresaId: number;
     descripcion: string;
     activo: boolean;
-  }
+}

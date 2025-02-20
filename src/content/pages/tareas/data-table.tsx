@@ -57,7 +57,7 @@ export function DataTable<TData, TValue>({
     <div className="w-full space-y-4">
       <DataTableToolbar table={table} />
       <div className="overflow-hidden border rounded-md">
-        <div className="sm:block hidden px-4">
+        <div className="hidden px-4 sm:block">
           <div className="py-2 grid grid-cols-[minmax(0,2fr),minmax(0,1fr),minmax(0,1fr),minmax(0,1fr),auto] gap-4">
             {table.getHeaderGroups().map((headerGroup) =>
               headerGroup.headers.map((header) => (
