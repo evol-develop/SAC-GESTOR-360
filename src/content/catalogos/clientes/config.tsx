@@ -316,7 +316,7 @@ export const Formulario = ({
               <TabsTrigger value="general">Datos generales</TabsTrigger>
               <TabsTrigger value="domicilio">Datos del domicilio</TabsTrigger>
               <TabsTrigger value="fiscales">Datos fiscales</TabsTrigger>
-              {dataModal.id === undefined && <TabsTrigger value="ingreso">Datos de ingreso</TabsTrigger>}
+              <TabsTrigger value="ingreso">Datos de ingreso</TabsTrigger>
               <TabsTrigger value="servicios">Servicios</TabsTrigger>
             </TabsList>
 
@@ -713,7 +713,7 @@ export const Formulario = ({
                   label="Correo para ingresar al sistema"
                   placeholder=""
                   type="email"
-                />
+                />              </>)}
 
                 <FormInput
                   form={generalForm}
@@ -731,7 +731,7 @@ export const Formulario = ({
                   type="password"
                 />
 
-              </>)}
+
             </CardContent>
             </TabsContent>
 

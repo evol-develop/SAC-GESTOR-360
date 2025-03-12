@@ -1,24 +1,8 @@
 import { toast } from "sonner";
 import { LuPlus } from "react-icons/lu";
 import { SubmitHandler } from "react-hook-form";
-
-import {
-  addItemSlot,
-  createSlot,
-  setDataModal,
-  setIsEditing,
-  setIsOpenModal,
-  setModalSize,
-  updateItemSlot,
-} from "@/store/slices/page";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import {addItemSlot, createSlot,setDataModal,setIsEditing,setIsOpenModal,setModalSize,updateItemSlot,} from "@/store/slices/page";
+import {Dialog,DialogContent,DialogDescription,DialogHeader,DialogTitle,DialogTrigger,} from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { usePage } from "@/hooks/usePage";
 import { RootState } from "@/store/store";
@@ -136,12 +120,13 @@ export const CatalogoHeader = ({
         <p className="text-muted-foreground">{titulos.descripcion}</p>
       </div>
       <div>
-        {showCreateButton && (
+       
           <Dialog
             open={open}
             onOpenChange={(open) => !open && handleCreateItemClose()}
           >
             <DialogTrigger asChild>
+            {showCreateButton && (
               <Button
                 onClick={handleCreateItemOpen}
                 size="sm"
@@ -150,7 +135,7 @@ export const CatalogoHeader = ({
               >
                 <LuPlus />
                 {"Crear " + titulos.nombreItem}
-              </Button>
+              </Button> )}
             </DialogTrigger>
             <DialogContent className="w-full max-w-[70vw] min-h-[50vh]">
               <DialogHeader>
@@ -179,7 +164,7 @@ export const CatalogoHeader = ({
               />
             </DialogContent>
           </Dialog>
-        )}
+       
       </div>
     </div>
   );

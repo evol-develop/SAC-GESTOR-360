@@ -49,18 +49,18 @@ const NotificacionesYActividad = () => {
         <title>{appConfig.NOMBRE} - Notificaciones y Actividad</title>
       </Helmet>
       <section className="relative h-[calc(100dvh-252px)] sm:h-[calc(100dvh-200px)] flex flex-col sm:flex-row gap-4">
-        <div className="bg-background sm:w-1/4 max-h-1/2 sm:max-h-none flex flex-col w-full h-full border rounded-sm">
+        <div className="flex flex-col w-full h-full border rounded-sm bg-background sm:w-1/4 max-h-1/2 sm:max-h-none">
           <Large className="p-4 pb-0">Notificaciones</Large>
           <NotificationAndTaskList className="h-[calc(100dvh-660px)] sm:h-[calc(100dvh-304px)]" />
         </div>
-        <div className="bg-background sm:w-3/4 max-h-1/2 sm:max-h-none flex flex-col w-full h-full overflow-y-auto border rounded-sm">
+        <div className="flex flex-col w-full h-full overflow-y-auto border rounded-sm bg-background sm:w-3/4 max-h-1/2 sm:max-h-none">
           <div className="flex items-center justify-between p-4">
             <Button
               size="sm"
               variant="default"
               onClick={() => toggleShow("message")}
             >
-              <span className="lg:inline-block hidden">
+              <span className="hidden lg:inline-block">
                 {writeMessage ? "Volver" : "Escribir mensaje"}
               </span>
               {writeMessage ? <LuUndo2 /> : <LuMailPlus />}
@@ -70,7 +70,7 @@ const NotificacionesYActividad = () => {
               variant="default"
               onClick={() => toggleShow("activity")}
             >
-              <span className="lg:inline-block hidden">
+              <span className="hidden lg:inline-block">
                 {showActivity ? "Ocultar actividad" : "Ver mi actividad"}
               </span>
               <LuLogs />
@@ -85,8 +85,8 @@ const NotificacionesYActividad = () => {
           ) : writeMessage ? (
             <SendMessage />
           ) : (
-            <div className="text-primary/50 flex items-center justify-center w-full h-full">
-              <div className="border-primary/50 flex items-center gap-2 p-2 text-sm border rounded-md">
+            <div className="flex items-center justify-center w-full h-full text-primary/50">
+              <div className="flex items-center gap-2 p-2 text-sm border rounded-md border-primary/50">
                 <p>Visualiza tus notificaciones </p>
                 <LuBellRing />
               </div>

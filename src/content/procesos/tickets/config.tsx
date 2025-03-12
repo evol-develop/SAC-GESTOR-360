@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { Card,CardContent} from "@/components/ui/card";
+import { Card,CardContent, CardHeader} from "@/components/ui/card";
 import {Form,FormLabel} from "@/components/ui/form";
 import axios from "@/lib/utils/axios";
 import FormInput from "@/components/form-base";
@@ -23,8 +23,7 @@ import {addItemSlot,createSlot,setDataModal,setIsEditing,setIsOpenModal,setModal
 import { usePage } from "@/hooks/usePage";
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
-import 'swiper/css';//NO QUITAR AUNQUE MARQUE ERROR
-import 'swiper/css/navigation'; //NO QUITAR AUNQUE MARQUE ERROR
+import '/node_modules/swiper/swiper-bundle.css'; //ESTE SIRVE PARA EL CARRUSEL DE ARCHIVOS, FOTOS Y AUDIOS
 import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from "@/components/ui/select"
 import { clienteInterface } from "@/interfaces/catalogos/clienteInterface";
 import { serviciosInterface } from "@/interfaces/catalogos/serviciosInterfaces";
@@ -34,6 +33,9 @@ import { PAGE_SLOT } from "./constants";
 import { Button } from "@/components/ui/button";
 import { LuLoaderCircle } from "react-icons/lu";
 import { CardFooter } from "@/components/ui/card";
+import UserAvatar from "@/components/UserAvatar";
+import { useNotifications } from "@/hooks/useNotifications";
+import { Notification } from "@/contexts/Notifications";
 
 const validationSchema = z
   .object({
@@ -41,6 +43,7 @@ const validationSchema = z
     titulo: z.string().max(120).min(1, "El título es un dato requerido"),
     clienteId: z.number().int(),
     servicioId: z.number().int(),
+    userId: z.string(),
   })
 
 
@@ -48,17 +51,20 @@ export const Formulario = () => {
   const { dispatch } = usePage();
   const { authState: { user },logout,} = useAuth();
 
-  console.log(user)
+  //console.log(user)
   
   const dataModal = useAppSelector((state: RootState) => state.page.dataModal);
   const { idEmpresa } = useAuth();
-  const fileList: { archivoURL: string; tipoArchivo: string }[] = [];
+  const fileList: { archivoURL: string; tipoArchivo: string; nombreArchivo: string }[] = [];
   const [audioList, setAudioList] = React.useState<{ url: string; id: string; tipo:string; blob:Blob ; nombre:string }[]>([]);
   const [imageList, setImageList] = React.useState<{ url: string; id: string; tipo:string; blob:Blob ; nombre:string}[]>([]);
   const [archivosList, setArchivosList] = React.useState<{ url: string; id: string; tipo:string; nombre:string; blob:Blob}[]>([]);
   const Cliente =  useAppSelector((state: RootState) => state.page.slots.clienteId);
-  const servicios =useAppSelector((state: RootState) => state.page.slots.SERVICIOS as serviciosInterface[] );
+  const servicios =useAppSelector((state: RootState) => state.page.slots.SERVICIOS as any[] );
   const clientes =useAppSelector((state: RootState) => state.page.slots.CLIENTES as clienteInterface[] );
+  const usuarios =useAppSelector((state: RootState) => state.page.slots.USUARIOS as any[] );
+  const { sendNotification } = useNotifications();
+  const [usuariosResponsable, setUsuariosResponsable] = useState<string>('');
   
   const addAudioElement = (blob: Blob) => {
     const url = URL.createObjectURL(blob);
@@ -68,7 +74,7 @@ export const Formulario = () => {
 
   const handleImageCropped = (croppedFile: string) => {
     const id = new Date().toISOString();
-    console.log(croppedFile);
+    //console.log(croppedFile);
   
     fetch(croppedFile)
     .then((res) => res.blob())
@@ -90,7 +96,7 @@ export const Formulario = () => {
   };
 
   const handleFile = (croppedFile: File) => {
-    console.log(croppedFile);
+    //console.log(croppedFile);
     const id = new Date().toISOString();
     setArchivosList((prevList) => [...prevList, { id: id, url: URL.createObjectURL(croppedFile), tipo: croppedFile.type.toString(), nombre: croppedFile.name, blob: croppedFile }]);
   };
@@ -104,7 +110,7 @@ export const Formulario = () => {
   };
 
   const eliminarArchivo = (id: string) => {
-    console.log(id);
+    //console.log(id);
     setArchivosList((prevList) => prevList.filter((audio) => audio.id !== id));
   };
 
@@ -120,7 +126,7 @@ export const Formulario = () => {
           });
           const uploaded = await uploadImage(file, folder);
           
-          fileList.push({ archivoURL: uploaded as string, tipoArchivo: element.tipo });
+          fileList.push({ archivoURL: uploaded as string, tipoArchivo: element.tipo, nombreArchivo: element.nombre });
         } catch (error) {
           console.error(`Error uploading :`, error);
         }
@@ -156,10 +162,10 @@ export const Formulario = () => {
         activo: valores.activo,
         archivos: fileList,
         servicioId: valores.servicioId,
-        
+        userId: valores.userId,
       };
 
-      console.log(valoresForm);
+      //console.log(valoresForm);
 
         const response = await axios.post<ResponseInterface>(
           "/api/tickets/create",
@@ -173,7 +179,27 @@ export const Formulario = () => {
         setAudioList([]);
         setImageList([]);
 
+        console.log(response.data.result)
 
+         const notification: Notification = {
+          title: "!Nuevo ticket asignado¡",
+          message: "Título: "+valores.titulo+" <br/>"+ 
+          "Link:  <a href='/site/procesos/consultaTickets/mostrarTicket/"+response.data.result.clienteId+
+          "/"+response.data.result.ticketId+"/"+response.data.result.id+"' style={{ textDecoration: 'underline', color: 'blue' }}>Ticket</a> ",
+          type:"",
+          groupIds:usuarios.map((item) => item.id),
+          userId: valores.userId,
+        };
+            
+        try {
+          
+          sendNotification(notification);
+      
+        } catch (error) {
+          console.error("Error al enviar la notificación", error);
+        }
+
+        toast.success("Ticket creado correctamente");
 
         return response.data;
 
@@ -192,16 +218,39 @@ export const Formulario = () => {
       titulo: dataModal.titulo,
       clienteId: dataModal.clienteId,  // Asegura un valor inicial
       servicioId: dataModal.servicioId,
+      userId: dataModal.userId,
     },
   });
   
-  const crearSlot = (value: string) => {
+  const seleccionarCliente = (value: string) => {
    
     dispatch(createSlot({ ["clienteId"]: parseInt(value) }));
     generalForm.setValue("clienteId", parseInt(value));
     dispatch(createSlot({"SERVICIOS": []}));
     
   };
+
+  const seleccionarServicio = (value: string) => {
+   
+    dispatch(createSlot({ ["servicioId"]: parseInt(value) }));
+    generalForm.setValue("servicioId", parseInt(value));
+
+    const servicioSeleccionado = servicios.find(
+      (servicio: serviciosInterface) => servicio.id === parseInt(value)
+    );
+
+    setUsuariosResponsable(servicioSeleccionado.usuario_responsable.id);
+
+    //console.log(servicioSeleccionado)
+  
+    const usuarios = servicioSeleccionado?.usuarios;
+
+    //console.log(usuarios)
+    
+    dispatch(createSlot({"USUARIOS": usuarios}));
+    generalForm.setValue("userId", servicioSeleccionado.usuario_responsable.id);
+  };
+
 
   const CargaServicios = async () => {
     try {
@@ -211,12 +260,29 @@ export const Formulario = () => {
           headers: { "Content-Type": "application/text" },
         }
       );
-
+      
       if (response.data.isSuccess && Array.isArray(response.data.result)) {
         // Mapear los servicios obtenidos
+
+        //console.log(response.data.result);
+        
         const servicios = response.data.result.map((item:any) => ({
           id: item.servicio?.id,
           descripcion: item.servicio?.descripcion || "",
+          usuario_responsable : {
+            id: item.servicio?.user?.id,
+            nombre: item.servicio?.user?.fullName || "",
+          },
+          usuarios: item.servicio?.departamento?.departamentosUsuarios
+          ?.map((depUsuario: any) => 
+            depUsuario.user
+              ? {
+                  id: depUsuario.user.id,
+                  nombre: depUsuario.user.fullName || "",
+                }
+              : null
+          )
+          .filter(Boolean) || [],
         }));
   
         dispatch(createSlot({ SERVICIOS: servicios }));
@@ -246,81 +312,123 @@ export const Formulario = () => {
   return (
     <>
     
+    <Card>
+    <CardHeader>
     <div className="flex items-center justify-center ">
-      <h1 className="text-xl font-bold text-center sm:text-left">
+      <h5 className="text-sm enter font-xbold sm:text-left">
         Generación de Tickets
-      </h1>
+      </h5>
     </div>
-
+    </CardHeader> 
+    <CardContent>
     <Form {...generalForm}>
      <form onSubmit={generalForm.handleSubmit(onSubmit)}>
      <div className="flex flex-col w-full h-full md:flex-row">
 
-     <div className="w-full h-full px-4 md:w-1/2">
-        <div className="h-full min-h-[200px]">
-          <div className="grid grid-cols-1 gap-4 p-1">
+      <div className="w-full h-full px-4 md:w-1/2">
+          <div className="h-full min-h-[200px]">
+            <div className="grid grid-cols-1 gap-4 p-1">
 
-          {user?.userRoll != "Cliente" && 
-                <div className="max-w-96">
-                <FormLabel className="text-xs">Cliente</FormLabel>
-                <Select name="clienteId" onValueChange={crearSlot} key={generalForm.watch("clienteId")}>
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={clientes && clientes.length > 0
-                        ? clientes.find((x) => x.id === generalForm.watch("clienteId"))
-                          ?.nombre || "Seleccione un cliente"
-                        : "Cargando..."} />
-                  </SelectTrigger>
-                  <SelectContent >
-                    {clientes && clientes.map((item: { id: number; nombre: string; }) => (
-                      <SelectItem key={item.id} value={item.id.toString()}>
-                        {item.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            }
-            
-            <div className="max-w-96">
-            <FormLabel className="text-xs">Servicios contratados </FormLabel>
-            <Select name="servicioId" onValueChange={(value) => generalForm.setValue("servicioId", parseInt(value))}  key={generalForm.watch("servicioId")}>
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={servicios && servicios.length > 0
-                    ? servicios.find((x) => x.id === generalForm.watch("servicioId"))
-                      ?.descripcion || "Seleccione un servicio"
-                    : "Cargando..."} />
-              </SelectTrigger>
-              <SelectContent>
-                {servicios && servicios.map((item: { id: number; descripcion: string; }) => (
-                  <SelectItem key={item.id} value={item.id.toString()}>
-                    {item.descripcion}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {user?.userRoll != "Cliente" && 
+                  <div >
+                  <FormLabel className="text-xs">Cliente</FormLabel>
+                  <Select name="clienteId" onValueChange={seleccionarCliente} key={generalForm.watch("clienteId")}>
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={clientes && clientes.length > 0
+                          ? clientes.find((x) => x.id === generalForm.watch("clienteId"))
+                            ?.nombre || "Seleccione un cliente"
+                          : "Cargando..."} />
+                    </SelectTrigger>
+                    <SelectContent >
+                      {clientes && clientes.map((item: { id: number; nombre: string; }) => (
+                        <SelectItem key={item.id} value={item.id.toString()}>
+                          {item.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              }
+              
+              <div className="flex items-center gap-4">
+              <FormLabel className="text-xs">Servicios contratados </FormLabel>
+              <Select name="servicioId" onValueChange={seleccionarServicio}  key={generalForm.watch("servicioId")}>
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={servicios && servicios.length > 0
+                      ? servicios.find((x) => x.id === generalForm.watch("servicioId"))
+                        ?.descripcion || "Seleccione un servicio"
+                      : "Cargando..."} />
+                </SelectTrigger>
+                <SelectContent>
+                  {servicios && servicios.map((item: { id: number; descripcion: string; }) => (
+                    <SelectItem key={item.id} value={item.id.toString()}>
+                      {item.descripcion}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {user?.userRoll != "Cliente" && usuariosResponsable && (
+                      <><FormLabel className="text-xs">Usuario responsable</FormLabel><UserAvatar
+                            withTooltip
+                            userId={usuariosResponsable}
+                            className="size-6"
+                            rounded="rounded-full" /></>)} 
+                            
+            </div>
+
+            {user?.userRoll != "Cliente" && 
+                  <>
+                  <div className="flex items-center gap-4"> 
+                        {/* <FormLabel className="text-xs">Cambiar usuario responsable</FormLabel> */}
+                        <Select name="userId" onValueChange={(value) => generalForm.setValue("userId", value)} key={generalForm.watch("userId")}>
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={usuarios && usuarios.length > 0
+                                ? usuarios.find((x) => x.id === generalForm.watch("userId"))
+                                  ?.nombre || "Seleccione un usuario"
+                                : "Cargando..."} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {usuarios && usuarios.map((item: { id: string; nombre: string; }) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.nombre}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      
+                      {/* {usuariosResponsable && (
+                      <><FormLabel className="text-xs">Usuario responsable</FormLabel><UserAvatar
+                            withTooltip
+                            userId={usuariosResponsable}
+                            className="size-6"
+                            rounded="rounded-full" /></>)} */}
+                          
+                    </div></>
+              }
+
+              <FormInput
+                form={generalForm}
+                name="titulo"
+                label="Título del ticket"
+                placeholder=""
+                required />
+
+              <label className="block text-xs font-medium text-black ">
+                Descripción del problema
+              </label>
+              <textarea
+                {...generalForm.register("descripcion")}
+                placeholder="Escribe aquí..."
+                required
+                className="w-full h-48 p-1 mb-5 text-sm border rounded-md shadow resize-none text-muted-foreground border-muted focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+
+            </div>
           </div>
-
-            <FormInput
-              form={generalForm}
-              name="titulo"
-              label="Título del ticket"
-              placeholder=""
-              required />
-
-            <label className="block text-xs font-medium text-black ">
-              Descripción del problema
-            </label>
-            <textarea
-              {...generalForm.register("descripcion")}
-              placeholder="Escribe aquí..."
-              required
-              className="w-full h-48 p-1 mb-5 text-sm border rounded-md shadow resize-none text-muted-foreground border-muted focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-
-          </div>
-        </div>
       </div>
         
         <div className="w-full h-full px-4 md:w-1/2"> 
@@ -382,7 +490,6 @@ export const Formulario = () => {
                 )}
               </div>
 
-              {/* Botones en la parte inferior derecha */}
               <div className="flex flex-col items-end gap-2 mt-2 right-4 ">
               <CropImage
                   form={generalForm}
@@ -414,6 +521,7 @@ export const Formulario = () => {
                   <Button
                     type="submit"
                     className="text-xs"
+                    disabled={generalForm.formState.isSubmitting}
                   >
                   {generalForm.formState.isSubmitting && (<LuLoaderCircle className="animate-spin" />)}
                     Generar ticket
@@ -421,11 +529,14 @@ export const Formulario = () => {
                   </Button>
                 </CardFooter>
               </div>
+              
           </div>
         </div>
-        </div>
+      </div>
       </form>
       </Form>
+      </CardContent>  
+      </Card>
     </>
   );
 

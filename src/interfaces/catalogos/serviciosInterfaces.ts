@@ -1,4 +1,6 @@
+import { UsuarioAdicionalesInterface } from "../UsuarioAdicionalesInterface";
 import { clienteInterface } from "./clienteInterface";
+import { departamentoInterface } from "./departamentoInterface";
 import { lineasInterface } from "./lineasInterface";
 import { sublineasInterface } from "./sublineasInterface";
 
@@ -23,6 +25,10 @@ export interface serviciosInterface {
     activo: boolean;
     linea: lineasInterface;
     sublinea : sublineasInterface;
+    departamentoId: number;
+    departamento: departamentoInterface;
+    usuario: UsuarioAdicionalesInterface;
+    userId: string;
 }
 
 export interface clientesServiciosInterface {

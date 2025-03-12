@@ -8,6 +8,14 @@ export const getItemActiveLabel = (active: boolean) => {
   );
 };
 
+export const getItemAtendidoLabel = (active: boolean) => {
+  return active ? (
+    <Badge variant="default">Atendido</Badge>
+  ) : (
+    <Badge variant="destructive">No atendido</Badge>
+  );
+};
+
 export const getDefaultLabel = (pred: boolean) => {
   return pred ? (
     <Badge>Predeterminado</Badge>

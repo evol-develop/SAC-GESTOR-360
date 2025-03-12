@@ -1,18 +1,17 @@
 import { Helmet } from "react-helmet-async";
 import { appConfig } from "@/appConfig";
-import { TicketsMovimientos } from "./config";
+import { TicketsMovimientos, crearComentario,OperacionesFormulario } from "./config";
 import { useGetData } from "@/hooks/useGetData";
 import { useAuth } from "@/hooks/useAuth";
-import {Results } from "./Results";
-import { Modal } from "@/config/Modal";
 import { PAGE_SLOT } from "./constants";
-
+import { CatalogoHeader } from "@/config/catalogoGenerico";
+import {titulos} from "./constants";
 const ManagementTickets = () => {
-
+  const { createItemCatalogo, updateItemCatalogo } = OperacionesFormulario();
   const { authState: { user },logout,} = useAuth();
-  useGetData({ ruta: "/api/tickets/getTicketsByEmpresa", slot: "TICKETS" });
-  
-  
+  var url = "/api/tickets/getTicketsByEmpresa";
+  if(user?.userRoll == "Cliente"){url  = `/api/tickets/getTicketsByClientes/${user?.id}`}
+  useGetData({ ruta: url, slot: "TICKETS" });
 
   return (
     <>
@@ -20,13 +19,16 @@ const ManagementTickets = () => {
         <title>{appConfig.NOMBRE} - Tickets</title>
       </Helmet>
 
-      <Modal 
-      PAGE_SLOT={PAGE_SLOT} 
-      titulo="Movimientos del ticket"
-      Content={TicketsMovimientos}
+      <TicketsMovimientos/>
+
+      <CatalogoHeader
+        PAGE_SLOT={PAGE_SLOT}
+        createItemCatalogo={createItemCatalogo}
+        UpdateItemCatalogo={updateItemCatalogo}
+        titulos={titulos}
+        Formulario={crearComentario }
+        showCreateButton={false}
       />
-        
-        <Results/>
     </>
   );
 };

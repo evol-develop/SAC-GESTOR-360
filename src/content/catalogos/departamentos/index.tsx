@@ -6,23 +6,17 @@ import { useGetData } from "@/hooks/useGetData";
 import { PAGE_SLOT, titulos } from "./constants";
 import { CatalogoHeader } from "@/config/catalogoGenerico";
 import { Formulario, OperacionesFormulario } from "./config";
-import { useEffect } from "react";
 
-const ManagementClientes = () => {
+const ManagementDepartamentos = () => {
   const { createItemCatalogo, updateItemCatalogo } = OperacionesFormulario();
 
-  useGetData({ ruta: "/api/servicios/getServicios", slot: PAGE_SLOT });
-  useGetData({ ruta: "/api/getCatalogoSAT?code="+appConfig.TOKEN+"&Catalogo=Servicios", slot: "SERVICIOSPRODUCTOS", facturacion: true });
-  useGetData({ ruta: "/api/getCatalogoSAT?code="+appConfig.TOKEN+"&Catalogo=Unidades", slot: "UNIDADES", facturacion: true });
-  useGetData({ ruta: "/api/sublineas/getSublineas", slot: "SUBLINEAS" });
-  useGetData({ ruta: "/api/lineas/getLineas", slot: "LINEAS" });
+  useGetData({ ruta: "/api/departamentos/getDepartamentos", slot: PAGE_SLOT });
   useGetData({ ruta: "/api/user/getusers", slot: "USUARIOS" });
-  useGetData({ ruta: "/api/departamentos/getDepartamentos", slot: "DEPARTAMENTOS" });
-  
+
   return (
     <>
       <Helmet>
-        <title>{appConfig.NOMBRE} - Servicios</title>
+        <title>{appConfig.NOMBRE} - Departamentos</title>
       </Helmet>
       <CatalogoHeader
         PAGE_SLOT={PAGE_SLOT}
@@ -36,4 +30,4 @@ const ManagementClientes = () => {
   );
 };
 
-export default ManagementClientes;
+export default ManagementDepartamentos;

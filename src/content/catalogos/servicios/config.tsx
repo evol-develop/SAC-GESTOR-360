@@ -23,6 +23,9 @@ import {sublineasInterface} from "@/interfaces/catalogos/sublineasInterface";
 import { Checkbox } from "@/components/ui/checkbox"
 import { datosSATInterface } from "@/interfaces/catalogos/datosSATInterface";
 import { useEffect, useState } from "react";
+import { departamentoInterface } from "@/interfaces/catalogos/departamentoInterface";
+import { UsuarioAdicionalesInterface } from "@/interfaces/UsuarioAdicionalesInterface";
+import { useMemo } from "react";
 
 const validationSchema = z
   .object({
@@ -30,7 +33,7 @@ const validationSchema = z
         .preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
     descripcion: z.string().max(120).min(1, "La descripción es un dato requerido"),
     frecuencia: z.string().min(1, "La frecuencia es obligatoria").optional(),
-    capturar_cantidad: z.boolean(),
+    capturar_cantidad: z.boolean().optional(),
     lineaId: z.number(),
     sublineaId: z.number(),
     id_unidad: z.number(),
@@ -46,6 +49,8 @@ const validationSchema = z
     porcentaje_retencion_iva: z
         .preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
     activo: z.boolean().optional(),
+    departamentoId: z.number(),
+    userId: z.string()//.optional(),
   })
 
 export const OperacionesFormulario = () => {
@@ -74,7 +79,9 @@ export const OperacionesFormulario = () => {
       tasa_ieps:valores.tasa_ieps,
       porcentaje_retencion_isr:valores.porcentaje_retencion_isr,
       porcentaje_retencion_iva:valores.porcentaje_retencion_iva,
-      activo:valores.activo
+      activo:valores.activo,
+      userId:valores.userId,
+      departamentoId:valores.departamentoId,
     };
 
     try {
@@ -116,8 +123,10 @@ export const OperacionesFormulario = () => {
       porcentaje_retencion_isr:valores.porcentaje_retencion_isr,
       porcentaje_retencion_iva:valores.porcentaje_retencion_iva,
       activo:valores.activo,
-      linea:values.dataModal.linea,
-      sublinea:values.dataModal.sublinea
+      linea:valores.linea,
+      sublinea:valores.sublinea,
+      userId:valores.userId,
+      departamentoId:valores.departamentoId,
     };
 
     try {
@@ -143,12 +152,14 @@ export const Formulario = ({
   onSubmit,
   handleCreateItemClose,
 }: PropsFormulario) => {
-  const isEditing = useAppSelector((state: RootState) => state.page.isEditing);
   const Servicios =useAppSelector((state: RootState) => state.page.slots.SERVICIOSPRODUCTOS as datosSATInterface[] );
   const Unidades =useAppSelector((state: RootState) => state.page.slots.UNIDADES as datosSATInterface[] );
   const Lineas =useAppSelector((state: RootState) => state.page.slots.LINEAS as lineasInterface[] );
   const SubLineas =useAppSelector((state: RootState) => state.page.slots.SUBLINEAS as sublineasInterface[] );
-
+  const departamentos =useAppSelector((state: RootState) => state.page.slots.DEPARTAMENTOS as departamentoInterface[] );
+  const usuarios =useAppSelector((state: RootState) => state.page.slots.USUARIOS as any[] );
+  
+  
   const tasaIvaTransformada = dataModal.tasa_iva === 16 ? "2" 
   : dataModal.tasa_iva === 0 ? "1" 
   : String(dataModal.tasa_iva);
@@ -172,7 +183,9 @@ export const Formulario = ({
       tasa_ieps:dataModal.tasa_ieps,
       porcentaje_retencion_isr:dataModal.porcentaje_retencion_isr,
       porcentaje_retencion_iva:dataModal.porcentaje_retencion_iva,
-      activo:dataModal.activo
+      activo:dataModal.activo,
+      departamentoId:dataModal.departamentoId,
+      userId: dataModal.userId,
     },
   });
 
@@ -192,7 +205,7 @@ export const Formulario = ({
   const onSubmit2: SubmitHandler<z.infer<typeof validationSchema>> = async (values) => {
     console.log(values);
 
-    onSubmit(values);
+    //onSubmit(values);
   }
 
   const onError = (errors: any) => {
@@ -218,6 +231,16 @@ export const Formulario = ({
     calcularTasaIvaActual();
   },[]);
 
+  const subLineasFiltradas = useMemo(() => {
+    return SubLineas?.filter((x) => x.lineaId === generalForm.watch("lineaId")) || [];
+  }, [generalForm.watch("lineaId"), SubLineas]);
+
+  const usuariosFiltrados = useMemo(() => {
+    return usuarios.filter(user => user.userRoll !== "Cliente");
+  }, [usuarios]);
+  
+  console.log(usuariosFiltrados);
+  
   return (
     <Tabs defaultValue="general" className="w-full">
    
@@ -226,6 +249,15 @@ export const Formulario = ({
           <form onSubmit={generalForm.handleSubmit(onSubmit)}>
             <Card className="h-[560px] w-full overflow-y-auto">
              
+            <Tabs defaultValue="general" className="w-full gap-3">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="general">Datos generales</TabsTrigger>
+              <TabsTrigger value="departamento">Departamento y usuarios</TabsTrigger>
+          
+            </TabsList>
+
+            <TabsContent value="general">
+            
               <CardContent className="relative grid grid-cols-4 gap-2 py-3">
 
                  {dataModal.id !== undefined && ( 
@@ -435,15 +467,16 @@ export const Formulario = ({
                 <SelectTrigger >
                 <SelectValue
                   placeholder={
-                    SubLineas && SubLineas.length > 0
-                      ? SubLineas.find((x) => x.id === generalForm.watch("sublineaId"))
+                    subLineasFiltradas && subLineasFiltradas.length > 0
+                      ? subLineasFiltradas.find((x) => x.id === generalForm.watch("sublineaId"))
                           ?.descripcion || "Seleccione una sublínea"
                       : "Cargando..."
                   }
                 />
                 </SelectTrigger>
                 <SelectContent>
-                    {SubLineas && SubLineas.map((item: { id: number; descripcion: string }) => (
+                    {subLineasFiltradas && subLineasFiltradas
+                    .map((item: { id: number; descripcion: string })=> (
                     <SelectItem key={item.id} value={item.id.toString()}>
                       {item.descripcion}
                     </SelectItem>
@@ -477,11 +510,73 @@ export const Formulario = ({
 
               </CardContent>
 
+              </TabsContent>
+
+              <TabsContent value="departamento">
+
+              <CardContent className="relative grid grid-cols-3 gap-6 py-2">
+                <div>
+                <FormLabel className="text-xs">Departamento al que pertenece</FormLabel>
+                <Select name="departamentoId" onValueChange={(value) => generalForm.setValue("departamentoId", parseInt(value))}>
+                  <SelectTrigger className="w-72">
+                  <SelectValue
+                    placeholder={
+                      departamentos && departamentos.length > 0
+                        ? departamentos.find((x) => x.id === generalForm.watch("departamentoId"))
+                            ?.nombre || "Selecciona un departamento"
+                        : "Cargando..."
+                    }
+                  />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {departamentos && departamentos.map((item: { id: number; nombre: string }) => (
+                      <SelectItem key={item.id} value={item.id.toString()}>
+                         {item.nombre}
+                      </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                </div>
+
+                <div>
+                <FormLabel className="text-xs">Usuario encargado (opcional)</FormLabel>
+                <Select name="userId" onValueChange={(value) => generalForm.setValue("userId", value)}>
+                  <SelectTrigger className="w-72">
+                  <SelectValue
+                    placeholder={
+                      usuariosFiltrados && usuariosFiltrados.length > 0
+                        ? usuariosFiltrados.find((x) => x.id === generalForm.watch("userId"))
+                            ?.fullName || "Selecciona un usuario"
+                        : "Cargando..."
+                    }
+                  />
+                  </SelectTrigger>
+                  <SelectContent>
+                  {/* <SelectItem key={""} value={""}>
+                    {"SIN USUARIO"}
+                  </SelectItem> */}
+
+                      {usuariosFiltrados && usuariosFiltrados.map((item: { id: string; fullName: string }) => (
+                      <SelectItem key={item.id} value={item.id.toString()}>
+                         {item.fullName}
+                      </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                </div>
+                
+              </CardContent>
+              
               <FormFooter
                 handleCreateItemClose={handleCreateItemClose}
                 form={generalForm}
                 dataModal={dataModal}
               />
+              </TabsContent>
+              
+
+
+              </Tabs>
             </Card>
           </form>
         </Form>

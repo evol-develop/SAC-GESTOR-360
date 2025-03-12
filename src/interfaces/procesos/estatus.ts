@@ -1,9 +1,7 @@
 export enum estatus {
-    SOLICITADO = 0,
-    EN_REVISION = 1,
-    ACEPTADO = 2,
-    EN_DESARROLLO = 3,
-    RESUELTO = 4,
-    CERRADO = 5,
+    GENERADO = 1,
+    ASIGANDO = 2,
+    REVISADO = 3,
+    CERRADO = 4,
   }
   

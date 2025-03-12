@@ -1,10 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
-
-import {
-  Acciones,
-  DeleteDialog,
-  ResultsCatalogo,
-} from "@/config/catalogoGenerico";
+import {Acciones,DeleteDialog,ResultsCatalogo,} from "@/config/catalogoGenerico";
 import { RootState } from "@/store/store";
 import UserAvatar from "@/components/UserAvatar";
 import { useAppSelector } from "@/hooks/storeHooks";
@@ -16,8 +11,8 @@ import { DataTableColumnHeader } from "@/config/catalogoGenerico/data-table-colu
 import { Button } from "@/components/ui/button";
 
 export const Results = () => {
-  const data =
-    useAppSelector((state: RootState) => state.page.slots.USUARIOS) || [];
+  const usuarios =useAppSelector((state: RootState) => state.page.slots.USUARIOS as any) || [];
+  const usuariosFiltrados = usuarios.filter(x => x.userRoll !== "Cliente");
 
   const {
     openConfirmDelete,
@@ -56,6 +51,25 @@ export const Results = () => {
       cell: ({ row }) => <span className="text-xs">{row.original.email}</span>,
     },
     {
+      id: "Rol",
+      accessorKey: "rol",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Rol" />
+      ),
+      cell: ({ row }) => <span className="text-xs">{row.original.userRoll}</span>,
+    },
+    {
+      id: "Departamento",
+      accessorKey: "Departamento",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Departamento" />
+      ),
+      cell: ({ row }) => (
+        <span className="text-xs">{row.original.departamento?.nombre || "N/A"}</span>
+      ),
+      
+    },
+    {
       id: "Estado",
       accessorKey: "activo",
       header: ({ column }) => (
@@ -85,7 +99,7 @@ export const Results = () => {
     <>
       <ResultsCatalogo
         PAGE_SLOT={PAGE_SLOT}
-        data={data}
+        data={usuariosFiltrados}
         columns={columns}
         filtro="Usuario"
         showSendUsuarioMessage

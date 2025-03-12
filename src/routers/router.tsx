@@ -69,6 +69,10 @@ const ManagementTipos = Loader(
   lazy(() => import("@/content/catalogos/tiposclientes"))
 );
 
+const ManagementDepartamentos = Loader(
+  lazy(() => import("@/content/catalogos/departamentos"))
+);
+
 //PROCESOS
 const ManagementTickets = Loader(
   lazy(() => import("@/content/procesos/tickets"))
@@ -76,6 +80,10 @@ const ManagementTickets = Loader(
 
 const ConsultaTickets = Loader(
   lazy(() => import("@/content/procesos/consultaTickets"))
+);
+
+const MostrarTicket = Loader(
+  lazy(() => import("@/content/procesos/consultaTickets/mostrarTicket"))
 );
 
 export const Router = () => {
@@ -107,7 +115,7 @@ export const Router = () => {
           <Route path="empresas" element={<ManagementEmpresas />} />
           <Route path="roles" element={<ManagementRoles />} />
           <Route path="autorizaciones" element={<ManagementAutorizaciones />} />
-
+       
           {/* Rutas de estado */}
           <Route path="clientes" element={<ManagementClientes />} />
           <Route path="alertas" element={<ManagementAlertas />} />
@@ -116,11 +124,14 @@ export const Router = () => {
           <Route path="sublineas" element={<ManagementSublineas />} />
           <Route path="servicios" element={<ManagementServicios />} />
           <Route path="tipos" element={<ManagementTipos />} />
+          <Route path="departamentos" element={<ManagementDepartamentos />} />
         </Route>
 
         <Route path="procesos">
           <Route path="tickets" element={<ManagementTickets />} />
           <Route path="consultaTickets" element={<ConsultaTickets />} />
+          <Route path="consultaTickets/mostrarTicket/:clienteId/:ticketId/:movimientoId" element={<MostrarTicket />} /> 
+          {/* <Route path="consultaTickets/mostrarTicket" element={<MostrarTicket />} /> */}
         </Route>
 
         <Route

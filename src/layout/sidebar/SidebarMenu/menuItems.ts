@@ -79,10 +79,10 @@ const menuItems: MenuItems[] = [
             id: MenuEnums.Clientes,
             Icon: LuUserRound,
           },
-          // {
-          //   id: MenuEnums.ClientesServicios,
-          //   Icon: RiCustomerService2Fill,
-          // },
+          {
+            id: MenuEnums.Departamentos,
+            Icon: RiCustomerService2Fill,
+          },
           {
             id: MenuEnums.Facturacion,
             Icon: MdOutlineFactCheck,

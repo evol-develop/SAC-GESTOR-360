@@ -35,4 +35,5 @@ export interface userResult {
   permisos: Permisos;
   expiration: string;
   activo: boolean;
+  departamento: any
 }

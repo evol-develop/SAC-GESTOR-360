@@ -15,8 +15,10 @@ import { getItemActiveLabel } from "@/config/catalogoGenerico/utils";
 import { serviciosInterface } from "@/interfaces/catalogos/serviciosInterfaces";
 
 export const Results = () => {
-  const data =useAppSelector((state: RootState) => state.page.slots.SERVICIOS as serviciosInterface ) || [];
+  const data =useAppSelector((state: RootState) => state.page.slots.SERVICIOS as any ) || [];
   const unidades =useAppSelector((state: RootState) => state.page.slots.UNIDADES) || [];
+
+  console.log(unidades)
 
   const {
     openConfirmDelete,
@@ -26,7 +28,7 @@ export const Results = () => {
     handleEditItem,
   } = useItemManagement({ deleteEndpoint: ENDPOINTDELETE, PAGE_SLOT });
 
-  const columns: ColumnDef<UsersInterface>[] = [
+  const columns: ColumnDef<serviciosInterface>[] = [
     
     {
       id: "descripcion",
@@ -58,7 +60,11 @@ export const Results = () => {
       id: "id_unidad",
       accessorKey: "id_unidad",
       header: "Unidad",
-      cell: ({ row }) => unidades.find((u) => u.id === row.original.id_unidad)?.descripcion,
+      cell: ({ row }) => 
+        unidades?.find((x: { id: number; descripcion: string }) => x.id === row.original.id_unidad)
+          ?.descripcion || "N/A",
+      
+
     },
     // {
     //   id: "Estado",

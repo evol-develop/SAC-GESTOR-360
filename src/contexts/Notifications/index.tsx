@@ -241,7 +241,7 @@ export const NotificationAndTaskList = ({
 
   return (
     <Tabs defaultValue="notifications" className="bg-background">
-      <TabsList className="bg-background grid w-full h-auto grid-cols-2 gap-2 p-4 pb-0">
+      <TabsList className="grid w-full h-auto grid-cols-2 gap-2 p-4 pb-0 bg-background">
         <TabsTrigger value="notifications" className="relative border">
           Mensajes <CountNotificationsAndTasks countTasks={false} />
         </TabsTrigger>
@@ -261,7 +261,7 @@ export const NotificationAndTaskList = ({
                 />
               ))
             ) : (
-              <div className="text-secondary-foreground/50 flex items-center justify-center w-full gap-1 p-2 text-sm">
+              <div className="flex items-center justify-center w-full gap-1 p-2 text-sm text-secondary-foreground/50">
                 No hay mensajes
                 <LuBellOff />
               </div>
@@ -277,7 +277,7 @@ export const NotificationAndTaskList = ({
                 <TaskItem key={task.id} task={task} className={itemClassName} />
               ))
             ) : (
-              <div className="text-secondary-foreground/50 flex items-center justify-center w-full gap-1 p-2 text-sm">
+              <div className="flex items-center justify-center w-full gap-1 p-2 text-sm text-secondary-foreground/50">
                 No hay tareas
                 <LuClipboardX />
               </div>
@@ -316,7 +316,7 @@ const NotificationItem = ({
             <div className="font-semibold">
               <UserAvatar userId={senderId} showAvatar={false} />
             </div>
-            {!read && <span className="size-2 flex bg-blue-600 rounded-full" />}
+            {!read && <span className="flex bg-blue-600 rounded-full size-2" />}
           </div>
           <div
             className={cn(
@@ -331,7 +331,7 @@ const NotificationItem = ({
         </div>
         <div className="text-xs font-medium">{title}</div>
       </div>
-      <div className="line-clamp-1 text-muted-foreground text-xs">
+      <div className="text-xs line-clamp-1 text-muted-foreground">
         {message.substring(0, 100)}
       </div>
     </Link>
@@ -360,7 +360,7 @@ const TaskItem = ({ task, className }: { task: Task; className?: string }) => {
               <UserAvatar userId={senderId} showAvatar={false} />
             </div>
             {!isCompleted && (
-              <span className="size-2 flex bg-blue-600 rounded-full" />
+              <span className="flex bg-blue-600 rounded-full size-2" />
             )}
           </div>
           <div
@@ -376,7 +376,7 @@ const TaskItem = ({ task, className }: { task: Task; className?: string }) => {
         </div>
         <div className="text-xs font-medium">{title}</div>
       </div>
-      <div className="line-clamp-1 text-muted-foreground text-xs">
+      <div className="text-xs line-clamp-1 text-muted-foreground">
         {description.substring(0, 100)}
       </div>
       <div className="flex items-center gap-2">

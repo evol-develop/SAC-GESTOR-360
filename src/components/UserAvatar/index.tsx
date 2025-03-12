@@ -38,6 +38,7 @@ type UserAvatarProps = {
     | "rounded-full";
   showAvatar?: boolean;
   styles?: React.CSSProperties;
+  catalogo?: string;
 };
 
 type User = {
@@ -60,6 +61,7 @@ const UserAvatar = ({
   className,
   showAvatar = true,
   styles,
+  catalogo= 'user'
 }: UserAvatarProps) => {
   const { user: userAuth } = useAuth();
   const [user, setUser] = useState<User>({
@@ -70,18 +72,34 @@ const UserAvatar = ({
 
   useEffect(() => {
     if (userId && !dataUsuario) {
+      //console.log(userId);
       const getUser = async () => {
+
+        var url =`/api/user/getuserbyid/${userId}`;
+
+        if(catalogo === "clientes")
+        {
+          url =`/api/clientes/getClientesById/${userId}`;
+        }
         try {
           const { data } = await axios.get<ResponseInterface>(
-            `/api/user/getuserbyid/${userId}`
+            url
           );
-          console.log(data);
+          //console.log(data);
           if (data.isSuccess) {
-            setUser({
-              nombre: data.result.fullName || "",
-              extra: data.result.email || "",
-              avatar: data.result.picturePath || "",
-            });
+            if(catalogo === 'clientes'){
+              setUser({
+                nombre: data.result.nombre || "",
+                extra: data.result.email || "",
+                avatar: data.result.picturePath || "",
+              });
+            }else{
+              setUser({
+                nombre: data.result.fullName || "",
+                extra: data.result.email || "",
+                avatar: data.result.picturePath || "",
+              });
+            }
           } else {
             throw new Error(data.message);
           }
@@ -132,7 +150,7 @@ const UserAvatar = ({
               alt={user.nombre}
               className="rounded-none"
             />
-            <AvatarFallback className="bg-primary text-primary-foreground rounded-none">
+            <AvatarFallback className="rounded-none bg-primary text-primary-foreground">
               {user.nombre
                 .split(" ")
                 .map((chunk) => chunk[0])
@@ -158,7 +176,7 @@ const UserAvatar = ({
           alt={user.nombre}
           className="rounded-none"
         />
-        <AvatarFallback className="bg-primary text-primary-foreground rounded-none">
+        <AvatarFallback className="rounded-none bg-primary text-primary-foreground">
           {user.nombre
             .split(" ")
             .map((chunk) => chunk[0])
@@ -170,3 +188,4 @@ const UserAvatar = ({
 };
 
 export default UserAvatar;
+

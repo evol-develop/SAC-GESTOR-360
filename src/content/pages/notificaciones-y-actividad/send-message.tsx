@@ -62,7 +62,7 @@ const SendMessage = () => {
   };
 
   return (
-    <section className="size-full flex flex-col gap-2 pb-4 text-sm">
+    <section className="flex flex-col gap-2 pb-4 text-sm size-full">
       <Separator />
       <div className="flex items-center justify-center h-full px-4">
         <Form {...form}>

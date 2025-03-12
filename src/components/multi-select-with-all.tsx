@@ -95,7 +95,7 @@ export const MultiSelectWithAll = ({
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="sm:text-sm justify-between w-full text-xs"
+          className="justify-between w-full text-xs sm:text-sm"
         >
           {value.length > 0
             ? value[0] === "all"

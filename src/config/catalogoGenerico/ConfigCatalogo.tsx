@@ -2,24 +2,12 @@ import React from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { LuPencil, LuTrash2 } from "react-icons/lu";
 import { GrView } from "react-icons/gr";
-
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+import {Tooltip,TooltipContent,TooltipTrigger,} from "@/components/ui/tooltip";
+import {AlertDialog,AlertDialogAction,AlertDialogCancel,AlertDialogContent,AlertDialogDescription,AlertDialogFooter,AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { IoTicketOutline } from "react-icons/io5";
 
 export interface PropsResults {
   data: any[];
@@ -43,7 +31,7 @@ type AccionesProps = {
    * @description Función para editar un item
    * @required
    */
-  handleEditItem: (item: any) => void;
+  handleEditItem?: (item: any) => void;
 
   /**
    * deleteButton
@@ -65,6 +53,9 @@ type AccionesProps = {
   handleConfirmDelete?: (item: any) => void;
   viewButton?: boolean;
   handleConfirmView?: (item: any) => void;
+  openButton?: boolean;
+  handleConfirmOpen?: (item: any) => void;
+  className?: string;
 };
 
 export const Acciones = ({
@@ -75,6 +66,9 @@ export const Acciones = ({
   handleConfirmDelete,
   viewButton = false,
   handleConfirmView,
+  openButton = false,
+  handleConfirmOpen,
+
 }: AccionesProps) => {
   return (
     <div className="flex items-center justify-start space-x-2">
@@ -102,20 +96,35 @@ export const Acciones = ({
           <TooltipContent side="right">Eliminar</TooltipContent>
         </Tooltip>
       )}
+      {openButton && handleConfirmOpen && (
+        <Tooltip>
+          <TooltipTrigger  asChild>
+            <Button
+              onClick={() => handleConfirmOpen(item)}
+              variant={"default"}
+              size="icon"
+            >
+              < IoTicketOutline />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="left" >Abrir ticket</TooltipContent>
+        </Tooltip>
+      )}
       {viewButton && handleConfirmView && (
         <Tooltip>
           <TooltipTrigger  asChild>
             <Button
               onClick={() => handleConfirmView(item)}
-              
+              variant={"warning"}
               size="icon"
             >
-              <GrView />
+              <GrView/>
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="right">Ver movimientos del ticket</TooltipContent>
+          <TooltipContent side="right" colorClass="bg-yellow-500 text-black">ver movimientos</TooltipContent>
         </Tooltip>
       )}
+
     </div>
   );
 };

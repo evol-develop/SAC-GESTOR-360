@@ -17,6 +17,7 @@ const ManagementClientes = () => {
   useGetData({ ruta: "/api/getCatalogoSAT?code="+appConfig.TOKEN+"&Catalogo=UsoCFDI", slot: "CFDI", facturacion: true });
   useGetData({ ruta: "/api/getCatalogoSAT?code="+appConfig.TOKEN+"&Catalogo=MetodoPago", slot: "FORMASPAGO", facturacion: true });
   useGetData({ ruta: "/api/getCatalogoSAT?code="+appConfig.TOKEN+"&Catalogo=RegimenFiscal", slot: "REGIMEN", facturacion: true });
+  useGetData({ ruta: "/api/departamentos/getDepartamentos", slot: "DEPRATAMENTOS" });
 
   return (
     <>

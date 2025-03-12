@@ -6,7 +6,7 @@ export enum MenuEnums {
   Roles= 5,
   Alertas= 6,
   Clientes= 7,
-  ClientesServicios= 8,
+  Departamentos= 8,
   Facturacion= 9,
   FacturacionComplementos= 10,
   Lineas= 11,
