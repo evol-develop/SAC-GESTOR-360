@@ -10,6 +10,7 @@ import { AuthProvider } from "./contexts/Auth/AuthContext.tsx";
 import { NotificationProvider } from "./contexts/Notifications/index.tsx";
 
 import "./index.css";
+import "./styles/rich-text-editor.css";
 import "react-image-crop/dist/ReactCrop.css";
 
 createRoot(document.getElementById("root")!).render(

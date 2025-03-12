@@ -42,7 +42,7 @@ const TaskDetail = ({ taskId }: { taskId: string }) => {
     <div className="flex flex-col flex-1">
       <Separator />
       <div className="sm:flex-row sm:items-center flex flex-col p-4">
-        <div className="flex items-start gap-4 text-sm">
+        <div className="flex gap-4 items-start text-sm">
           <UserAvatar
             userId={task.senderId}
             rounded="rounded-full"
@@ -99,7 +99,10 @@ const TaskDetail = ({ taskId }: { taskId: string }) => {
       <Separator />
       <ScrollArea className="p-4 h-full sm:h-[calc(100vh-366px)]">
         <div className="flex-1 text-sm whitespace-pre-wrap">
-          <p>{task.description}</p>
+          <div
+            className="rich-text-content"
+            dangerouslySetInnerHTML={{ __html: task.description }}
+          />
         </div>
       </ScrollArea>
     </div>

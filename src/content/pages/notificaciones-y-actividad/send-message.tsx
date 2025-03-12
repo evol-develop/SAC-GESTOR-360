@@ -7,8 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 import FormInput from "@/components/form-base";
 import { Button } from "@/components/ui/button";
-import FormTextarea from "@/components/form-textarea";
 import { Separator } from "@/components/ui/separator";
+import FormRichText from "@/components/form-rich-text";
 import { Notification } from "@/contexts/Notifications";
 import { useNotifications } from "@/hooks/useNotifications";
 import { MultiselectField } from "@/components/multi-select-with-all";
@@ -62,15 +62,15 @@ const SendMessage = () => {
   };
 
   return (
-    <section className="flex flex-col gap-2 pb-4 text-sm size-full">
+    <section className="size-full flex flex-col gap-2 pb-4 text-sm">
       <Separator />
-      <div className="flex items-center justify-center h-full px-4">
+      <div className="flex justify-center items-center px-4 h-full">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col w-full max-w-lg gap-2 mx-auto"
+            className="flex flex-col gap-2 mx-auto w-full max-w-lg"
           >
-            <div className="grid w-full grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 w-full">
               <FormInput
                 form={form}
                 name="title"
@@ -84,7 +84,7 @@ const SendMessage = () => {
                 tipo="users"
               />
             </div>
-            <FormTextarea
+            <FormRichText
               form={form}
               name="message"
               label="Mensaje"

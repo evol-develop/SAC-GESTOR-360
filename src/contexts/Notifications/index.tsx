@@ -241,7 +241,7 @@ export const NotificationAndTaskList = ({
 
   return (
     <Tabs defaultValue="notifications" className="bg-background">
-      <TabsList className="grid w-full h-auto grid-cols-2 gap-2 p-4 pb-0 bg-background">
+      <TabsList className="bg-background grid grid-cols-2 gap-2 p-4 pb-0 w-full h-auto">
         <TabsTrigger value="notifications" className="relative border">
           Mensajes <CountNotificationsAndTasks countTasks={false} />
         </TabsTrigger>
@@ -251,7 +251,7 @@ export const NotificationAndTaskList = ({
       </TabsList>
       <TabsContent value="notifications">
         <ScrollArea className={className}>
-          <div className="grid w-full h-full gap-2 p-4 pt-0">
+          <div className="grid gap-2 p-4 pt-0 w-full h-full">
             {filteredNotifications.length > 0 ? (
               filteredNotifications.map((notification) => (
                 <NotificationItem
@@ -261,7 +261,7 @@ export const NotificationAndTaskList = ({
                 />
               ))
             ) : (
-              <div className="flex items-center justify-center w-full gap-1 p-2 text-sm text-secondary-foreground/50">
+              <div className="text-secondary-foreground/50 flex gap-1 justify-center items-center p-2 w-full text-sm">
                 No hay mensajes
                 <LuBellOff />
               </div>
@@ -271,13 +271,13 @@ export const NotificationAndTaskList = ({
       </TabsContent>
       <TabsContent value="tasks">
         <ScrollArea className={className}>
-          <div className="grid w-full h-full gap-2 p-4 pt-0">
+          <div className="grid gap-2 p-4 pt-0 w-full h-full">
             {filteredTasks.length > 0 ? (
               filteredTasks.map((task) => (
                 <TaskItem key={task.id} task={task} className={itemClassName} />
               ))
             ) : (
-              <div className="flex items-center justify-center w-full gap-1 p-2 text-sm text-secondary-foreground/50">
+              <div className="text-secondary-foreground/50 flex gap-1 justify-center items-center p-2 w-full text-sm">
                 No hay tareas
                 <LuClipboardX />
               </div>
@@ -310,13 +310,13 @@ const NotificationItem = ({
       )}
       to={`/site/notificaciones-y-actividad?type=msj&notification=${id}`}
     >
-      <div className="flex flex-col w-full gap-1">
+      <div className="flex flex-col gap-1 w-full">
         <div className="flex items-center">
-          <div className="flex items-center gap-2">
+          <div className="flex gap-2 items-center">
             <div className="font-semibold">
               <UserAvatar userId={senderId} showAvatar={false} />
             </div>
-            {!read && <span className="flex bg-blue-600 rounded-full size-2" />}
+            {!read && <span className="size-2 flex bg-blue-600 rounded-full" />}
           </div>
           <div
             className={cn(
@@ -331,9 +331,13 @@ const NotificationItem = ({
         </div>
         <div className="text-xs font-medium">{title}</div>
       </div>
-      <div className="text-xs line-clamp-1 text-muted-foreground">
-        {message.substring(0, 100)}
-      </div>
+      <div
+        className={cn(
+          "rich-text-content",
+          "line-clamp-1 text-muted-foreground text-xs"
+        )}
+        dangerouslySetInnerHTML={{ __html: message }}
+      />
     </Link>
   );
 };
@@ -353,14 +357,14 @@ const TaskItem = ({ task, className }: { task: Task; className?: string }) => {
       )}
       to={`/site/notificaciones-y-actividad?type=task&notification=${task.id}`}
     >
-      <div className="flex flex-col w-full gap-1">
+      <div className="flex flex-col gap-1 w-full">
         <div className="flex items-center">
-          <div className="flex items-center gap-2">
+          <div className="flex gap-2 items-center">
             <div className="font-semibold">
               <UserAvatar userId={senderId} showAvatar={false} />
             </div>
             {!isCompleted && (
-              <span className="flex bg-blue-600 rounded-full size-2" />
+              <span className="size-2 flex bg-blue-600 rounded-full" />
             )}
           </div>
           <div
@@ -376,10 +380,10 @@ const TaskItem = ({ task, className }: { task: Task; className?: string }) => {
         </div>
         <div className="text-xs font-medium">{title}</div>
       </div>
-      <div className="text-xs line-clamp-1 text-muted-foreground">
+      <div className="line-clamp-1 text-muted-foreground text-xs">
         {description.substring(0, 100)}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex gap-2 items-center">
         <Status taskStatus={status} />
       </div>
     </Link>

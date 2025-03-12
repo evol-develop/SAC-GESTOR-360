@@ -28,7 +28,7 @@ const NotificationDetail = ({ notificationId }: { notificationId: string }) => {
     <div className="flex flex-col flex-1">
       <Separator />
       <div className="sm:flex-row sm:items-center flex flex-col p-4">
-        <div className="flex items-start gap-4 text-sm">
+        <div className="flex gap-4 items-start text-sm">
           <UserAvatar
             userId={notification.senderId}
             rounded="rounded-full"
@@ -43,7 +43,7 @@ const NotificationDetail = ({ notificationId }: { notificationId: string }) => {
             </div>
           </div>
         </div>
-        <div className="sm:ml-auto sm:mt-0 flex items-center gap-2 mt-1 ml-12">
+        <div className="sm:ml-auto sm:mt-0 flex gap-2 items-center mt-1 ml-12">
           <span className="text-muted-foreground text-xs">
             {formatDistanceToNow(new Date(notification.createdAt as string), {
               addSuffix: true,
@@ -70,7 +70,10 @@ const NotificationDetail = ({ notificationId }: { notificationId: string }) => {
       <Separator />
       <ScrollArea className="p-4 h-full sm:h-[calc(100vh-346px)]">
         <div className="flex-1 text-sm whitespace-pre-wrap">
-          <p>{notification.message}</p>
+          <div
+            className="rich-text-content"
+            dangerouslySetInnerHTML={{ __html: notification.message }}
+          />
         </div>
       </ScrollArea>
     </div>
