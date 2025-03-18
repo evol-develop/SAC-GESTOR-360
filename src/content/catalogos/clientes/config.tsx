@@ -34,10 +34,10 @@ const validationSchema = z
     Servicios: z.array(z.object({ id: z.number(), descripcion: z.string() })).optional(),
     nombre: z.string().min(1, "El nombre es un dato requerido").max(200),
     rfc: z.string().length(13, "El RFC debe tener exactamente 13 caracteres"),
-    cp: z.string().min(5, "El código postal debe tener 5 dígitos").max(6, "El código postal debe tener 5 dígitos"),
+    cp: z.string().min(5, "El código postal debe tener 5 dígitos").max(6, "El código postal debe tener 5 dígitos").optional(),
     telefono: z.string().min(10, "El teléfono debe ser de 10 dígitos").max(10).regex(phoneRegExp, "El teléfono debe ser de 10 dígitos"),
     email: z.string().min(1, "El correo es un dato requerido").max(120).email("El correo no es válido"),
-    curp: z.string().length(18, "El CURP debe tener 18 caracteres"),
+    curp: z.string().length(18, "El CURP debe tener 18 caracteres").optional(),
     tiposClienteId: z.number().optional(),
     activo: z.boolean().optional(),
     domicilio: z.string().optional(),
@@ -49,7 +49,7 @@ const validationSchema = z
     //limite_credito: z.string().optional(),
     // descuento_default: z.string().optional(),
     // dias_credito: z.string().optional(),
-    alertaId: z.number().optional(),
+    alertaId: z.number().optional().nullable(),
     facturar: z.boolean().optional(),
     retener_iva: z.boolean().optional(),
     retener_isr: z.boolean().optional(),
@@ -224,7 +224,8 @@ export const Formulario = ({
  
   const alertas =useAppSelector((state: RootState) => state.page.slots.ALERTAS as alertasInterface[]) ;
   const cfdi =useAppSelector((state: RootState) => state.page.slots.CFDI as datosSATInterface[]) ;
-  const formasPago =useAppSelector((state: RootState) => state.page.slots.FORMASPAGO as datosSATInterface[]) ;
+  const formasPago =useAppSelector((state: RootState) => state.page.slots.FormasPago as datosSATInterface[]) ;
+  const metodosPago =useAppSelector((state: RootState) => state.page.slots.METODOSPAGO as datosSATInterface[]) ;
   const regimen =useAppSelector((state: RootState) => state.page.slots.REGIMEN as datosSATInterface[] );
   const tipoCliente =useAppSelector((state: RootState) => state.page.slots.TIPOS_CLIENTES as tipoClientes[]) ;
   const servicios =useAppSelector((state: RootState) => state.page.slots.SERVICIOS as serviciosInterface[]) ;
@@ -268,10 +269,10 @@ export const Formulario = ({
     },
   });
 
-  const metodosPago = [
-    { clave: "PPD", descripcion: "Pago en parcialidades o diferido" },
-    { clave: "PUE", descripcion: "Pago en una sola exhibición" },
-  ];
+  // const metodosPago = [
+  //   { clave: "PPD", descripcion: "Pago en parcialidades o diferido" },
+  //   { clave: "PUE", descripcion: "Pago en una sola exhibición" },
+  // ];
 
   const { control, setValue, getValues } = generalForm;
   const [selectedItems, setSelectedItems] = useState<serviciosInterface[]>([]);
@@ -642,14 +643,14 @@ export const Formulario = ({
                 <SelectTrigger>
                 <SelectValue
                 placeholder={
-                  metodosPago.find((metodo) => metodo.clave === generalForm.watch("metodo_pago"))
+                  metodosPago && metodosPago.find((metodo) => metodo.clave === generalForm.watch("metodo_pago"))
                     ?.descripcion || "Selecciona un método de pago"
                 }/>
                 </SelectTrigger>
                 <SelectContent>
-                {metodosPago.map((metodo) => (
+                {metodosPago && metodosPago.map((metodo) => (
                   <SelectItem key={metodo.clave} value={metodo.clave}>
-                    {metodo.descripcion}
+                    {metodo.clave} - {metodo.descripcion}
                   </SelectItem>
                 ))}
                 </SelectContent>

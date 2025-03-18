@@ -236,7 +236,11 @@ export const Formulario = ({
   }, [generalForm.watch("lineaId"), SubLineas]);
 
   const usuariosFiltrados = useMemo(() => {
-    return usuarios.filter(user => user.userRoll !== "Cliente");
+    
+    if(usuarios && usuarios){
+      return usuarios.filter(user => user.userRoll !== "Cliente");
+    }
+
   }, [usuarios]);
   
   console.log(usuariosFiltrados);

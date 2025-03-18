@@ -17,50 +17,42 @@ import { Loading } from "@/components/Loading";
 import { useEffect } from "react";
 import Archivos from "./Archivos";
 
-
 interface CardData {
   title: string;
   description: string;
+  id: number;
+  fecha: Date ;
+  fechaTermina: Date ;
 }
 
 interface InfiniteCardsProps {
-  items: CardData[];
-  PAGE_SLOT: string;
+  etapas: CardData[];
 }
 
-const InfiniteCards: React.FC<InfiniteCardsProps> = ({ items,PAGE_SLOT }) => {
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+const InfiniteCards: React.FC<InfiniteCardsProps> = ({ etapas }) => {
+  //const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const isLoading = useAppSelector((state: RootState) => state.page.isLoading);
   const comentarios = useAppSelector((state: RootState) => state.page.slots.COMENTARIOS as any);
-  const handleCardClick = (index: number) => {
-    dispatch(deleteSlot("COMENTARIOS"))
-    setSelectedIndex(index === selectedIndex ? null : index); 
-    console.log(index)
-    dispatch(createSlot({ movimientoId: index }));
-    
-  };
   const { dispatch } = usePage();
   const [comentarioId,setComentarioId]  = useState<number>(0);
   const ticketId = useAppSelector((state: RootState) => state.page.slots.ticketId as any);
   const clienteId = useAppSelector((state: RootState) => state.page.slots.clienteId as any);
   const movimientoId = useAppSelector((state: RootState) => state.page.slots.movimientoId as any);
   const showArchivos = useAppSelector((state: RootState) => state.page.slots.SHOWARCHIVOS as boolean);
+  const selectedIndex = useAppSelector((state: RootState) => state.page.slots.ETAPA);
+  
+  const handleCardClick = (id:number, index: number ) => {
+    dispatch(deleteSlot("COMENTARIOS"))
+    dispatch(createSlot({ movimientoId: id }));
+    dispatch(createSlot({ ETAPA: index }));
+  };
   
   const openComentario = (comentario:ticketComentariosInterface) => {
+   
+    dispatch(createSlot({ SHOWARCHIVOS: true }));
     setComentarioId(comentario.id);
     dispatch(createSlot({ COMENTARIO: comentario.comentario }));
-    dispatch(createSlot({ SHOWARCHIVOS: true }));
   };
-
-  useEffect(()=>{
-    var etapas =  items.length;
-    if(items && etapas ===1){
-      setSelectedIndex(0);
-    }else{
-      setSelectedIndex(etapas)
-    }
-  },[]);
-  
 
   const CargarComentariosByMovimiento = async () => {
     try {
@@ -90,127 +82,156 @@ const InfiniteCards: React.FC<InfiniteCardsProps> = ({ items,PAGE_SLOT }) => {
   };
   
   useEffect(() => {
-    if(movimientoId && ticketId){
+    if(movimientoId != null && ticketId && clienteId){
       CargarComentariosByMovimiento();
     }
-  }, [movimientoId,ticketId]);
+  }, []);
 
-  console.log(movimientoId)
-        
+  useEffect(() => {
+    if(movimientoId != null && ticketId && clienteId){
+      CargarComentariosByMovimiento();
+    }
+  }, [movimientoId,ticketId,clienteId]);
+
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSmallScreen(window.innerWidth <= 640); // Ajusta el valor de 640 según el tamaño de tu pantalla
+    };
+
+    // Llamar a handleResize inicialmente
+    handleResize();
+
+    // Añadir el evento de cambio de tamaño
+    window.addEventListener("resize", handleResize);
+
+    // Limpiar el evento cuando el componente se desmonte
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+    
   return (
-    <TooltipProvider >
+    <TooltipProvider>
       <div
-        className={` ${"relative w-[calc(150dvh-450px)] sm:w-[calc(270dvh-500px)]  h-[400px] overflow-x-auto flex "}`}
+        className="relative w-full h-[420px] overflow-x-auto flex flex-wrap sm:flex-nowrap " // Ajusta según la altura de tu header
         style={{
-          scrollbarWidth: "none", 
-          msOverflowStyle: "none", 
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
         }}
       >
-        {items.map((item, index) => (
+        {etapas.map((item, index) => {
+          const positionValue = index * 50;
+          const topValue = index * 30;
+          const widthValue = 120 - index * 5;
+  
+          return (
+            <div
+              key={index}
+              className="absolute z-10 transition-all duration-500 ease-in-out shadow-md transform-translate-x-8 hover:shadow-lg"
+              style={{
+                right: "0px",
+                left: isSmallScreen ? "0px" : `${positionValue}px`,
+                top: isSmallScreen ? `${topValue}px` : "auto",
+                width: index === 0 ? "100%" : `${widthValue}%`,
+              }}
+            >
+              {!showArchivos && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      className={`p-3 rounded-t-lg cursor-pointer border rounded-sm ${
+                        selectedIndex === index ? "bg-primary" : "bg-white text-black"
+                      }`}
+                      onClick={() => handleCardClick(item.id, index)}
+                    >
+                      <div className={`text-xs font-semibold  ${
+                        selectedIndex === index ? "text-white" : " text-black"
+                      }`}>
+                        {item.title}
+                      </div>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" align="start" forceMount className="translate-x-[-10px] text-center">
+                    {item.description}
+                    <br />
+                    {new Date(item.fecha).toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit", year: "numeric" })} -
+                    {new Date(item.fechaTermina).toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          );
+        })}
+  
+        {/* Contenedor de comentarios */}
+        <div className={`w-full sm:w-[calc(270dvh-500px)] `}>
+          <div className="text-gray-700">
+            {!showArchivos ? (
+              <section className={`relative flex flex-col h-full gap-4 sm:flex-wrap ${isSmallScreen ? "mt-36" : "mt-11"}`}>
+                <div className="flex flex-col w-full h-full min-h-[200px] max-h-full bg-background sm:max-h-none overflow-y-auto">
+                  <h1 className="font-bold text-center">COMENTARIOS</h1>
+                  {!isLoading ? (
+                    <div className="h-[calc(120dvh-350px)] sm:h-[calc(85dvh-300px)] overflow-auto">
+                      
+                      {comentarios && comentarios.map((step: ticketComentariosInterface, index: number) => {
+                          const fechaValida = new Date(step.fecha);
+                          const fechaFormateada = !isNaN(fechaValida.getTime())
+                            ? format(fechaValida, "dd/MM/yyyy hh:mm:ss a", { locale: es })
+                            : "Fecha inválida";
+  
+                          return (
+                            <motion.div
+                              key={index}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.2 }}
+                              onClick={() => openComentario(step)}
+                            >
+                              <Card className="max-w-full p-2 break-words border-l-4 shadow-md cursor-pointer rounded-xl border-primary">
+                                <CardContent className="flex gap-2 items-left">
+                                  <Circle className="w-6 h-4 text-gray-500" />
+                                  <div className="max-w-full overflow-hidden text-xs break-words">
+                                    <h3 className="text-lg font-semibold text-primary">
+                                      <UserAvatar
+                                        withTooltip
+                                        userId={step.usuarioCrea}
+                                        className="size-6"
+                                        rounded="rounded-full"
+                                      />
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground">{fechaFormateada}</p>
+                                    <h5 className="break-words">{step.comentario}</h5>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </motion.div>
+                          );
+                        })}
 
-          
-          <><Card
-            key={index}
-            className={`${"absolute  transition-all duration-500 ease-in-out transform-translate-x-8 z-10 shadow-md hover:shadow-lg"}`}
-            style={{
-              left: `${index * 20}px`,
-              width: "100%",
-            }}
-          >
-            {!showArchivos && (
-
-              <><Tooltip>
-                <TooltipTrigger asChild>
-                  <CardHeader
-                    className={selectedIndex === index ? "p-3 bg-cyan-600 rounded-t-lg cursor-pointer" : "p-3 bg-gray-500 rounded-t-lg cursor-pointer"}
-                    onClick={() => handleCardClick(index)}
-                  >
-                    <CardTitle className={selectedIndex === index ? "text-xs font-semibold text-white" : "text-xs font-semibold text-slate-950"}>
-                      {item.title}
-                    </CardTitle>
-                  </CardHeader>
-                </TooltipTrigger>
-                <TooltipContent side="top" align="start" forceMount className="translate-x-[-10px]">
-                  {item.description}
-                </TooltipContent>
-              </Tooltip>
-                {/* <CardContent></CardContent> */}
+                        {comentarios && comentarios.length === 0 && (<>NO HAY COMENTARIOS </>)}
+                    </div>
+                  ) : (
+                    <Loading />
+                  )}
+                </div>
+              </section>
+            ) : (
+              <>
+                {movimientoId && ticketId && clienteId && comentarioId && (
+                  <Archivos movimientoId={movimientoId} ticketId={ticketId} clienteId={clienteId} comentarioId={comentarioId} />
+                )}
               </>
-
             )}
-
-          </Card>
-            </> 
-        ))}
-
-        <Card className="w-[calc(150dvh-450px)] sm:w-[calc(270dvh-500px)]">
-             
-             <CardContent className="p-3 text-gray-700" style={{
-               // left: `${index * 20}px`,
-             }}>
-
-               {!showArchivos ? (
-                 <section className="relative flex flex-col h-full gap-4 sm:flex-row">
-
-                   <div className="flex flex-col w-full h-full max-h-full bg-background sm:max-h-none">
-                     <h1 className="font-bold text-center ">COMENTARIOS</h1>
-                     {!isLoading ? (<>
-                       <div className=" h-[calc(90dvh-350px)] sm:h-[calc(90dvh-300px)] overflow-auto">
-                         {comentarios &&
-                           comentarios.map((step: ticketComentariosInterface, index: number) => (
-                             <motion.div
-                               key={index}
-                               initial={{ opacity: 0, y: 10 }}
-                               animate={{ opacity: 1, y: 0 }}
-                               transition={{ delay: index * 0.2 }}
-                               onClick={() => openComentario(step)}
-
-                             >
-                               <Card className="p-2 border-l-4 shadow-md cursor-pointer rounded-xl border-primary">
-                                 <CardContent className="flex gap-2 items-left">
-                                   <Circle className="w-6 h-4 text-gray-500" />
-                                   <div className="text-xs">
-                                     <h3 className="text-lg font-semibold text-primary">
-                                       <UserAvatar
-                                         withTooltip
-                                         userId={step.usuarioCrea}
-                                         className="size-6"
-                                         rounded="rounded-full" />
-                                     </h3>
-                                     <p className="text-sm text-muted-foreground">
-                                       {format(new Date(step.fecha), "dd/MMMM/yyyy hh:mm:ss a", {
-                                         locale: es,
-                                       })}
-                                     </p>
-                                     <h5>{step.comentario}</h5>
-                                   </div>
-                                 </CardContent>
-                               </Card>
-                             </motion.div>
-                           ))}
-                       </div>
-
-
-                     </>) : (<Loading />)}
-                   </div>
-
-                 </section>) : (<>
-
-                   {movimientoId && ticketId && clienteId && comentarioId && (
-                     <Archivos movimientoId={movimientoId} ticketId={ticketId} clienteId={clienteId} comentarioId={comentarioId} />
-                   )}
-
-                 </>)}
-
-             </CardContent>
-           
-         </Card>
+          </div>
+        </div>
+        
       </div>
-
- 
-            
     </TooltipProvider>
-  )
+  );
+  
+  
 };
 
 export default InfiniteCards;

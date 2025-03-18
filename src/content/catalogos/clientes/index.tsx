@@ -15,7 +15,8 @@ const ManagementClientes = () => {
   useGetData({ ruta: "/api/tipos/getTipos", slot: "TIPOS_CLIENTES" });
   useGetData({ ruta: "/api/servicios/getServicios", slot: "SERVICIOS" });
   useGetData({ ruta: "/api/getCatalogoSAT?code="+appConfig.TOKEN+"&Catalogo=UsoCFDI", slot: "CFDI", facturacion: true });
-  useGetData({ ruta: "/api/getCatalogoSAT?code="+appConfig.TOKEN+"&Catalogo=MetodoPago", slot: "FORMASPAGO", facturacion: true });
+  useGetData({ ruta: "/api/getCatalogoSAT?code="+appConfig.TOKEN+"&Catalogo=MetodoPago", slot: "METODOSPAGO", facturacion: true });
+  useGetData({ ruta: "/api/getCatalogoSAT?code="+appConfig.TOKEN+"&Catalogo=FormasPago", slot: "FormasPago", facturacion: true });
   useGetData({ ruta: "/api/getCatalogoSAT?code="+appConfig.TOKEN+"&Catalogo=RegimenFiscal", slot: "REGIMEN", facturacion: true });
   useGetData({ ruta: "/api/departamentos/getDepartamentos", slot: "DEPRATAMENTOS" });
 

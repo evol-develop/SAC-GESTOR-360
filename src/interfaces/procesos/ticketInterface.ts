@@ -10,6 +10,7 @@ export interface ticketInterface {
     servicioId: number;
     user: any;
     atendido: boolean;
+    fechaCrea: Date  | null;
   }
 
   export interface ticketMovimientoInterface {
@@ -20,7 +21,8 @@ export interface ticketInterface {
     estado:string;
     ticket: ticketInterface;
     ticketEstatus: any;
-    fecha:any
+    ticketEstatusId: any;
+    fechaCrea:any
   }
 
   export interface ticketComentariosInterface {

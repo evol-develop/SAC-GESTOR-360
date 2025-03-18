@@ -18,5 +18,6 @@ export enum TiposAutorizacion {
     'ModificarPermisos' = 'Modificar Permisos',
     'ModificarAutorizaciones' = 'Modificar Autorizaciones',
     'EliminarRoles' = 'Eliminar Roles',
-    'EliminarDocumentos' = 'Eliminar Documentos'
+    'EliminarDocumentos' = 'Eliminar Documentos',
+    'CambiarEtapa'= 'Cambiar Etapa'
 }

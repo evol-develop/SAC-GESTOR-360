@@ -1,7 +1,7 @@
 export enum estatus {
-    GENERADO = 1,
-    ASIGANDO = 2,
-    REVISADO = 3,
-    CERRADO = 4,
+    GENERADO = 0,
+    ASIGNADO = 1,
+    REVISADO = 2,
+    CERRADO = 3,
   }
   

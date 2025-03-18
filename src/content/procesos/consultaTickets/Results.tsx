@@ -12,17 +12,21 @@ import { DataTableColumnHeader } from "@/config/catalogoGenerico/data-table-colu
 import { usePage } from "@/hooks/usePage";
 import {createSlot,deleteSlot, setIsLoading,setIsOpenModal,setDataModal} from "@/store/slices/page";
 import { useNavigate } from 'react-router';
+import { useAuth } from "@/hooks/useAuth";
 
 export const getEtapaLabel = (etapa: number): string => {return estatus[etapa] || "Desconocido"; };
+
 export const Results = () => {
   const navigate = useNavigate();
   const { dispatch } = usePage();
   const data =useAppSelector((state: RootState) => state.page.slots.TICKETS) || [];
+  const { authState: { user },logout,} = useAuth();
 
   const createSlots =(e:any)=>{
     dispatch(createSlot({ ticketId: e.ticketId }));
     dispatch(createSlot({ clienteId: e.clienteId }));
-
+    dispatch(createSlot({ userId: e.ticket.userId }));
+    dispatch(createSlot({ etapaActual: e.ticketEstatusId }));
   }
 
   const abrirTicket = (e: any) => {
@@ -35,7 +39,6 @@ export const Results = () => {
       id: "ticket.id",
       accessorKey: "ticket.id",
       header: "Folio #",
-    
     },
     {
       id: "cliente.nombre",
@@ -57,6 +60,19 @@ export const Results = () => {
       },
     },
     {
+      id: "ticket.fechaCrea",
+      accessorKey: "ticket.fechaCrea",
+      header: "Fecha solicitud",
+      cell: ({ row }) =>
+        row.original.ticket.fechaCrea
+          ? new Date(row.original.ticket.fechaCrea).toLocaleDateString("es-MX", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            })
+          : "",
+    },
+    {
       id: "ticket.titulo",
       accessorKey: "ticket.titulo",
       header: "Título",
@@ -65,7 +81,7 @@ export const Results = () => {
       id: "ticketEstatus.nombre",
       accessorKey: "ticketEstatus.nombre",
       header: "Estatus",
-    },
+    },    
     {
       id: "ticket.servicio.descripcion",
       accessorKey: "ticket.servicio.descripcion",
@@ -104,17 +120,15 @@ export const Results = () => {
     {
       header: "Acciones",
       cell: ({ row }) => {
-        const { ticketEstatus } = row.original;
-        
-        return ticketEstatus.id === 0 ? null : (
-          <>
-            <Acciones
-              item={row.original}
-              openButton={true}
-              handleConfirmOpen={(e) => abrirTicket(e)}
-              viewButton={true}
-              handleConfirmView={(e) => createSlots(e)} />
-          </>
+      
+        return (
+          <Acciones
+            item={row.original}
+            openButton={true}
+            handleConfirmOpen={(e) => abrirTicket(e)}
+            viewButton={ user?.userRoll != "Cliente" ? true:false }
+            handleConfirmView={(e) => createSlots(e)}
+          />
         );
       },
     }
@@ -126,7 +140,7 @@ export const Results = () => {
         PAGE_SLOT={PAGE_SLOT}
         data={data}
         columns={columns}
-        filtro="cliente"
+        filtro="cliente.nombre"
       />
       
     </>

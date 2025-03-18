@@ -111,6 +111,8 @@ export const OperacionesFormulario = () => {
       item
     );
 
+    if (response.data.isSuccess) await createUser(valores.correo);
+    
     return response.data;
   };
 

@@ -15,7 +15,7 @@ export async function Autorizar(onConfirm: () => void, id: string) {
       return onConfirm();
     }
 
-    if (respuesta.data === "true") {
+    if (String(respuesta.data) === "true") {
       const result = await Swal.fire({
         title: "Confirmar Autorización",
         html: '<input type="password" id="password" class="swal2-input" placeholder="Contraseña...">',
@@ -67,6 +67,7 @@ export async function Autorizar(onConfirm: () => void, id: string) {
         confirmButtonColor: "#3085d6",
       });
     }
+
   } catch (error) {
     console.error(error);
     await Swal.fire({

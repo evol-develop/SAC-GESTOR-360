@@ -6,13 +6,13 @@ import { Card,CardContent, CardHeader} from "@/components/ui/card";
 import Archivos from '@/components/Archivos';
 const MostrarTicket = () => {
   const { clienteId, ticketId,movimientoId } = useParams();
-  console.log(clienteId,ticketId,movimientoId)
+  //console.log(clienteId,ticketId,movimientoId)
   const navigate = useNavigate();
 
-  const abrirTicket = () => {
-    let url =`/site/procesos/consultaTickets`;
-    navigate(url);
-  };
+  // const abrirTicket = () => {
+  //   let url =`/site/procesos/consultaTickets`;
+  //   navigate(url);
+  // };
  
   
   return (
@@ -29,13 +29,13 @@ const MostrarTicket = () => {
     </a>
 
     <h5 className="flex-grow font-bold tracking-tight text-center">
-      Ticket {ticketId}
+      Ticket {" "} #{ticketId}
     </h5>
   </CardHeader> 
     <CardContent>
 
     {movimientoId && ticketId && clienteId  && (
-      <Archivos showComentario={false} movimientoId={parseInt(movimientoId)} ticketId={parseInt(ticketId)} clienteId={parseInt(clienteId)} comentarioId={null} />)}
+      <Archivos showComentario={false} movimientoId={null} ticketId={parseInt(ticketId)} clienteId={parseInt(clienteId)} comentarioId={null} />)}
 
     </CardContent>  
   </Card>

@@ -10,6 +10,8 @@ import {
   setIsOpenModal,
   setModalSize,
   updateItemSlot,
+  deleteItemSlot,
+  deleteSlot
 } from "@/store/slices/page";
 
 interface Props {
@@ -19,16 +21,18 @@ interface Props {
 
 export const Modal = ({  titulo, Content }: Props) => {
     const { dispatch } = usePage();
-    const open = useAppSelector((state: RootState) => state.page.isOpenModal);
+    const open = useAppSelector((state: RootState) => state.page.slots.openModal);
     const globalState = useAppSelector((state: RootState) => state.page.slots);
     const dataModal = useAppSelector((state: RootState) => state.page.dataModal);
 
 
     const handleCreateItemClose = () => {
-      dispatch(setIsEditing(false));
-      dispatch(setDataModal({}));
-      dispatch(setIsOpenModal(false));
-      dispatch(setModalSize("lg"));
+      // dispatch(setIsEditing(false));
+      // dispatch(setDataModal({}));
+      // dispatch(setIsOpenModal(false));
+      // dispatch(setModalSize("lg"));
+
+      dispatch(deleteSlot("openModal"));
     };
 
   return (
@@ -38,7 +42,7 @@ export const Modal = ({  titulo, Content }: Props) => {
         if (!isOpen) handleCreateItemClose();
       }}
     >
-      <DialogContent className="w-full max-w-[70vw] min-h-[50vh] max-h-[90vh] overflow-auto">
+      <DialogContent className=" min-h-[50vh] max-h-[90vh] overflow-auto">
         <DialogHeader>
           <DialogTitle>{titulo}</DialogTitle>
           <DialogDescription />
