@@ -1,68 +1,79 @@
-import { AuthState } from "@/contexts/Auth/AuthContext";
-import { EmpresaInterface } from "@/interfaces/empresaInterface";
-
-type authUser = {
-  accessToken: string;
-  activo: boolean;
-  apellido: string;
-  avatar: string | null;
-  email: string;
-  empresa: EmpresaInterface | null;
-  fullName: string;
-  id: string;
-  nombre: string;
-  role: string;
-  telefono: string | null;
-  userRoll: string;
-  username: string;
-};
+import { AuthState, authUser } from "@/contexts/Auth/types";
 
 export type AuthAction =
-  | { type: "LOGIN"; payload: { user: authUser } }
-  | { type: "LOGIN_ERROR"; payload: { error: string } }
+  | { type: "LOGIN_START" }
+  | { type: "AUTH_LOADING" }
+  | { type: "LOGIN"; payload: { user: authUser; is2FAEnabled?: boolean } }
   | { type: "LOGOUT" }
   | {
       type: "INITIALIZE";
-      payload: { isAuthenticated: boolean; user: authUser | undefined };
+      payload: {
+        isAuthenticated: boolean;
+        user?: authUser;
+        is2FAEnabled?: boolean;
+      };
     }
-  | { type: "ERROR"; payload: { error: string } };
+  | { type: "UPDATE_USER"; payload: { user: authUser; is2FAEnabled?: boolean } }
+  | { type: "ERROR" | "LOGIN_ERROR"; payload: { error: string } };
 
 export const authReducer = (
   state: AuthState,
   action: AuthAction
 ): AuthState => {
   switch (action.type) {
+    case "LOGIN_START":
+    case "AUTH_LOADING":
+      return {
+        ...state,
+        isLoading: true,
+        error: undefined,
+      };
+
     case "LOGIN":
       return {
         ...state,
         isAuthenticated: true,
+        isLoading: false,
         user: action.payload.user,
+        is2FAEnabled: action.payload.is2FAEnabled || false,
         error: undefined,
       };
+
     case "LOGOUT":
       return {
         ...state,
         isAuthenticated: false,
         user: undefined,
+        is2FAEnabled: false,
         error: undefined,
       };
+
+    case "INITIALIZE":
+      return {
+        ...state,
+        ...action.payload,
+        isInitialized: true,
+        is2FAEnabled: action.payload.is2FAEnabled || false,
+        error: undefined,
+      };
+
+    case "UPDATE_USER":
+      return {
+        ...state,
+        user: action.payload.user,
+        is2FAEnabled: action.payload.is2FAEnabled || state.is2FAEnabled,
+        error: undefined,
+      };
+
+    case "ERROR":
     case "LOGIN_ERROR":
-    case "ERROR": // Consolida el manejo de errores
       return {
         ...state,
         isAuthenticated: false,
+        isLoading: false,
         error: action.payload.error,
       };
-    case "INITIALIZE": {
-      const { isAuthenticated, user } = action.payload;
-      return {
-        ...state,
-        isAuthenticated,
-        isInitialized: true,
-        user,
-        error: undefined,
-      };
-    }
+
     default:
       return state;
   }

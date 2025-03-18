@@ -5,7 +5,7 @@ import NotificationContext, {
   Task,
 } from "@/contexts/Notifications";
 import { Badge } from "@/components/ui/badge";
-import { AuthState } from "@/contexts/Auth/AuthContext";
+import { AuthState } from "@/contexts/Auth/types";
 
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
@@ -29,10 +29,10 @@ export const unreadNotificationsCount = (
     (notification) =>
       (notification.userId === auth.user?.id && !notification.isRead) ||
       (notification.userId === "all" &&
-        new Date(notification.createdAt) >
+        new Date(notification.createdAt || "") >
           new Date(new Date().setHours(0, 0, 0, 0))) ||
       (notification.groupIds?.includes(auth.user?.id || "") &&
-        new Date(notification.createdAt) >
+        new Date(notification.createdAt || "") >
           new Date(new Date().setHours(0, 0, 0, 0)))
   );
 
@@ -52,10 +52,10 @@ export const notificationsAndTasksCount = (
     (notification) =>
       (notification.userId === auth.user?.id && !notification.isRead) ||
       (notification.userId === "all" &&
-        new Date(notification.createdAt) >
+        new Date(notification.createdAt || "") >
           new Date(new Date().setHours(0, 0, 0, 0))) ||
       (notification.groupIds?.includes(auth.user?.id || "") &&
-        new Date(notification.createdAt) >
+        new Date(notification.createdAt || "") >
           new Date(new Date().setHours(0, 0, 0, 0)))
   );
 
@@ -85,11 +85,11 @@ export const isNotificationRead = (
   const isGroupNotification =
     notification.groupIds &&
     notification.groupIds?.includes(userId) &&
-    new Date(notification.createdAt) >
+    new Date(notification.createdAt || "") >
       new Date(new Date().setHours(0, 0, 0, 0));
   const isGlobalToday =
     notification.userId === "all" &&
-    new Date(notification.createdAt) >
+    new Date(notification.createdAt || "") >
       new Date(new Date().setHours(0, 0, 0, 0));
 
   return isGlobalToday || isGroupNotification ? false : notification.isRead;

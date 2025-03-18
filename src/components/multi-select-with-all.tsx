@@ -95,14 +95,14 @@ export const MultiSelectWithAll = ({
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="justify-between w-full text-xs sm:text-sm"
+          className="sm:text-sm justify-between w-full text-xs"
         >
           {value.length > 0
             ? value[0] === "all"
               ? "Todos seleccionados"
               : `${value.length} seleccionados`
             : "Seleccionar"}
-          <ChevronsUpDown className="w-4 h-4 ml-2 opacity-50" />
+          <ChevronsUpDown className="ml-2 w-4 h-4 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="sm:text-sm w-[200px] text-xs">
@@ -117,15 +117,19 @@ export const MultiSelectWithAll = ({
             key={item.value}
             checked={value.includes(item.value)}
             onCheckedChange={() => handleSelect(item.value)}
-            className="flex items-center justify-between"
+            className="flex justify-between items-center"
           >
-            <UserAvatar
-              withTooltip
-              userId={item.value}
-              className="size-6"
-              rounded="rounded-full"
-            />
-            {item.label}
+            <div className="flex gap-1 items-center">
+              <UserAvatar
+                withTooltip
+                userId={item.value}
+                className="size-6"
+                rounded="rounded-full"
+              />
+              <span className="text-nowrap truncate max-w-[15ch]">
+                {item.label}
+              </span>
+            </div>
           </DropdownMenuCheckboxItem>
         ))}
       </DropdownMenuContent>

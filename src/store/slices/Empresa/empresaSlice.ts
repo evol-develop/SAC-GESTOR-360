@@ -1,5 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { EmpresaInterface } from "src/interfaces/empresaInterface";
+import { createSlice } from "@reduxjs/toolkit";
 
 export interface StatePayload {
   state: string;
@@ -34,10 +33,10 @@ export const empresaSlice = createSlice({
   name: "empresa",
   initialState,
   reducers: {
-    createSlotEmpresa: (state, action: PayloadAction<EmpresaSlotState>) => {
+    createSlotEmpresa: (state, action) => {
       state.slots = { ...state.slots, ...action.payload };
     },
-    setInfoEmpresa: (state, action: PayloadAction<EmpresaInterface>) => {
+    setInfoEmpresa: (state, action) => {
       state.id = action.payload.id;
       state.nombre = action.payload.nombre;
       state.nombreCorto = action.payload.nombreCorto;

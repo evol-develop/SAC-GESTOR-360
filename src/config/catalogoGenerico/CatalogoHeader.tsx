@@ -1,12 +1,27 @@
 import { toast } from "sonner";
 import { LuPlus } from "react-icons/lu";
 import { SubmitHandler } from "react-hook-form";
-import {addItemSlot, createSlot,setDataModal,setIsEditing,setIsOpenModal,setModalSize,updateItemSlot,} from "@/store/slices/page";
-import {Dialog,DialogContent,DialogDescription,DialogHeader,DialogTitle,DialogTrigger,} from "@/components/ui/dialog";
+
+import {
+  addItemSlot,
+  createSlot,
+  setDataModal,
+  setIsEditing,
+  setIsOpenModal,
+  setModalSize,
+  updateItemSlot,
+} from "@/store/slices/page";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { usePage } from "@/hooks/usePage";
 import { RootState } from "@/store/store";
-import { H3, P } from "@/components/typography";
 import { Button } from "@/components/ui/button";
 import { useAppSelector } from "@/hooks/storeHooks";
 import { ResponseInterface } from "@/interfaces/responseInterface";
@@ -15,11 +30,11 @@ interface Props {
   PAGE_SLOT: string;
   createItemCatalogo: (
     values: any,
-    idEmpresa: string | number
+    idEmpresa: number
   ) => Promise<ResponseInterface>;
   UpdateItemCatalogo: (
     values: any,
-    idEmpresa: string | number
+    idEmpresa: number
   ) => Promise<ResponseInterface>;
   titulos: {
     titulo: string;
@@ -35,8 +50,8 @@ interface Props {
     ...props
   }: {
     dataModal: any;
-    onSubmit: any;
-    handleCreateItemClose: any;
+    onSubmit: SubmitHandler<any>;
+    handleCreateItemClose: () => void;
   }) => JSX.Element;
   showCreateButton?: boolean;
 }
@@ -73,7 +88,7 @@ export const CatalogoHeader = ({
       if (dataModal.id === undefined) {
         itemResponse = (await createItemCatalogo(
           { values, globalState },
-          idEmpresa
+          idEmpresa as number
         )) as ResponseInterface;
 
         if (itemResponse.isSuccess) {
@@ -84,7 +99,7 @@ export const CatalogoHeader = ({
       } else {
         itemResponse = (await UpdateItemCatalogo(
           { values, dataModal, globalState },
-          idEmpresa
+          idEmpresa as number
         )) as ResponseInterface;
         if (itemResponse.isSuccess) {
           dispatch(
@@ -96,9 +111,9 @@ export const CatalogoHeader = ({
       const message = itemResponse.message;
       const isSuccess = itemResponse.isSuccess;
       handleCreateItemSuccess(isSuccess, message);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      handleCreateItemSuccess(false, err.message);
+      if (err instanceof Error) handleCreateItemSuccess(false, err.message);
     }
   };
 
@@ -114,36 +129,35 @@ export const CatalogoHeader = ({
   };
 
   return (
-    <div className="container flex flex-col items-center justify-between mx-auto mb-4 sm:flex-row">
+    <div className="sm:flex-row container flex flex-col justify-between items-center mx-auto mb-4">
       <div>
         <h2 className="text-2xl font-bold tracking-tight">{titulos.titulo}</h2>
         <p className="text-muted-foreground">{titulos.descripcion}</p>
       </div>
       <div>
-       
+        {showCreateButton && (
           <Dialog
             open={open}
             onOpenChange={(open) => !open && handleCreateItemClose()}
           >
             <DialogTrigger asChild>
-            {showCreateButton && (
               <Button
                 onClick={handleCreateItemOpen}
                 size="sm"
                 type="button"
-                className="mt-4 sm:mt-0"
+                className="sm:mt-0 mt-4"
               >
                 <LuPlus />
                 {"Crear " + titulos.nombreItem}
-              </Button> )}
+              </Button>
             </DialogTrigger>
-            <DialogContent className="w-full max-w-[70vw] min-h-[50vh]">
+            <DialogContent className="w-fit max-w-7xl">
               <DialogHeader>
                 <DialogTitle>
                   {titulos.tituloModal === undefined ||
                   titulos.tituloModal === ""
                     ? dataModal.id === undefined
-                      ? "Agregar nueva/o " + titulos.nombreItem
+                      ? "Agregar " + titulos.nombreItem
                       : "Editar " + titulos.nombreItem
                     : titulos.tituloModal}
                 </DialogTitle>
@@ -151,8 +165,8 @@ export const CatalogoHeader = ({
                   {titulos.descripcionModal === undefined ||
                   titulos.descripcionModal === ""
                     ? dataModal.id === undefined
-                      ? `Llena los campos para crear una nueva/o ${titulos.nombreItem}.`
-                      : `Llena los campos para editar la/el ${titulos.nombreItem}.`
+                      ? `Llena los campos para crear ${titulos.nombreItem}.`
+                      : `Llena los campos para editar ${titulos.nombreItem}.`
                     : titulos.descripcionModal}
                 </DialogDescription>
               </DialogHeader>
@@ -164,7 +178,7 @@ export const CatalogoHeader = ({
               />
             </DialogContent>
           </Dialog>
-       
+        )}
       </div>
     </div>
   );

@@ -1,51 +1,22 @@
+import { toast } from "sonner";
 import { useNavigate } from "react-router";
-import { createContext, useEffect, useReducer } from "react";
+import { createContext, useEffect, useReducer, useCallback } from "react";
 
-import axios from "@/lib/utils/axios";
 import { usePage } from "@/hooks/usePage";
 import { authReducer } from "./AuthReducer";
-import { setInfoEmpresa } from "@/store/slices/Empresa";
-import { firebaseAuth } from "@/firebase/firebase-config";
+import { AuthService } from "@/services/auth.service";
+import { AuthContextInterface, AuthState } from "./types";
 import { createSlotPermisos } from "@/store/slices/Permisos";
-import { EmpresaInterface } from "@/interfaces/empresaInterface";
-import { ResponseInterface } from "@/interfaces/responseInterface";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-
-type authUser = {
-  accessToken: string;
-  activo: boolean;
-  apellido: string;
-  avatar: string | null;
-  email: string;
-  empresa: EmpresaInterface | null;
-  fullName: string;
-  id: string;
-  nombre: string;
-  role: string;
-  telefono: string | null;
-  userRoll: string;
-  username: string;
-};
-
-export interface AuthState {
-  isAuthenticated: boolean;
-  isInitialized: boolean;
-  user?: authUser;
-  error?: string;
-}
+import { setInfoEmpresa } from "@/store/slices/Empresa";
 
 const initialAuthState: AuthState = {
   isAuthenticated: false,
   isInitialized: false,
+  isLoading: false,
+  user: undefined,
+  error: undefined,
+  is2FAEnabled: false,
 };
-
-interface AuthContextInterface {
-  user: authUser | undefined;
-  idEmpresa: string | number;
-  authState: AuthState;
-  login: (userName: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-}
 
 const AuthContext = createContext<AuthContextInterface | null>(null);
 
@@ -54,143 +25,182 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const { dispatch: dispatchPermisos, dispatch: dispatchEmpresa } = usePage();
 
-  const updateLocalStorage = (state: AuthState) => {
-    localStorage.setItem("AuthState", JSON.stringify(state));
-  };
-
-  const initializeAuth = async () => {
+  // Manejador de cierre de sesión por inactividad
+  const handleInactivityLogout = useCallback(async () => {
     try {
-      const savedState = JSON.parse(
-        localStorage.getItem("AuthState") || "{}"
-      ) as AuthState;
+      await AuthService.logout();
+      dispatch({ type: "LOGOUT" });
+      toast.warning("Sesión cerrada por inactividad");
+      navigate("/login");
+    } catch (error) {
+      console.error("Error en logout por inactividad:", error);
+    }
+  }, [navigate]);
 
-      if (!savedState?.user || !savedState?.isAuthenticated) {
-        throw new Error("No hay usuario autenticado");
-      }
-
-      const { user } = savedState;
-      const userResponse = await axios.get(`/api/account/getuserbyemail`, {
-        params: { email: user.email },
-      });
-
-      const permisosResponse = await axios.get(
-        `/api/roles/getpermisosbyusuario/${user.email}`
-      );
-
-      const updatedUser: authUser = {
-        ...user,
-        ...userResponse.data.result,
-      };
+  const initializeAuth = useCallback(async () => {
+    try {
+      const { user, permisos } = await AuthService.validateSession();
 
       dispatch({
         type: "INITIALIZE",
-        payload: { isAuthenticated: true, user: updatedUser },
+        payload: {
+          isAuthenticated: true,
+          user,
+          is2FAEnabled: user.is2FAEnabled || false,
+        },
       });
 
-      dispatchPermisos(
-        createSlotPermisos({ PERMISOS: permisosResponse.data.result })
-      );
-      dispatchEmpresa(setInfoEmpresa(updatedUser.empresa as EmpresaInterface));
-      updateLocalStorage({
-        isAuthenticated: true,
-        user: updatedUser,
-        isInitialized: true,
-      });
-    } catch {
+      dispatchPermisos(createSlotPermisos({ PERMISOS: permisos }));
+      dispatchEmpresa(setInfoEmpresa(user.empresa));
+
+      // Iniciar temporizador de inactividad
+      AuthService.startInactivityTimer(handleInactivityLogout);
+    } catch (error) {
+      if (error instanceof Error && error.message === "No hay sesión activa") {
+        console.warn(error.message);
+      } else {
+        console.error(error);
+      }
       dispatch({
         type: "INITIALIZE",
         payload: { isAuthenticated: false, user: undefined },
       });
-      localStorage.removeItem("AuthState");
     }
-  };
+  }, [dispatchPermisos, dispatchEmpresa, handleInactivityLogout]);
 
   useEffect(() => {
+    // Configurar interceptor para renovar tokens automáticamente
+    AuthService.setupTokenRefreshInterceptor();
+
     initializeAuth();
-  }, []);
+
+    // Limpiar temporizador al desmontar
+    return () => {
+      AuthService.stopInactivityTimer();
+    };
+  }, [initializeAuth]);
 
   const login = async (userName: string, password: string) => {
     try {
-      const response = await axios.post<ResponseInterface>(
-        "/api/account/login",
-        { userName, password }
-      );
+      dispatch({ type: "LOGIN_START" });
 
-      console.log(response.data);
+      const { user, permisos } = await AuthService.login(userName, password);
 
-      if (!response.data || !response.data.isSuccess) {
-        throw new Error(response.data?.message || "Error desconocido");
-      }
-
-      const { user, accessToken } = response.data.result;
-
-      if (!user || !accessToken) {
-        throw new Error("Error al iniciar sesión");
-      }
-
-      await signInWithEmailAndPassword(firebaseAuth, userName, userName);
-
-      axios.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
-      const permisosResponse = await axios.get(
-        `/api/roles/getpermisosbyusuario/${user.userName}`,
-        {
-          headers: { "Content-Type": "application/text" },
-        }
-      );
-
-      const userAuthenticated: authUser = {
-        accessToken,
-        activo: user.activo,
-        apellido: user.apellido,
-        avatar: user.avatar || "",
-        email: user.userName,
-        empresa: user.empresa,
-        fullName: user.fullName,
-        id: user.id,
-        nombre: user.nombre,
-        role: user.userRol,
-        telefono: user.telefono,
-        userRoll: user.userRol,
-        username: user.username,
-      };
-
-      dispatch({ type: "LOGIN", payload: { user: userAuthenticated } });
-      updateLocalStorage({
-        isAuthenticated: true,
-        user: userAuthenticated,
-        isInitialized: true,
+      dispatch({
+        type: "LOGIN",
+        payload: {
+          user,
+          is2FAEnabled: user.is2FAEnabled || false,
+        },
       });
 
-      dispatchPermisos(
-        createSlotPermisos({ PERMISOS: permisosResponse.data.result })
-      );
-      dispatchEmpresa(
-        setInfoEmpresa(userAuthenticated.empresa as EmpresaInterface)
-      );
+      dispatchPermisos(createSlotPermisos({ PERMISOS: permisos }));
+      dispatchEmpresa(setInfoEmpresa(user.empresa));
 
-      navigate("/site");
+      // Iniciar temporizador de inactividad
+      AuthService.startInactivityTimer(handleInactivityLogout);
+
+      if (user && permisos && user.empresa) {
+        navigate("/site");
+      } else {
+        throw new Error("No se pudieron cargar todos los datos necesarios");
+      }
     } catch (error) {
-      console.error(error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Error desconocido al iniciar sesión";
+
       dispatch({
         type: "LOGIN_ERROR",
-        payload: { error: "Error al iniciar sesión" },
+        payload: { error: errorMessage },
       });
+
+      // Mostrar mensaje de error
+      toast.error(errorMessage);
     }
   };
 
   const logout = async () => {
     try {
+      // Limpiar redux
+      await AuthService.logout();
+      dispatchPermisos(createSlotPermisos({ PERMISOS: [] }));
+      dispatchEmpresa(setInfoEmpresa({}));
       dispatch({ type: "LOGOUT" });
-      await signOut(firebaseAuth);
-      localStorage.removeItem("AuthState");
-      delete axios.defaults.headers.common.Authorization;
-      navigate("/login");
+      navigate("/");
     } catch (error) {
-      console.error(error);
+      console.error("Error en logout:", error);
       dispatch({
         type: "ERROR",
         payload: { error: "Error al cerrar sesión" },
       });
+      toast.error("Error al cerrar sesión");
+    }
+  };
+
+  // Configurar autenticación de dos factores
+  const setup2FA = async (phoneNumber: string) => {
+    try {
+      dispatch({ type: "AUTH_LOADING" });
+      const verificationId = await AuthService.setup2FA(phoneNumber);
+      return verificationId;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Error al configurar autenticación de dos factores";
+
+      dispatch({
+        type: "ERROR",
+        payload: { error: errorMessage },
+      });
+
+      toast.error(errorMessage);
+      throw error;
+    }
+  };
+
+  // Completar configuración de 2FA
+  const complete2FASetup = async (
+    verificationId: string,
+    verificationCode: string
+  ) => {
+    try {
+      dispatch({ type: "AUTH_LOADING" });
+      const success = await AuthService.complete2FASetup(
+        verificationId,
+        verificationCode
+      );
+
+      if (success && authState.user) {
+        const updatedUser = { ...authState.user, is2FAEnabled: true };
+        AuthService.setUser(updatedUser);
+
+        dispatch({
+          type: "UPDATE_USER",
+          payload: { user: updatedUser, is2FAEnabled: true },
+        });
+
+        toast.success(
+          "Autenticación de dos factores configurada correctamente"
+        );
+        return true;
+      }
+      return false;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Error al completar la configuración de autenticación de dos factores";
+
+      dispatch({
+        type: "ERROR",
+        payload: { error: errorMessage },
+      });
+
+      toast.error(errorMessage);
+      throw error;
     }
   };
 
@@ -198,10 +208,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     <AuthContext.Provider
       value={{
         user: authState.user,
-        idEmpresa: authState.user?.empresa?.id || "",
+        idEmpresa: authState.user?.empresa.id,
         authState,
         login,
         logout,
+        setup2FA,
+        complete2FASetup,
+        is2FAEnabled: authState.is2FAEnabled,
       }}
     >
       {children}

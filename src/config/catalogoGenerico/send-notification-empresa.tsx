@@ -16,7 +16,7 @@ import {
 import { Form } from "@/components/ui/form";
 import FormInput from "@/components/form-base";
 import { Button } from "@/components/ui/button";
-import FormTextarea from "@/components/form-textarea";
+import FormRichText from "@/components/form-rich-text";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ComboboxForm } from "@/components/custom-combobox";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -70,12 +70,7 @@ const MessageEmpresa = () => {
   return (
     <Dialog open={open} onOpenChange={(value) => setOpen(value)}>
       <DialogTrigger asChild>
-        <Button
-          variant="secondary"
-          size="sm"
-          className="hover:bg-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600 bg-blue-400"
-          onClick={() => setOpen(true)}
-        >
+        <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
           Enviar mensaje
           <LuMailPlus />
         </Button>
@@ -91,7 +86,7 @@ const MessageEmpresa = () => {
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
-              <div className="grid w-full grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 w-full">
                 <FormInput
                   form={form}
                   name="title"
@@ -106,7 +101,7 @@ const MessageEmpresa = () => {
                   placeholder="Selecciona una opción"
                 />
               </div>
-              <FormTextarea
+              <FormRichText
                 form={form}
                 name="message"
                 label="Mensaje"

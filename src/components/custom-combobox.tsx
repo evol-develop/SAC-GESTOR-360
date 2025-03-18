@@ -2,13 +2,20 @@ import { UseFormReturn } from "react-hook-form";
 import { LuChevronsUpDown, LuLoaderCircle } from "react-icons/lu";
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { priorities } from "@/contexts/Notifications/constants";
-import {FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import axios from "@/lib/utils/axios";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { EvolRolInterface } from "@/interfaces/userInterface";
 import { ResponseInterface, userResult } from "@/interfaces/responseInterface";
+import { EmpresaInterface } from "@/interfaces/empresaInterface";
 
 type Props = {
   tipo:
@@ -37,9 +44,13 @@ export const ComboboxForm = ({
   form,
   placeholder = "Selecciona una opción...",
 }: Props) => {
-  const [data, setData] = useState<{
-    disabled?: boolean; label: string; value: string 
-}[]>([]);
+  const [data, setData] = useState<
+    {
+      disabled?: boolean;
+      label: string;
+      value: string;
+    }[]
+  >([]);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
@@ -89,13 +100,13 @@ export const ComboboxForm = ({
               `/api/roles/getroles`
             );
 
-            const data: dataProps[] = (response.data.result as EvolRolInterface[]).map(
-              (item) => ({
-                label: item.nombre,
-                value: item.id.toString(),
-                disabled: item.nombre === "Cliente", // Deshabilitar la opción "Cliente"
-              })
-            );
+            const data: dataProps[] = (
+              response.data.result as EvolRolInterface[]
+            ).map((item) => ({
+              label: item.nombre,
+              value: item.id.toString(),
+              disabled: item.nombre === "Cliente", // Deshabilitar la opción "Cliente"
+            }));
             setData(data);
           } catch (err) {
             console.error(err);
@@ -121,20 +132,41 @@ export const ComboboxForm = ({
           }
           break;
         case "PRIORIDAD":
-        try {
-          setLoading(true);
-          const data: dataProps[] = priorities.map((item) => ({
-            label: `${item.label}`,
-            value: `${item.value}`,
-          }));
+          try {
+            setLoading(true);
+            const data: dataProps[] = priorities.map((item) => ({
+              label: `${item.label}`,
+              value: `${item.value}`,
+            }));
 
-          setData(data);
-        } catch (err) {
-          console.error(err);
-        } finally {
-          setLoading(false);
-        }
-        break;
+            setData(data);
+          } catch (err) {
+            console.error(err);
+          } finally {
+            setLoading(false);
+          }
+          break;
+        case "EMPRESAS":
+          try {
+            setLoading(true);
+            const response = await axios.get<ResponseInterface>(
+              `/api/empresas/GetAllEmpresas`
+            );
+            const data: dataProps[] = (
+              response.data.result as EmpresaInterface[]
+            ).map((item) => ({
+              label: `${item.nombre}`,
+              value: `${item.id}`,
+            }));
+            if (response.data.result.length > 0) {
+              setData(data);
+            }
+          } catch (err) {
+            console.error(err);
+          } finally {
+            setLoading(false);
+          }
+          break;
       }
     };
     getData();
@@ -157,7 +189,7 @@ export const ComboboxForm = ({
       control={form.control}
       name={name}
       render={({ field }) => (
-        <FormItem className="flex flex-col">
+        <FormItem>
           <FormLabel>{label}</FormLabel>
           <div className="relative w-full">
             <FormControl>
@@ -178,36 +210,37 @@ export const ComboboxForm = ({
                     )?.label
                   : placeholder}
                 {!loading ? (
-                  <LuChevronsUpDown className="w-4 h-4 ml-2 opacity-50 shrink-0" />
+                  <LuChevronsUpDown className="shrink-0 ml-2 w-4 h-4 opacity-50" />
                 ) : (
-                  <LuLoaderCircle className="w-4 h-4 ml-2 shrink-0 animate-spin" />
+                  <LuLoaderCircle className="shrink-0 ml-2 w-4 h-4 animate-spin" />
                 )}
               </Button>
             </FormControl>
             {open && (
-              <div className="absolute z-50 w-full mt-1 border rounded shadow-md bg-primary-foreground">
+              <div className="bg-primary-foreground absolute z-50 mt-1 w-full rounded border shadow-md">
                 <Input
                   ref={inputRef}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Buscar..."
                 />
-               <ul ref={listRef} className="overflow-y-auto max-h-60">
-  {filteredOptions.map((option) => (
-    <li
-      key={option.value}
-      className={cn(
-        "cursor-pointer px-2 py-1 hover:bg-primary/25",
-        field.value === option.value && "bg-primary/50",
-        option.disabled && "text-gray-400 cursor-not-allowed" // Estilo visual para opciones deshabilitadas
-      )}
-      onClick={() => !option.disabled && handleSelect(option.value)} // Evitar selección si está deshabilitado
-    >
-      {option.label}
-    </li>
-  ))}
-</ul>
-
+                <ul ref={listRef} className="overflow-y-auto max-h-60">
+                  {filteredOptions.map((option) => (
+                    <li
+                      key={option.value}
+                      className={cn(
+                        "cursor-pointer px-2 py-1 hover:bg-primary/25",
+                        field.value === option.value && "bg-primary/50",
+                        option.disabled && "text-gray-400 cursor-not-allowed" // Estilo visual para opciones deshabilitadas
+                      )}
+                      onClick={() =>
+                        !option.disabled && handleSelect(option.value)
+                      } // Evitar selección si está deshabilitado
+                    >
+                      {option.label}
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
