@@ -130,7 +130,7 @@ export const CropImage = ({ form, name, setValue,onImageCropped, showPreview= tr
       <div className="flex flex-col gap-2 md:flex-row" style={{ height, width }}>
         <div
           {...getRootProps()}
-          className="flex items-center justify-center w-full p-4 text-center border border-dashed rounded-md cursor-pointer border-muted md:w-3/4"
+          className="flex items-center justify-center w-full p-4 text-center border rounded-sm cursor-pointer md:w-3/4"
         >
           <input {...getInputProps()} />
           <p className="text-sm text-muted-foreground">

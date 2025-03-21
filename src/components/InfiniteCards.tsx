@@ -16,6 +16,10 @@ import UserAvatar from "@/components/UserAvatar";
 import { Loading } from "@/components/Loading";
 import { useEffect } from "react";
 import Archivos from "./Archivos";
+import { Button } from "@/components/ui/button";
+import { CiCirclePlus } from "react-icons/ci";
+import SinComentarios from "./sinComentarios";
+import { useAuth } from "@/hooks/useAuth";
 
 interface CardData {
   title: string;
@@ -32,7 +36,9 @@ interface InfiniteCardsProps {
 const InfiniteCards: React.FC<InfiniteCardsProps> = ({ etapas }) => {
   //const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const isLoading = useAppSelector((state: RootState) => state.page.isLoading);
-  const comentarios = useAppSelector((state: RootState) => state.page.slots.COMENTARIOS as any);
+  const comentariosCliente = useAppSelector((state: RootState) => state.page.slots.COMENTARIOS_CLIENTE as any);
+  const comentariosAsignado = useAppSelector((state: RootState) => state.page.slots.COMENTARIOS_ASIGNADO as any);
+  const userId = useAppSelector((state: RootState) => state.page.slots.userId);
   const { dispatch } = usePage();
   const [comentarioId,setComentarioId]  = useState<number>(0);
   const ticketId = useAppSelector((state: RootState) => state.page.slots.ticketId as any);
@@ -40,7 +46,10 @@ const InfiniteCards: React.FC<InfiniteCardsProps> = ({ etapas }) => {
   const movimientoId = useAppSelector((state: RootState) => state.page.slots.movimientoId as any);
   const showArchivos = useAppSelector((state: RootState) => state.page.slots.SHOWARCHIVOS as boolean);
   const selectedIndex = useAppSelector((state: RootState) => state.page.slots.ETAPA);
+  const idUserCliente = useAppSelector((state: RootState) => state.page.slots.idUserCliente as any);
+  const { authState: { user },logout,} = useAuth();
   
+    
   const handleCardClick = (id:number, index: number ) => {
     dispatch(deleteSlot("COMENTARIOS"))
     dispatch(createSlot({ movimientoId: id }));
@@ -62,18 +71,23 @@ const InfiniteCards: React.FC<InfiniteCardsProps> = ({ etapas }) => {
           headers: { "Content-Type": "application/text" },
         }
       );
-     // console.log(response.data);
+      console.log(response.data);
+      
       if (response.data.isSuccess && Array.isArray(response.data.result)) {
       
         const comentarios = response.data.result.map((item:any) => ({
           fecha: item.fechaCrea,
           id: item.id,
-          usuarioCrea: item.usuarioCrea,
+          usuarioCrea: item.userId,
           comentario: item.comentario,
-          asunto: item.asunto
+          asunto: item.asunto,
+          dirigido_a: item.dirigido_a,
         }));
+        console.log(comentarios[0])
+        
 
-        dispatch(createSlot({ COMENTARIOS: comentarios }));
+        dispatch(createSlot({ COMENTARIOS_ASIGNADO: comentarios.filter((item: any) => item.dirigido_a === "ASIGNADO") })); // Filtrar comentarios asignados
+        dispatch(createSlot({ COMENTARIOS_CLIENTE: comentarios.filter((item: any) => item.dirigido_a === "CLIENTE") })); // Filtrar comentarios de clientes
       }
       
     } catch (err) {
@@ -112,10 +126,21 @@ const InfiniteCards: React.FC<InfiniteCardsProps> = ({ etapas }) => {
     };
   }, []);
     
+  function OpenModalComentario(item : any, userId : string, dirigido : string){
+   
+    dispatch(createSlot({"Dirigido": dirigido} ));
+    dispatch(createSlot({"Destinatario": userId} ));
+    // dispatch(createSlot({ ModalType: "Comentarios" }));
+    dispatch(setIsOpenModal(true));
+    dispatch(setDataModal(item));
+  }
+  // console.log(comentariosAsignado)
+  // console.log(comentariosAsignado.lenght)
+  
   return (
     <TooltipProvider>
       <div
-        className="relative w-full h-[420px] overflow-x-auto flex flex-wrap sm:flex-nowrap " // Ajusta según la altura de tu header
+        className="relative w-full h-[380px]  overflow-x-auto flex flex-wrap sm:flex-nowrap " // Ajusta según la altura de tu header
         style={{
           scrollbarWidth: "none",
           msOverflowStyle: "none",
@@ -166,21 +191,35 @@ const InfiniteCards: React.FC<InfiniteCardsProps> = ({ etapas }) => {
         })}
   
         {/* Contenedor de comentarios */}
-        <div className={`w-full sm:w-[calc(270dvh-500px)] `}>
+        <div className={`w-full  `}>
           <div className="text-gray-700">
             {!showArchivos ? (
               <section className={`relative flex flex-col h-full gap-4 sm:flex-wrap ${isSmallScreen ? "mt-36" : "mt-11"}`}>
-                <div className="flex flex-col w-full h-full min-h-[200px] max-h-full bg-background sm:max-h-none overflow-y-auto">
-                  <h1 className="font-bold text-center">COMENTARIOS</h1>
-                  {!isLoading ? (
-                    <div className="h-[calc(120dvh-350px)] sm:h-[calc(85dvh-300px)] overflow-auto">
-                      
-                      {comentarios && comentarios.map((step: ticketComentariosInterface, index: number) => {
+                <div >
+                 
+                 {/* {comentariosAsignado.lenght === undefined && comentariosCliente.lenght === undefined &&
+                 (
+                  <SinComentarios/>
+                 )} */}
+
+                 <section className="relative h-[calc(100dvh-252px)] sm:h-[calc(75dvh-200px)] flex flex-col sm:flex-row gap-4 ">
+                 <div
+                  className={`relative flex flex-col h-full border rounded-sm bg-background max-h-1/2 sm:max-h-none ${
+                    user?.userRoll !== "Cliente" ? "sm:w-1/2" : "w-full"
+                  }`}
+                >
+                      <div className="text-xs text-center"> {user?.userRoll !== "Cliente" ? (<>Cliente</>):(<>Comentarios</>)}</div>
+
+                      {!isLoading ? (
+                        <>{comentariosCliente && comentariosCliente.lenght && (<h1 className="text-xs font-bold text-center">COMENTARIOS</h1>)}
+                        <div className="h-[calc(120dvh-350px)] sm:h-[calc(85dvh-300px)] ">
+
+                        {comentariosCliente && comentariosCliente.map((step: ticketComentariosInterface, index: number) => {
                           const fechaValida = new Date(step.fecha);
                           const fechaFormateada = !isNaN(fechaValida.getTime())
                             ? format(fechaValida, "dd/MM/yyyy hh:mm:ss a", { locale: es })
                             : "Fecha inválida";
-  
+
                           return (
                             <motion.div
                               key={index}
@@ -191,15 +230,14 @@ const InfiniteCards: React.FC<InfiniteCardsProps> = ({ etapas }) => {
                             >
                               <Card className="max-w-full p-2 break-words border-l-4 shadow-md cursor-pointer rounded-xl border-primary">
                                 <CardContent className="flex gap-2 items-left">
-                                  <Circle className="w-6 h-4 text-gray-500" />
+                                  <Circle className="w-6 h-3 text-gray-500" />
                                   <div className="max-w-full overflow-hidden text-xs break-words">
                                     <h3 className="text-lg font-semibold text-primary">
                                       <UserAvatar
                                         withTooltip
                                         userId={step.usuarioCrea}
                                         className="size-6"
-                                        rounded="rounded-full"
-                                      />
+                                        rounded="rounded-full" />
                                     </h3>
                                     <p className="text-sm text-muted-foreground">{fechaFormateada}</p>
                                     <h5 className="break-words">{step.comentario}</h5>
@@ -210,13 +248,84 @@ const InfiniteCards: React.FC<InfiniteCardsProps> = ({ etapas }) => {
                           );
                         })}
 
-                        {comentarios && comentarios.length === 0 && (<>NO HAY COMENTARIOS </>)}
+                        {comentariosCliente && comentariosCliente.length === 0 && (<SinComentarios/>)}
+                        
+                      </div></>
+                    ) : (
+                      <Loading />
+                    )}
+                    
+                    <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4">
+                        <Button size="sm" className="text-xs " onClick={(e) => OpenModalComentario(e, idUserCliente, "CLIENTE")}>
+                        Responder
+                        </Button>
+                      </div>
+                  
                     </div>
+                    
+                    {user?.userRoll !== "Cliente" && (
+                    <div className="relative flex flex-col w-full h-full overflow-y-auto border rounded-sm bg-background sm:w-1/2 max-h-1/2 sm:max-h-none">
+                    <div className="text-xs text-center">Asignado</div>
+
+                    {!isLoading ? (
+                      <>{comentariosAsignado && comentariosAsignado.lenght && (<h1 className="text-xs font-bold text-center">COMENTARIOS</h1>)}
+                      <div className="h-[calc(120dvh-350px)] sm:h-[calc(85dvh-300px)] overflow-auto">
+
+                      {comentariosAsignado && comentariosAsignado.map((step: ticketComentariosInterface, index: number) => {
+                        const fechaValida = new Date(step.fecha);
+                        const fechaFormateada = !isNaN(fechaValida.getTime())
+                          ? format(fechaValida, "dd/MM/yyyy hh:mm:ss a", { locale: es })
+                          : "Fecha inválida";
+
+                        return (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.2 }}
+                            onClick={() => openComentario(step)}
+                          >
+                            <Card className="max-w-full p-2 break-words border-l-4 shadow-md cursor-pointer rounded-xl border-primary">
+                              <CardContent className="flex gap-2 items-left">
+                                <Circle className="w-6 h-4 text-gray-500" />
+                                <div className="max-w-full overflow-hidden text-xs break-words">
+                                  <h3 className="text-lg font-semibold text-primary">
+                                    <UserAvatar
+                                      withTooltip
+                                      userId={step.usuarioCrea}
+                                      className="size-6"
+                                      rounded="rounded-full" />
+                                  </h3>
+                                  <p className="text-sm text-muted-foreground">{fechaFormateada}</p>
+                                  <h5 className="break-words">{step.comentario}</h5>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        );
+                      })}
+
+                      {comentariosAsignado && comentariosAsignado.length === 0 && ( <SinComentarios/>)}
+                      
+                    </div></>
                   ) : (
                     <Loading />
                   )}
+          
+                    <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4">
+                      <Button size="sm" className="text-xs " onClick={(e) => OpenModalComentario(e, userId, "ASIGNADO")}>
+                      Responder
+                      </Button>
+                    </div>
+                    </div>
+                    )}
+                </section>
+                 
                 </div>
               </section>
+
+
+
             ) : (
               <>
                 {movimientoId && ticketId && clienteId && comentarioId && (

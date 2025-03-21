@@ -16,6 +16,9 @@ import UserAvatar from "@/components/UserAvatar";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+// Función para detectar etiquetas HTML
+const containsHtmlTags = (text: string) => /<\/?[a-z][\s\S]*>/i.test(text);
+
 const NotificationDetail = ({ notificationId }: { notificationId: string }) => {
   const { notifications, markAsRead } = useNotifications();
   const notification = notifications.find((n) => n.id === notificationId);
@@ -24,27 +27,43 @@ const NotificationDetail = ({ notificationId }: { notificationId: string }) => {
     return <p>Notificación no encontrada.</p>;
   }
 
+  const titleContainsHtml = containsHtmlTags(notification.title);
+
   return (
     <div className="flex flex-col flex-1">
       <Separator />
-      <div className="sm:flex-row sm:items-center flex flex-col p-4">
-        <div className="flex gap-4 items-start text-sm">
+      <div className="flex flex-col p-4 sm:flex-row sm:items-center">
+        <div className="flex items-start gap-4 text-sm">
           <UserAvatar
             userId={notification.senderId}
             rounded="rounded-full"
             withTooltip
           />
           <div className="grid gap-1">
-            <div className="font-semibold">{notification.title}</div>
-            <div className="text-primary/75 line-clamp-1 text-xs">
+            <div className="font-semibold">
+              {titleContainsHtml ? (
+                <span>
+                  
+                  <div
+                    // Renderiza el HTML detectado dentro del título
+                    dangerouslySetInnerHTML={{
+                      __html: notification.title,
+                    }}
+                  />
+                </span>
+              ) : (
+                notification.title
+              )}
+            </div>
+            <div className="text-xs text-primary/75 line-clamp-1">
               <Badge variant={getBadgeVariantFromLabel(notification.type)}>
                 {notification.type}
               </Badge>
             </div>
           </div>
         </div>
-        <div className="sm:ml-auto sm:mt-0 flex gap-2 items-center mt-1 ml-12">
-          <span className="text-muted-foreground text-xs">
+        <div className="flex items-center gap-2 mt-1 ml-12 sm:ml-auto sm:mt-0">
+          <span className="text-xs text-muted-foreground">
             {formatDistanceToNow(new Date(notification.createdAt as string), {
               addSuffix: true,
             })}

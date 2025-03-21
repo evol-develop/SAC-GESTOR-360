@@ -193,21 +193,20 @@ export const ComboboxForm = ({
                   placeholder="Buscar..."
                 />
                <ul ref={listRef} className="overflow-y-auto max-h-60">
-  {filteredOptions.map((option) => (
-    <li
-      key={option.value}
-      className={cn(
-        "cursor-pointer px-2 py-1 hover:bg-primary/25",
-        field.value === option.value && "bg-primary/50",
-        option.disabled && "text-gray-400 cursor-not-allowed" // Estilo visual para opciones deshabilitadas
-      )}
-      onClick={() => !option.disabled && handleSelect(option.value)} // Evitar selección si está deshabilitado
-    >
-      {option.label}
-    </li>
-  ))}
-</ul>
-
+                  {filteredOptions.map((option) => (
+                    <li
+                      key={option.value}
+                      className={cn(
+                        "cursor-pointer px-2 py-1 hover:bg-primary/25",
+                        field.value === option.value && "bg-primary/50",
+                        option.disabled && "text-gray-400 cursor-not-allowed" // Estilo visual para opciones deshabilitadas
+                      )}
+                      onClick={() => !option.disabled && handleSelect(option.value)} // Evitar selección si está deshabilitado
+                    >
+                      {option.label}
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>

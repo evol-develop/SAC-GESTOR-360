@@ -36,10 +36,11 @@ import { CardFooter } from "@/components/ui/card";
 import UserAvatar from "@/components/UserAvatar";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Notification } from "@/contexts/Notifications";
+import { useMemo } from "react";
 
 const validationSchema = z
   .object({
-    descripcion: z.string().max(120).min(1, "La descripción es un dato requerido"),
+    descripcion: z.string().max(1000).min(1, "La descripción es un dato requerido"),
     titulo: z.string().max(120).min(1, "El título es un dato requerido"),
     clienteId: z.number().int(),
     servicioId: z.number().int(),
@@ -171,8 +172,10 @@ export const Formulario = () => {
           "/api/tickets/create",
           valoresForm
         );
+
+        if(response.data.isSuccess){
         
-        toast.success(response.data.message);
+        //toast.success(response.data.message);
 
         generalForm.reset();
         setArchivosList([]);
@@ -182,11 +185,13 @@ export const Formulario = () => {
         console.log(response.data.result)
 
          const notification: Notification = {
-          title: "!Nuevo ticket asignado¡",
-          message: "Título: "+valores.titulo+" <br/>"+ 
-          "Link:  <a href='/site/procesos/consultaTickets/mostrarTicket/"+response.data.result.clienteId+
-          "/"+response.data.result.ticketId+"/"+response.data.result.id+"' style={{ textDecoration: 'underline', color: 'blue' }}>Ticket</a> ",
-          type:"",
+          title: "Se ha generado un nuevo ticket con el folio #"+response.data.result.id,
+          message: 
+          "<a href='/site/procesos/consultaTickets/mostrarTicket/"+response.data.result.clienteId+
+          "/"+response.data.result.ticketId+"/"+0+"/"+0+"' style={{ textDecoration: 'underline', color: 'blue' }}> Ver ticket</a>  <br/>"+
+          "<div  className='text-xs'><b>Asunto:</b> "+valores.titulo+" <br/>"+ 
+          "<b>Descripción:</b> "+valores.descripcion+" </div>",
+          type:"importante",
           groupIds:usuarios.map((item) => item.id),
           userId: valores.userId,
         };
@@ -199,7 +204,8 @@ export const Formulario = () => {
           console.error("Error al enviar la notificación", error);
         }
 
-        //toast.success("Ticket creado correctamente");
+        toast.success("Ticket creado correctamente");
+      }
 
         return response.data;
 
@@ -243,11 +249,11 @@ export const Formulario = () => {
 
     //console.log(servicioSeleccionado)
   
-    const usuarios = servicioSeleccionado?.usuarios;
+    //const usuarios = servicioSeleccionado?.usuarios;
 
     //console.log(usuarios)
     
-    dispatch(createSlot({"USUARIOS": usuarios}));
+    //dispatch(createSlot({"USUARIOS": usuarios}));
     generalForm.setValue("userId", servicioSeleccionado.usuario_responsable.id);
   };
 
@@ -309,6 +315,12 @@ export const Formulario = () => {
     console.log(valores);
   };
 
+  const usuariosFiltrados = useMemo(() => {
+    if(usuarios){
+    return usuarios.filter(user => user.userRoll !== "Cliente");
+    }
+  }, [usuarios]);
+
   return (
     <>
     
@@ -330,7 +342,7 @@ export const Formulario = () => {
             <div className="grid grid-cols-1 gap-4 p-1">
 
             {user?.userRoll != "Cliente" && 
-                  <div >
+                  <div className="flex items-center gap-4">
                   <FormLabel className="text-xs">Cliente</FormLabel>
                   <Select name="clienteId" onValueChange={seleccionarCliente} key={generalForm.watch("clienteId")}>
                     <SelectTrigger>
@@ -351,8 +363,8 @@ export const Formulario = () => {
                 </div>
               }
               
-              <div className="flex items-center gap-4">
-              <FormLabel className="text-xs">Servicios contratados </FormLabel>
+              <div className="flex items-center gap-2">
+              <FormLabel className="text-xs">Servicio: </FormLabel>
               <Select name="servicioId" onValueChange={seleccionarServicio}  key={generalForm.watch("servicioId")}>
                 <SelectTrigger>
                   <SelectValue
@@ -370,33 +382,37 @@ export const Formulario = () => {
                 </SelectContent>
               </Select>
 
-              {user?.userRoll != "Cliente" && usuariosResponsable && (
-                      <><FormLabel className="text-xs">Usuario responsable</FormLabel><UserAvatar
+              {/* {user?.userRoll != "Cliente" && usuariosResponsable && (
+                      <><FormLabel className="text-xs">Responsable</FormLabel><UserAvatar
                             withTooltip
                             userId={usuariosResponsable}
                             className="size-6"
-                            rounded="rounded-full" /></>)} 
+                            rounded="rounded-full" /></>)}  */}
                             
             </div>
 
             {user?.userRoll != "Cliente" && 
                   <>
-                  <div className="flex items-center gap-4"> 
-                        {/* <FormLabel className="text-xs">Cambiar usuario responsable</FormLabel> */}
-                        <Select name="userId" onValueChange={(value) => generalForm.setValue("userId", value)} key={generalForm.watch("userId")}>
+                  <div className="flex items-center gap-2">  
+                        <FormLabel className="text-xs whitespace-nowrap">Asignar a: </FormLabel>
+                        <Select name="userId" onValueChange={(value) => generalForm.setValue("userId", value)}>
                           <SelectTrigger>
                             <SelectValue
-                              placeholder={usuarios && usuarios.length > 0
-                                ? usuarios.find((x) => x.id === generalForm.watch("userId"))
-                                  ?.nombre || "Seleccione un usuario"
-                                : "Cargando..."} />
+                              placeholder={
+                                usuariosFiltrados && usuariosFiltrados.length > 0
+                                  ? usuariosFiltrados.find((x) => x.id === generalForm.watch("userId"))?.fullName ||
+                                    "Selecciona un usuario"
+                                  : "Cargando..."
+                              }
+                            />
                           </SelectTrigger>
                           <SelectContent>
-                            {usuarios && usuarios.map((item: { id: string; nombre: string; }) => (
-                              <SelectItem key={item.id} value={item.id}>
-                                {item.nombre}
-                              </SelectItem>
-                            ))}
+                            {usuariosFiltrados &&
+                              usuariosFiltrados.map((item: { id: string; fullName: string }) => (
+                                <SelectItem key={item.id} value={item.id.toString()}>
+                                  {item.fullName}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                       
@@ -413,18 +429,18 @@ export const Formulario = () => {
               <FormInput
                 form={generalForm}
                 name="titulo"
-                label="Título del ticket"
+                label="Asunto :"
                 placeholder=""
                 required />
 
               <label className="block text-xs font-medium text-black ">
-                Descripción del problema
+                Descripción del problema :
               </label>
               <textarea
                 {...generalForm.register("descripcion")}
-                placeholder="Escribe aquí..."
+                placeholder="Describa su problema aqui ..."
                 required
-                className="w-full h-48 p-1 mb-5 text-sm border rounded-md shadow resize-none text-muted-foreground border-muted focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full h-48 p-1 mb-5 text-sm border rounded-md shadow resize-none border-muted focus:outline-none focus:ring-2 focus:ring-primary"
               />
 
             </div>
@@ -490,7 +506,7 @@ export const Formulario = () => {
                 )}
               </div>
 
-              <div className="flex flex-col items-end gap-2 mt-2 right-4 ">
+              <div className="flex flex-row items-end gap-1 mt-2 ">
               <CropImage
                   form={generalForm}
                   name="pictureURL"
@@ -498,11 +514,11 @@ export const Formulario = () => {
                   onImageCropped={handleImageCropped}
                   showPreview={false}
                   handleFile={handleFile}
-                  height="61px"
-                  width="80%"
+                  height="100%"
+                  width="100%"
                 />
               
-              <div style={{marginTop:'-8%'}}  >
+              <div style={{marginTop:'-15% !important'}}  >
               <AudioRecorder
                   onRecordingComplete={addAudioElement}
                   audioTrackConstraints={{

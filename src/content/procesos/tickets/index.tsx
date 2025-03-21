@@ -22,6 +22,8 @@ const ManagementTickets = () => {
     dispatch(createSlot({ ["clienteId"]: parseInt(user.id) }));
   }
 
+  useGetData({ ruta: "/api/user/getusers", slot: "USUARIOS" });
+
   return (
     <>
       <Helmet>

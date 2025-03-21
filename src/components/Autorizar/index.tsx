@@ -11,9 +11,11 @@ export async function Autorizar(onConfirm: () => void, id: string) {
       `api/autorizaciones/tieneautorizacion/${id}`
     );
 
-    if (respuesta.data === "go") {
-      return onConfirm();
-    }
+    // if (respuesta.data === "go") {
+    //   return onConfirm();
+    // }
+
+    console.log(respuesta.data)
 
     if (String(respuesta.data) === "true") {
       const result = await Swal.fire({

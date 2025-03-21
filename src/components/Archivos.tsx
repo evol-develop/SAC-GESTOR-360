@@ -16,10 +16,10 @@ import { ticketInterface } from '@/interfaces/procesos/ticketInterface';
 import { toast } from 'sonner';
 
 interface Props{
-    movimientoId : number| null,
+    movimientoId : number,
     ticketId: number,
     clienteId:number,
-    comentarioId:number| null,
+    comentarioId:number,
     showComentario?: boolean
 }
 
@@ -43,8 +43,8 @@ const Archivos = ({ movimientoId, ticketId,clienteId,comentarioId, showComentari
             `/api/tickets/getArchivosByComentario/${ticketId}/${clienteId}`, // Solo los parámetros de ruta van aquí
             {
               params: { // Los parámetros opcionales van en `params`
-                id_movimiento: movimientoId || null,
-                id_comentario: comentarioId || null
+                id_movimiento: movimientoId === 0 ? null: movimientoId,
+                id_comentario: comentarioId === 0 ? null: comentarioId
               }
             }
           );
@@ -90,10 +90,17 @@ const Archivos = ({ movimientoId, ticketId,clienteId,comentarioId, showComentari
             setImageList(imageList);
             setArchivosList(archivosList);
 
-            if(comentarioId === null && movimientoId === null){
+            if(comentarioId === 0 && movimientoId === 0){
               setComentario(ticket.descripcion as string)
             }else{
-              setComentario(comentarioSlot)
+
+              // if(comentarioSlot==null || comentarioSlot === undefined)
+              // {
+                setComentario(archivos[0].ticketComentario.comentario)
+              // }
+              // else{
+              //   setComentario(comentarioSlot)
+              // }
             }
 
           }else{
@@ -113,120 +120,92 @@ const Archivos = ({ movimientoId, ticketId,clienteId,comentarioId, showComentari
     return (
 
     <div className="flex flex-col w-full h-full overflow-y-auto bg-background max-h-1/2 sm:max-h-none">
-    <section className="relative h-[calc(100dvh-350px)] sm:h-[calc(100dvh-300px)] flex flex-col sm:flex-row gap-4">
+      <section className="relative h-[calc(100dvh-350px)] sm:h-[calc(100dvh-300px)] flex flex-col sm:flex-row gap-4">
+          
         
-       
-        <div className="flex flex-col w-full h-full border rounded-sm bg-background sm:w-1/3 max-h-1/2 sm:max-h-none">
-            <h1 className="text-xs font-bold text-center">  {showComentario ? (<>COMENTARIO</>):(<>DESCRIPCIÓN DEL PROBLEMA</>)}</h1>
-            {comentario}
-        </div>
-        
-        <div className="flex flex-col w-full h-full overflow-y-auto border rounded-sm bg-background max-h-1/2 sm:max-h-none">
-        <h1 className="text-xs font-bold text-center">ARCHIVOS ADJUNTOS</h1>
-        {!isLoading ? (<>
-                
-        {audioList.length > 0 && (
-        <div>
-        <h3 className="text-xs font-bold">{audioList.length} Audio(s)</h3>
-        <Swiper navigation modules={[Navigation]} spaceBetween={10} slidesPerView={5}>
-            {audioList.map((audio) => (
-            <SwiperSlide key={audio.archivoURL} className="flex items-center justify-between p-2 border rounded-md">
-                <Reproductor autoPlay={false} audioUrl={audio.archivoURL} style={{ width: "100%" }} />
-                {/* <a
-                    href={audio.archivoURL}
-                    target="_blank"
-                    download={audio.nombreArchivo}
-                    className="absolute inset-0 flex items-center justify-center text-white transition-opacity duration-200 rounded-md opacity-0 bg-black/60 group-hover:opacity-100"
-                  >
-                    Descargar
-                  </a> */}
-            </SwiperSlide>
-            ))}
-        </Swiper>
-        </div>
-        )}
-
-        {archivosList.length > 0 && (
-          <div>
-            <h3 className="text-xs font-bold">{archivosList.length} Archivo(s)</h3>
-            <Swiper navigation modules={[Navigation]} spaceBetween={10} slidesPerView={5}>
-              {archivosList.map((archivo) => (
-                <SwiperSlide key={archivo.archivoURL} className="relative p-2 border rounded-md group">
-                  <div className="flex flex-col items-center">
-                    <FaFileAlt size={30} />
-                    <p className="text-xs truncate max-w-[100px]">{archivo.nombreArchivo}</p>
-                  </div>
-                  {/* Botón de descarga */}
-                  <a
-                    href={archivo.archivoURL}
-                    target="_blank"
-                    download={archivo.nombreArchivo}
-                    className="absolute inset-0 flex items-center justify-center text-white transition-opacity duration-200 rounded-md opacity-0 bg-black/60 group-hover:opacity-100"
-                  >
-                    Descargar
-                  </a>
-                </SwiperSlide>
-              ))}
-            </Swiper>
+          <div className="flex flex-col w-full h-full border rounded-sm bg-background sm:w-1/3 max-h-1/2 sm:max-h-none">
+              <h1 className="text-xs font-bold text-center">  {showComentario ? (<>Comentario</>):(
+                <>Descripción del problema</>)}</h1>
+              <div className='text-xs'>{comentario}</div>
           </div>
-        )}
-
-        {imageList.length > 0 && (
+          
+          <div className="flex flex-col w-full h-full p-1 overflow-y-auto border rounded-sm bg-background max-h-1/2 sm:max-h-none">
+          <h1 className="text-xs font-bold text-center">Archivos adjuntos</h1>
+          {!isLoading ? (<>
+                  
+          {audioList.length > 0 && (
           <div>
-            <h3 className="text-xs font-bold">{imageList.length} Imágen(es)</h3>
-            <Swiper navigation modules={[Navigation]} spaceBetween={10} slidesPerView={5}>
-              {imageList.map((croppedImage) => (
-                <SwiperSlide key={croppedImage.archivoURL} className="relative p-2 border rounded-md group">
-                  <img src={croppedImage.archivoURL} alt="Imagen Adjunta" className="object-contain w-24 rounded-md" />
-                  {/* Botón de descarga */}
-                  <a
-                    href={croppedImage.archivoURL}
-                    target="_blank"
-                    download
-                    className="absolute inset-0 flex items-center justify-center text-white transition-opacity duration-200 rounded-md opacity-0 bg-black/60 group-hover:opacity-100"
-                  >
-                    Descargar
-                  </a>
-                </SwiperSlide>
+          <h3 className="text-xs font-bold">{audioList.length} Audio(s)</h3>
+          <Swiper navigation modules={[Navigation]} spaceBetween={10} slidesPerView={5}>
+              {audioList.map((audio) => (
+              <SwiperSlide key={audio.archivoURL} className="flex items-center justify-between p-2 border rounded-md">
+                  <Reproductor autoPlay={false} audioUrl={audio.archivoURL} style={{ width: "100%" }} />
+                  {/* <a
+                      href={audio.archivoURL}
+                      target="_blank"
+                      download={audio.nombreArchivo}
+                      className="absolute inset-0 flex items-center justify-center text-white transition-opacity duration-200 rounded-md opacity-0 bg-black/60 group-hover:opacity-100"
+                    >
+                      Descargar
+                    </a> */}
+              </SwiperSlide>
               ))}
-            </Swiper>
+          </Swiper>
           </div>
-        )}
+          )}
 
-        {/* {archivosList.length > 0 && (
+          {archivosList.length > 0 && (
             <div>
-            <h3 className="text-xs font-bold">{archivosList.length} Archivo(s)</h3>
-            <Swiper navigation modules={[Navigation]} spaceBetween={10} slidesPerView={5}>
+              <h3 className="text-xs font-bold">{archivosList.length} Archivo(s)</h3>
+              <Swiper navigation modules={[Navigation]} spaceBetween={10} slidesPerView={5}>
                 {archivosList.map((archivo) => (
-                <SwiperSlide key={archivo.archivoURL} className="relative p-2 border rounded-md">
+                  <SwiperSlide key={archivo.archivoURL} className="relative p-2 border rounded-md group">
                     <div className="flex flex-col items-center">
-                    <FaFileAlt size={30} />
-                    <p className="text-xs truncate max-w-[100px]">{archivo.nombreArchivo}</p>
+                      <FaFileAlt size={30} />
+                      <p className="text-xs truncate max-w-[100px]">{archivo.nombreArchivo}</p>
                     </div>
-                </SwiperSlide>
+                    {/* Botón de descarga */}
+                    <a
+                      href={archivo.archivoURL}
+                      target="_blank"
+                      download={archivo.nombreArchivo}
+                      className="absolute inset-0 flex items-center justify-center text-white transition-opacity duration-200 rounded-md opacity-0 bg-black/60 group-hover:opacity-100"
+                    >
+                      Descargar
+                    </a>
+                  </SwiperSlide>
                 ))}
-            </Swiper>
+              </Swiper>
             </div>
-        )}
+          )}
 
-        {imageList.length > 0 && (
+          {imageList.length > 0 && (
             <div>
-            <h3 className="text-xs font-bold">{imageList.length} Imágen(es)</h3>
-            <Swiper navigation modules={[Navigation]} spaceBetween={10} slidesPerView={5}>
+              <h3 className="text-xs font-bold">{imageList.length} Imágen(es)</h3>
+              <Swiper navigation modules={[Navigation]} spaceBetween={10} slidesPerView={5}>
                 {imageList.map((croppedImage) => (
-                <SwiperSlide key={croppedImage.archivoURL} className="relative p-2 border rounded-md">
+                  <SwiperSlide key={croppedImage.archivoURL} className="relative p-2 border rounded-md group">
                     <img src={croppedImage.archivoURL} alt="Imagen Adjunta" className="object-contain w-24 rounded-md" />
-                </SwiperSlide>
+                    {/* Botón de descarga */}
+                    <a
+                      href={croppedImage.archivoURL}
+                      target="_blank"
+                      download
+                      className="absolute inset-0 flex items-center justify-center text-white transition-opacity duration-200 rounded-md opacity-0 bg-black/60 group-hover:opacity-100"
+                    >
+                      Descargar
+                    </a>
+                  </SwiperSlide>
                 ))}
-            </Swiper>
+              </Swiper>
             </div>
-        )} */}
-        
-        </>):(<div><Loading/></div>)}
+          )}
 
-        </div>
-    </section> 
-  </div>
+          </>):(<div><Loading/></div>)}
+
+          </div>
+      </section> 
+    </div>
     )
 }
 

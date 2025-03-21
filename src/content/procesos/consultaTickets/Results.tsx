@@ -25,12 +25,13 @@ export const Results = () => {
   const createSlots =(e:any)=>{
     dispatch(createSlot({ ticketId: e.ticketId }));
     dispatch(createSlot({ clienteId: e.clienteId }));
+    dispatch(createSlot({ idUserCliente: e.userId }));
     dispatch(createSlot({ userId: e.ticket.userId }));
     dispatch(createSlot({ etapaActual: e.ticketEstatusId }));
   }
 
   const abrirTicket = (e: any) => {
-    let url =`/site/procesos/consultaTickets/mostrarTicket/${e.clienteId}/${e.ticketId}/${e.id}`;
+    let url =`/site/procesos/consultaTickets/mostrarTicket/${e.clienteId}/${e.ticketId}/${0}/${0}`;
     navigate(url);
   };
 
@@ -126,7 +127,7 @@ export const Results = () => {
             item={row.original}
             openButton={true}
             handleConfirmOpen={(e) => abrirTicket(e)}
-            viewButton={ user?.userRoll != "Cliente" ? true:false }
+            viewButton={true}
             handleConfirmView={(e) => createSlots(e)}
           />
         );
@@ -134,15 +135,24 @@ export const Results = () => {
     }
     
   ];
+  
+  const filteredColumns =
+  user?.userRoll !== "Cliente"
+    ? columns
+    : columns.filter(
+        (col) =>
+          col.id !== "cliente.nombre" &&
+          col.id !== "ticket.servicio.departamento.nombre" &&
+          col.id !== "ticket.user.fullName"
+      );
+
+
   return (
-    <>
-      <ResultsCatalogo
-        PAGE_SLOT={PAGE_SLOT}
-        data={data}
-        columns={columns}
-        filtro="cliente.nombre"
-      />
-      
-    </>
+    <ResultsCatalogo
+      PAGE_SLOT={PAGE_SLOT}
+      data={data}
+      columns={filteredColumns} // Se usa la lista filtrada
+      filtro="cliente.nombre"
+    />
   );
 };

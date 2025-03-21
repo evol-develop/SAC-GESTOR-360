@@ -24,6 +24,8 @@ import { serviciosInterface } from "@/interfaces/catalogos/serviciosInterfaces";
 import  SelectGrid  from "@/components/select";
 import { useEffect, useState } from "react";
 import { SubmitHandler } from "react-hook-form";
+import { formatoAPI, zip_codes } from "@/interfaces/catalogos/formatoAPI";
+import { toast } from "sonner";
 
 const phoneRegExp = /^\d{10}$/;
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
@@ -34,18 +36,18 @@ const validationSchema = z
     Servicios: z.array(z.object({ id: z.number(), descripcion: z.string() })).optional(),
     nombre: z.string().min(1, "El nombre es un dato requerido").max(200),
     rfc: z.string().length(13, "El RFC debe tener exactamente 13 caracteres"),
-    cp: z.string().min(5, "El código postal debe tener 5 dígitos").max(6, "El código postal debe tener 5 dígitos").optional(),
+    cp: z.string().min(5, "El código postal debe tener 5 dígitos").max(6, "El código postal debe tener 5 dígitos").optional().nullable(),
     telefono: z.string().min(10, "El teléfono debe ser de 10 dígitos").max(10).regex(phoneRegExp, "El teléfono debe ser de 10 dígitos"),
     email: z.string().min(1, "El correo es un dato requerido").max(120).email("El correo no es válido"),
-    curp: z.string().length(18, "El CURP debe tener 18 caracteres").optional(),
-    tiposClienteId: z.number().optional(),
+    curp: z.string().length(18, "El CURP debe tener 18 caracteres").optional().nullable(),
+    tiposClienteId: z.number().optional().nullable(),
     activo: z.boolean().optional(),
-    domicilio: z.string().optional(),
-    colonia: z.string().optional(),
-    estado: z.string().optional(),
-    ciudad: z.string().optional(),
-    celular: z.string().optional(),
-    email2: z.string().optional(),
+    domicilio: z.string().optional().nullable(),
+    colonia: z.string().optional().nullable(),
+    estado: z.string().optional().nullable(),
+    ciudad: z.string().optional().nullable(),
+    celular: z.string().optional().nullable(),
+    email2: z.string().optional().nullable(),
     //limite_credito: z.string().optional(),
     // descuento_default: z.string().optional(),
     // dias_credito: z.string().optional(),
@@ -53,38 +55,38 @@ const validationSchema = z
     facturar: z.boolean().optional(),
     retener_iva: z.boolean().optional(),
     retener_isr: z.boolean().optional(),
-    porcentaje_retencion_iva: z.number().optional(),
-    porcentaje_retencion_isr: z.number().optional(),
-    metodo_pago: z.string().min(1, "El método de pago es obligatorio").optional(),
-    id_forma_pago: z.number().optional(),
-    fecha_registro: z.string().optional(),
+    porcentaje_retencion_iva: z.number().optional().nullable(),
+    porcentaje_retencion_isr: z.number().optional().nullable(),
+    id_metodo_pago: z.number().optional().nullable(),
+    id_forma_pago: z.number().optional().nullable(),
+    fecha_registro: z.string().optional().nullable(),
     enviar_cobranza: z.boolean().optional(),
-    nombreComercial: z.string().optional(),
-    fecha_final: z.string().optional(),
-    id_regimen_fiscal: z.number().optional(),
-    id_uso_cfdi: z.number().optional(),
-    password: z
-    .string()
-    .regex(passwordRegex, {
-      message:
-        "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial",
-    }).optional(),
-  password2: z.string().regex(passwordRegex, {
-    message:
-      "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial",
-  }).optional(),
+    nombreComercial: z.string().optional().nullable(),
+    fecha_final: z.string().optional().nullable(),
+    id_regimen_fiscal: z.number().optional().nullable(),
+    id_uso_cfdi: z.number().optional().nullable(),
+  //   password: z
+  //   .string()
+  //   .regex(passwordRegex, {
+  //     message:
+  //       "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial",
+  //   }).optional(),
+  // password2: z.string().regex(passwordRegex, {
+  //   message:
+  //     "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial",
+  // }).optional(),
     limite_credito: z
-    .preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
+    .preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()).nullable(),
     descuento_default: z
-    .preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
+    .preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()).nullable(),
     dias_credito: z
-    .preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
+    .preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()).nullable(),
 
   })
-  .refine((data) => data.password === data.password2, {
-    path: ["password2"],
-    message: "Las contraseñas no coinciden",
-  });
+  // .refine((data) => data.password === data.password2, {
+  //   path: ["password2"],
+  //   message: "Las contraseñas no coinciden",
+  // });
 
 export const OperacionesFormulario = () => {
   
@@ -229,7 +231,8 @@ export const Formulario = ({
   const regimen =useAppSelector((state: RootState) => state.page.slots.REGIMEN as datosSATInterface[] );
   const tipoCliente =useAppSelector((state: RootState) => state.page.slots.TIPOS_CLIENTES as tipoClientes[]) ;
   const servicios =useAppSelector((state: RootState) => state.page.slots.SERVICIOS as serviciosInterface[]) ;
-
+  const [formatCLM, setformatCLM] = useState<any[]>([]);
+  
   const generalForm = useForm<z.infer<typeof validationSchema>>({
     resolver: zodResolver(validationSchema),
     defaultValues: {
@@ -255,7 +258,7 @@ export const Formulario = ({
       retener_isr: dataModal.retener_isr,
       porcentaje_retencion_iva: dataModal.porcentaje_retencion_iva,
       porcentaje_retencion_isr: dataModal.porcentaje_retencion_isr,
-      metodo_pago: dataModal.metodo_pago,
+      id_metodo_pago: dataModal.id_metodo_pago,
       id_forma_pago: dataModal.id_forma_pago,
       fecha_registro: dataModal.fecha_registro,
       enviar_cobranza: dataModal.enviar_cobranza,
@@ -264,7 +267,7 @@ export const Formulario = ({
       activo : dataModal.activo,
       id_regimen_fiscal: dataModal.id_regimen_fiscal,
       id_uso_cfdi: dataModal.id_uso_cfdi,
-      password : dataModal.password,
+      // password : dataModal.password,
       Servicios: dataModal.Servicios,
     },
   });
@@ -305,6 +308,53 @@ export const Formulario = ({
     }
   }, []);  
 
+    const onSubmit2: SubmitHandler<z.infer<typeof validationSchema>> = async (values) => {
+      console.log(values);
+  
+      //onSubmit(values);
+    }
+  
+    const onError = (errors: any) => {
+      console.log(errors);
+      //toast.error("Error al enviar el formulario");
+    };
+  
+    async function changeCode(value: string) {
+      try {
+          const response = await axios.get<zip_codes>(`https://sepomex.icalialabs.com/api/v1/zip_codes?zip_code=${value}`);
+  
+          // Verifica si 'result' existe y contiene 'zip_codes'
+          if (response.data && response.data.zip_codes) {
+              const zipCodes = response.data.zip_codes as formatoAPI[];
+              console.log(zipCodes);
+
+              setformatCLM([]);
+
+                zipCodes.map((item) => {
+                    setformatCLM((prev) => [
+                        ...prev, 
+                        { label: `${item.d_asenta} ${item.d_ciudad} ${item.d_mnpio} `, value: `${item.d_asenta} -${item.d_ciudad} -${item.d_mnpio} ` }
+                    ]);
+                });
+  
+          }else
+          {
+            toast.error('No se encontraron datos para este CP');
+          }
+      } catch (err) {
+          console.error(err);
+      }
+  }
+
+  function llenarCampos(value: string) {
+    const [colonia, ciudad, estado] = value.split(" -");
+  
+    generalForm.setValue("colonia", colonia || ""); 
+    generalForm.setValue("ciudad", ciudad || ""); 
+    generalForm.setValue("estado", estado || ""); 
+  
+  }
+  
 
   return (
 
@@ -317,7 +367,7 @@ export const Formulario = ({
               <TabsTrigger value="general">Datos generales</TabsTrigger>
               <TabsTrigger value="domicilio">Datos del domicilio</TabsTrigger>
               <TabsTrigger value="fiscales">Datos fiscales</TabsTrigger>
-              <TabsTrigger value="ingreso">Datos de ingreso</TabsTrigger>
+              {/* {dataModal.id === undefined && (<><TabsTrigger value="ingreso">Datos de ingreso</TabsTrigger></>)} */}
               <TabsTrigger value="servicios">Servicios</TabsTrigger>
             </TabsList>
 
@@ -477,6 +527,14 @@ export const Formulario = ({
 
               <FormInput
                   form={generalForm}
+                  name="email"
+                  label="Correo para ingresar al sistema"
+                  placeholder=""
+                  type="email"
+                />   
+                
+              <FormInput
+                  form={generalForm}
                   name="email2"
                   label="Correo (para envio de facturas)"
                   placeholder=""
@@ -501,19 +559,45 @@ export const Formulario = ({
 
             <FormInput
                 form={generalForm}
-                name="cp"
-                label="Código Postal"
-                placeholder=""
-                type="number"
-              />
-
-              <FormInput
-                form={generalForm}
                 name="domicilio"
                 label="Domicilio"
                 placeholder=""
                 type="text"
               />
+              
+            <FormInput
+              form={generalForm}
+              name="cp"
+              label="Código Postal"
+              placeholder=""
+              onChange={(e) =>{
+                
+               // handleChange(e);
+
+                if(e.target.value.length === 5){
+                  changeCode(e.target.value);
+                }
+              }}
+              type="number"
+            />
+                
+              <div>
+                <FormLabel className="text-xs">Ubicación </FormLabel>
+                <Select  onValueChange={(value) => llenarCampos(value)}>
+                  <SelectTrigger>
+                  <SelectValue
+                  placeholder={"Selecciona una ubicación"
+                  }/>
+                  </SelectTrigger>
+                  <SelectContent>
+                  {formatCLM && formatCLM.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               <FormInput
                 form={generalForm}
@@ -522,17 +606,19 @@ export const Formulario = ({
                 placeholder=""
               />
 
-              <FormInput
-                form={generalForm}
-                name="estado"
-                label="Estado"
-                placeholder=""
-              />
 
               <FormInput
                 form={generalForm}
                 name="ciudad"
                 label="Ciudad"
+                placeholder=""
+              />
+              
+              
+              <FormInput
+                form={generalForm}
+                name="estado"
+                label="Estado"
                 placeholder=""
               />
               
@@ -639,11 +725,11 @@ export const Formulario = ({
 
               <div>
               <FormLabel className="text-xs">Método de pago </FormLabel>
-              <Select name="metodo_pago" onValueChange={(value) => generalForm.setValue("metodo_pago", value)}>
+              <Select name="metodo_pago" onValueChange={(value) => generalForm.setValue("id_metodo_pago",  parseInt(value))}>
                 <SelectTrigger>
                 <SelectValue
                 placeholder={
-                  metodosPago && metodosPago.find((metodo) => metodo.clave === generalForm.watch("metodo_pago"))
+                  metodosPago && metodosPago.find((metodo) => metodo.id === generalForm.watch("id_metodo_pago"))
                     ?.descripcion || "Selecciona un método de pago"
                 }/>
                 </SelectTrigger>
@@ -705,16 +791,11 @@ export const Formulario = ({
               </CardContent>
             </TabsContent>
 
+{/*            
             <TabsContent value="ingreso">
             <CardContent className="relative grid grid-cols-3 gap-3">
-            {dataModal.id === undefined && (<>
-              <FormInput
-                  form={generalForm}
-                  name="email"
-                  label="Correo para ingresar al sistema"
-                  placeholder=""
-                  type="email"
-                />              </>)}
+          
+                       
 
                 <FormInput
                   form={generalForm}
@@ -734,7 +815,7 @@ export const Formulario = ({
 
 
             </CardContent>
-            </TabsContent>
+            </TabsContent> */}
 
             <TabsContent value="servicios">
             <CardContent className="relative grid grid-cols-1 gap-3 py-3">

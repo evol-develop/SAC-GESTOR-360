@@ -24,34 +24,30 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { datosSATInterface } from "@/interfaces/catalogos/datosSATInterface";
 import { useEffect, useState } from "react";
 import { departamentoInterface } from "@/interfaces/catalogos/departamentoInterface";
-import { UsuarioAdicionalesInterface } from "@/interfaces/UsuarioAdicionalesInterface";
+import { Controller } from "react-hook-form";
+
 import { useMemo } from "react";
 
-const validationSchema = z
-  .object({
-    precio: z
-        .preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
-    descripcion: z.string().max(120).min(1, "La descripción es un dato requerido"),
-    frecuencia: z.string().min(1, "La frecuencia es obligatoria").optional(),
-    capturar_cantidad: z.boolean().optional(),
-    lineaId: z.number(),
-    sublineaId: z.number(),
-    id_unidad: z.number(),
-    tasa_iva: z.string(),
-    aplica_iva:z.boolean().optional(),
-    clave_sat:z.string(),
-    aplica_ieps:z.boolean(),
-    obj_imp:z.string().optional(),
-    tasa_ieps: z
-        .preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
-    porcentaje_retencion_isr: z
-        .preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
-    porcentaje_retencion_iva: z
-        .preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
-    activo: z.boolean().optional(),
-    departamentoId: z.number(),
-    userId: z.string()//.optional(),
-  })
+const validationSchema = z.object({
+  precio: z.preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().min(0.01, "El precio es obligatorio")),
+  descripcion: z.string().max(120).min(1, "La descripción es un dato requerido"),
+  frecuencia: z.string().min(1, "La frecuencia es obligatoria"), // Elimina .optional()
+  capturar_cantidad: z.boolean().optional(),
+  lineaId: z.number().min(1, "La línea es obligatoria"),
+  sublineaId: z.number().min(1, "La sublínea es obligatoria"),
+  id_unidad: z.number().min(1, "La unidad es obligatoria"),
+  tasa_iva: z.string().min(1, "La tasa de IVA es obligatoria"),
+  aplica_iva: z.boolean().nullable().optional(),
+  clave_sat: z.string().min(1, "La clave SAT es obligatoria"),
+  aplica_ieps: z.boolean().optional(),
+  obj_imp: z.string().min(1, "El objeto de impuesto es obligatorio").optional(),
+  tasa_ieps: z.preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
+  porcentaje_retencion_isr: z.preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
+  porcentaje_retencion_iva: z.preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
+  activo: z.boolean().optional(),
+  departamentoId: z.number().min(1, "El departamento es obligatorio"),
+  userId: z.string().min(1, "El usuario es obligatorio"),
+});
 
 export const OperacionesFormulario = () => {
   const createItemCatalogo = async (
@@ -161,7 +157,7 @@ export const Formulario = ({
   
   
   const tasaIvaTransformada = dataModal.tasa_iva === 16 ? "2" 
-  : dataModal.tasa_iva === 0 ? "1" 
+  : dataModal.tasa_iva === 0 ? "1"
   : String(dataModal.tasa_iva);
 
   
@@ -175,7 +171,7 @@ export const Formulario = ({
       lineaId:dataModal.lineaId,
       sublineaId:dataModal.sublineaId,
       id_unidad:dataModal.id_unidad,
-      tasa_iva:tasaIvaTransformada,
+      tasa_iva: tasaIvaTransformada,
       aplica_iva:dataModal.aplica_iva,
       clave_sat:dataModal.clave_sat,
       aplica_ieps:dataModal.aplica_ieps,
@@ -197,9 +193,9 @@ export const Formulario = ({
 
   
   const tasaIvaOptions = [
-    { clave: "1", descripcion: '0.00 %' },
-    { clave: "2", descripcion: '16.00 %'},
-     { clave: "3", descripcion: 'EXENTO' }
+    { clave: 1, descripcion: '0.00 %' },
+    { clave: 2, descripcion: '16.00 %'},
+     { clave: 3, descripcion: 'EXENTO' }
   ];
 
   const onSubmit2: SubmitHandler<z.infer<typeof validationSchema>> = async (values) => {
@@ -243,7 +239,7 @@ export const Formulario = ({
 
   }, [usuarios]);
   
-  console.log(usuariosFiltrados);
+  //console.log(usuariosFiltrados);
   
   return (
     <Tabs defaultValue="general" className="w-full">
@@ -384,29 +380,43 @@ export const Formulario = ({
 
               <div>
                 <FormLabel className="text-xs">Tasa Iva(%) </FormLabel>
-                <Select name="tasa_iva" onValueChange={(value) => generalForm.setValue("tasa_iva", value)}>
+                <Controller
+                name="tasa_iva"
+                control={generalForm.control}
+                render={({ field, fieldState }) => (
+                  <>
+                <Select onValueChange={(value) => field.onChange(value)} value={field.value?.toString() || ""}>
                   <SelectTrigger >
                   <SelectValue
                   placeholder={tasaIvaActual}/>
                   </SelectTrigger>
                   <SelectContent>
                   {tasaIvaOptions.map((metodo) => (
-                    <SelectItem key={metodo.clave} value={metodo.clave}>
+                    <SelectItem key={metodo.clave} value={metodo.clave.toString()}>
                       {metodo.descripcion}
                     </SelectItem>
                   ))}
                   </SelectContent>
                 </Select>
+                {fieldState.error && <p className="text-xs text-red-500">{fieldState.error.message}</p>}
+                  </>
+                )}
+              />
               </div>
 
               <div>
               <FormLabel className="text-xs">Clave sat</FormLabel>
-              <Select name="clave_sat" onValueChange={(value) => generalForm.setValue("clave_sat", value)}>
+              <Controller
+                name="clave_sat"
+                control={generalForm.control}
+                render={({ field, fieldState }) => (
+                  <>
+                <Select onValueChange={(value) => field.onChange(value)} value={field.value?.toString() || ""}>
                 <SelectTrigger className="w-72">
                 <SelectValue
                   placeholder={
                     Servicios && Servicios.length > 0
-                      ? Servicios.find((x) => x.id.toString() === generalForm.watch("clave_sat"))
+                      ? Servicios.find((x) => x.id.toString() === field.value)
                           ?.descripcion || "Selecciona un tipo de producto"
                       : "Cargando..."
                   }
@@ -420,15 +430,26 @@ export const Formulario = ({
                     ))}
                 </SelectContent>
               </Select>
+              {fieldState.error && <p className="text-xs text-red-500">{fieldState.error.message}</p>}
+                  </>
+                )}
+              />
               </div>
               
               <div>
               <FormLabel className="text-xs">Frecuencia </FormLabel>
-              <Select name="frecuencia" onValueChange={(value) => generalForm.setValue("frecuencia", value)}>
+              <Controller
+                name="frecuencia"
+                control={generalForm.control}
+                render={({ field, fieldState }) => (
+                  <>
+                                            <Select
+                      onValueChange={(value) => field.onChange(value)}
+                      value={field.value?.toString() || ""}>
                 <SelectTrigger >
                 <SelectValue
                 placeholder={
-                  frecuencias.find((metodo) => metodo.clave === generalForm.watch("frecuencia"))
+                  frecuencias.find((metodo) => metodo.clave === field.value)
                     ?.descripcion || "Selecciona una frecuencia"
                 }/>
                 </SelectTrigger>
@@ -440,63 +461,99 @@ export const Formulario = ({
                 ))}
                 </SelectContent>
               </Select>
+              {fieldState.error && <p className="text-xs text-red-500">{fieldState.error.message}</p>}
+                  </>
+                )}
+              />
               </div>
 
               <div>
               <FormLabel className="text-xs">Línea</FormLabel>
-              <Select name="lineaId" onValueChange={(value) => generalForm.setValue("lineaId", parseInt(value))}>
-                <SelectTrigger >
-                <SelectValue
-                  placeholder={
-                    Lineas && Lineas.length > 0
-                      ? Lineas.find((x) => x.id === generalForm.watch("lineaId"))
-                          ?.descripcion || "Seleccione una línea"
-                      : "Cargando..."
-                  }
-                />
-                </SelectTrigger>
-                <SelectContent>
-                    {Lineas && Lineas.map((item: { id: number; descripcion: string }) => (
-                    <SelectItem key={item.id} value={item.id.toString()}>
-                      {item.descripcion}
-                    </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-              </div>
+              <Controller
+                name="lineaId"
+                control={generalForm.control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <Select
+                      onValueChange={(value) => field.onChange(parseInt(value))}
+                      value={field.value?.toString() || ""}
+                    >
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={
+                            Lineas && Lineas.length > 0
+                              ? Lineas.find((x) => x.id === field.value)?.descripcion || "Seleccione una línea"
+                              : "Cargando..."
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Lineas &&
+                          Lineas.map((item) => (
+                            <SelectItem key={item.id} value={item.id.toString()}>
+                              {item.descripcion}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    {fieldState.error && <p className="text-xs text-red-500">{fieldState.error.message}</p>}
+                  </>
+                )}
+              />
+            </div>
 
-              <div>
+            <div>
               <FormLabel className="text-xs">Sublínea</FormLabel>
-              <Select name="sublineaId" onValueChange={(value) => generalForm.setValue("sublineaId", parseInt(value))}>
-                <SelectTrigger >
-                <SelectValue
-                  placeholder={
-                    subLineasFiltradas && subLineasFiltradas.length > 0
-                      ? subLineasFiltradas.find((x) => x.id === generalForm.watch("sublineaId"))
-                          ?.descripcion || "Seleccione una sublínea"
-                      : "Cargando..."
-                  }
-                />
-                </SelectTrigger>
-                <SelectContent>
-                    {subLineasFiltradas && subLineasFiltradas
-                    .map((item: { id: number; descripcion: string })=> (
-                    <SelectItem key={item.id} value={item.id.toString()}>
-                      {item.descripcion}
-                    </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-              </div>
+              <Controller
+                name="sublineaId"
+                control={generalForm.control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <Select
+                      onValueChange={(value) => field.onChange(parseInt(value))}
+                      value={field.value?.toString() || ""}
+                    >
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={
+                            subLineasFiltradas && subLineasFiltradas.length > 0
+                              ? subLineasFiltradas.find((x) => x.id === field.value)?.descripcion || "Seleccione una sublínea"
+                              : "Cargando..."
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {subLineasFiltradas &&
+                          subLineasFiltradas.map((item) => (
+                            <SelectItem key={item.id} value={item.id.toString()}>
+                              {item.descripcion}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    {fieldState.error && <p className="text-xs text-red-500">{fieldState.error.message}</p>}
+                  </>
+                )}
+              />
+            </div>
+
 
               <div>
               <FormLabel className="text-xs">Unidad </FormLabel>
-              <Select name="id_unidad" onValueChange={(value) => generalForm.setValue("id_unidad", parseInt(value))}>
+              <Controller
+                name="id_unidad"
+                control={generalForm.control}
+                render={({ field, fieldState }) => (
+                  <>
+               <Select
+                      onValueChange={(value) => field.onChange(parseInt(value))}
+                      value={field.value?.toString() || ""}
+                    >
                 <SelectTrigger className="w-72">
                 <SelectValue
                   placeholder={
                     Unidades && Unidades.length > 0
-                      ? Unidades.find((x) => x.id === generalForm.watch("id_unidad"))
+                      ? Unidades.find((x) => x.id === field.value)
                           ?.descripcion || "Selecciona una unidad"
                       : "Cargando..."
                   }
@@ -510,6 +567,10 @@ export const Formulario = ({
                     ))}
                 </SelectContent>
               </Select>
+              {fieldState.error && <p className="text-xs text-red-500">{fieldState.error.message}</p>}
+                  </>
+                )}
+              />
               </div>
 
               </CardContent>
@@ -521,12 +582,20 @@ export const Formulario = ({
               <CardContent className="relative grid grid-cols-3 gap-6 py-2">
                 <div>
                 <FormLabel className="text-xs">Departamento al que pertenece</FormLabel>
-                <Select name="departamentoId" onValueChange={(value) => generalForm.setValue("departamentoId", parseInt(value))}>
+                <Controller
+                name="departamentoId"
+                control={generalForm.control}
+                render={({ field, fieldState }) => (
+                  <>
+                              <Select
+                      onValueChange={(value) => field.onChange(parseInt(value))}
+                      value={field.value?.toString() || ""}
+                    >
                   <SelectTrigger className="w-72">
                   <SelectValue
                     placeholder={
                       departamentos && departamentos.length > 0
-                        ? departamentos.find((x) => x.id === generalForm.watch("departamentoId"))
+                        ? departamentos.find((x) => x.id ===field.value)
                             ?.nombre || "Selecciona un departamento"
                         : "Cargando..."
                     }
@@ -540,16 +609,28 @@ export const Formulario = ({
                       ))}
                   </SelectContent>
                 </Select>
+                {fieldState.error && <p className="text-xs text-red-500">{fieldState.error.message}</p>}
+                  </>
+                )}
+              />
                 </div>
 
                 <div>
                 <FormLabel className="text-xs">Usuario encargado (opcional)</FormLabel>
-                <Select name="userId" onValueChange={(value) => generalForm.setValue("userId", value)}>
+                <Controller
+                name="userId"
+                control={generalForm.control}
+                render={({ field, fieldState }) => (
+                  <>
+                             <Select
+                      onValueChange={(value) => field.onChange(value)}
+                      value={field.value?.toString() || ""}
+                    >
                   <SelectTrigger className="w-72">
                   <SelectValue
                     placeholder={
                       usuariosFiltrados && usuariosFiltrados.length > 0
-                        ? usuariosFiltrados.find((x) => x.id === generalForm.watch("userId"))
+                        ? usuariosFiltrados.find((x) => x.id === field.value)
                             ?.fullName || "Selecciona un usuario"
                         : "Cargando..."
                     }
@@ -567,6 +648,10 @@ export const Formulario = ({
                       ))}
                   </SelectContent>
                 </Select>
+                {fieldState.error && <p className="text-xs text-red-500">{fieldState.error.message}</p>}
+                  </>
+                )}
+              />
                 </div>
                 
               </CardContent>

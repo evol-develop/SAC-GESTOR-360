@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router';
 import { Card,CardContent, CardHeader} from "@/components/ui/card";
 import Archivos from '@/components/Archivos';
 const MostrarTicket = () => {
-  const { clienteId, ticketId,movimientoId } = useParams();
+  const { clienteId, ticketId,movimientoId, comentarioId } = useParams();
   //console.log(clienteId,ticketId,movimientoId)
   const navigate = useNavigate();
 
@@ -17,11 +17,11 @@ const MostrarTicket = () => {
   
   return (
   <>
-  <Helmet><title>{appConfig.NOMBRE} - Ticket detalles</title></Helmet>
+  <Helmet><title>{appConfig.NOMBRE} - Detalles</title></Helmet>
 
 
   <Card>
-  <CardHeader className="flex flex-row items-center justify-between">
+  <CardHeader className="flex flex-row items-center justify-between text-xs">
     <a href='/site/procesos/consultaTickets' 
        className="text-start" 
        style={{ textDecoration: 'underline', color: 'blue' }}>
@@ -31,11 +31,18 @@ const MostrarTicket = () => {
     <h5 className="flex-grow font-bold tracking-tight text-center">
       Ticket {" "} #{ticketId}
     </h5>
+
+    <a href='/site/procesos/consultaTickets' 
+       className="text-start" 
+       style={{ textDecoration: 'underline', color: 'blue' }}>
+       Ver comentarios {'>'}
+    </a>
+
   </CardHeader> 
     <CardContent>
 
-    {movimientoId && ticketId && clienteId  && (
-      <Archivos showComentario={false} movimientoId={null} ticketId={parseInt(ticketId)} clienteId={parseInt(clienteId)} comentarioId={null} />)}
+    {movimientoId && ticketId && clienteId && comentarioId  && (
+      <Archivos showComentario={false} movimientoId={parseInt(movimientoId)} ticketId={parseInt(ticketId)} clienteId={parseInt(clienteId)} comentarioId={parseInt(comentarioId)} />)}
 
     </CardContent>  
   </Card>

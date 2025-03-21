@@ -55,8 +55,8 @@ export const GridCatalogo = ({
         showSendUsuarioMessage={showSendUsuarioMessage}
         showSendEmpresaMessage={showSendEmpresaMessage}
       />
-      <div className="overflow-hidden border rounded-md">
-        <div className="sm:block hidden">
+      <div className="overflow-auto max-h-[400px] border rounded-md">
+        <div className="hidden sm:block">
           <div className="p-2 grid grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-2">
             {table.getHeaderGroups().map((headerGroup) =>
               headerGroup.headers.map((header) => (

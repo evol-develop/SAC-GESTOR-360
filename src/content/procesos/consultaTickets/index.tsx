@@ -19,18 +19,15 @@ const ManagementTickets = () => {
   console.log(user?.userRoll)
     
   if(user?.userRoll == "Administrador" || user?.userRoll == "Soporte" ){
-
     url  = `/api/tickets/getTicketsByEmpresa`;
-
   }
   else if(user?.userRoll == "Cliente"){
-
     url  = `/api/tickets/getTicketsByClientes/${user?.id}`;
-
   }
   else{
      url  = `/api/tickets/getTicketsByUsuario`;
   }
+  
   useGetData({ ruta: url, slot: "TICKETS" });
   useGetData({ ruta: "/api/user/getusers", slot: "USUARIOS" });
   

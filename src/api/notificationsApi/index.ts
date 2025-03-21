@@ -1,6 +1,7 @@
 import { getItemsByConditionNoIdEmpresa } from "@/api";
 import { type Notification, type Task } from "@/contexts/Notifications";
-
+import { timeLineInterface } from "@/interfaces/timeLineInterface";
+import { useAuth } from "@/hooks/useAuth";
 // Define el tipo genérico para la línea de tiempo
 export type ActivityTimelineItem = {
   id: string;
@@ -27,13 +28,13 @@ const mapToActivityTimelineItem = <T extends Notification | Task>(
     groupIds: item.groupIds,
     userId: item.userId,
     createdAt: item.createdAt,
+  
   }));
 };
 
-export const getActivityTimeline = async (
-  userId: string
-): Promise<ActivityTimelineItem[]> => {
+export const getActivityTimeline = async (userId: string): Promise<timeLineInterface[]> => {
   try {
+
     const [notifications, tasks] = await Promise.all([
       getItemsByConditionNoIdEmpresa("notifications", "senderId", "==", userId),
       getItemsByConditionNoIdEmpresa("tasks", "senderId", "==", userId),
@@ -51,11 +52,37 @@ export const getActivityTimeline = async (
       "description"
     );
 
-    // Combinar y ordenar
-    return [...mappedNotifications, ...mappedTasks].sort(
+    // // Combinar y ordenar
+    // return [...mappedNotifications, ...mappedTasks].sort(
+    //   (a, b) =>
+    //     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    // ) as ActivityTimelineItem[];
+
+    console.log("Mapped Notifications:", mappedNotifications);
+    console.log("Mapped Tasks:", mappedTasks);
+
+    const formattedNotifications: timeLineInterface[] = mappedNotifications.map((item) => ({
+      id: String(item.id),
+      title: String(item.title), // Ajusta la ruta correcta
+      description: String(item.details),
+      time: String(item.createdAt),
+    }));
+
+    const formattedTasks: timeLineInterface[] = mappedTasks.map((item) => ({
+      id: String(item.id),
+      title: String(item.title),
+      description: String(item.details),
+      time: String(item.createdAt),
+    }));
+
+    return [
+      ...formattedNotifications,
+      ...formattedTasks,
+    ].sort(
       (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    ) as ActivityTimelineItem[];
+        new Date(b.time).getTime() - new Date(a.time).getTime()
+    ) as timeLineInterface[];
+
   } catch (error) {
     console.error(error);
     throw new Error("Error al obtener la línea de tiempo");

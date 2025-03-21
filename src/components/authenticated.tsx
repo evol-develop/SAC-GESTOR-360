@@ -33,7 +33,7 @@ const Authenticated = ({ children }: Props) => {
   const currentPath = location.pathname
     .replace("/site/", "")
     .replace(/\/$/, "")
-    .replace(/\/\d+\/\d+\/\d+$/g, "");
+    .replace(/\/\d+\/\d+\/\d+\/\d+$/g, "");
   if (currentPath !== "/site") {
     const permiso = permisos.find((p) => p.ruta === currentPath);
 

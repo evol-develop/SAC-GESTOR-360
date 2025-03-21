@@ -1,5 +1,4 @@
 import { UseFormReturn } from "react-hook-form";
-
 import {
   FormControl,
   FormField,
@@ -19,6 +18,7 @@ type FormInputProps = {
   className?: string;
   focus?: boolean;
   disabled?: boolean;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
 const FormInput = ({
@@ -30,7 +30,8 @@ const FormInput = ({
   required = false,
   className,
   focus,
-  disabled=false,
+  disabled = false,
+  onChange,  // <-- Asegurar que la prop se recibe
 }: FormInputProps) => {
   return (
     <FormField
@@ -48,6 +49,10 @@ const FormInput = ({
               className={className}
               onFocus={() => focus && form.setFocus(name)}
               disabled={disabled}
+              onChange={(e) => {
+                field.onChange(e); // Mantiene el comportamiento de react-hook-form
+                onChange && onChange(e); // Ejecuta la función personalizada si se proporciona
+              }}
             />
           </FormControl>
           <FormMessage />

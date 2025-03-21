@@ -2,15 +2,22 @@ import { Helmet } from "react-helmet-async";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { LuBellRing, LuLogs, LuMailPlus, LuUndo2 } from "react-icons/lu";
-
+import {
+  getActivityTimeline,
+  type ActivityTimelineItem,
+} from "@/api/notificationsApi";
 import TaskDetail from "./task-detail";
 import { appConfig } from "@/appConfig";
 import { Large } from "@/components/typography";
 import { Button } from "@/components/ui/button";
-import ActivityTimeline from "./activity-timeline";
+//import ActivityTimeline from "./activity-timeline";
 import NotificationDetail from "./notification-detail";
 import { NotificationAndTaskList } from "@/contexts/Notifications";
 import SendMessage from "./send-message";
+import { TimelineLayout } from "@/components/timeLine/timeline-layout";
+import { timeLineInterface } from "@/interfaces/timeLineInterface";
+import { set } from "date-fns";
+import { useAuth } from "@/hooks/useAuth";
 
 const NotificacionesYActividad = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -18,6 +25,8 @@ const NotificacionesYActividad = () => {
   const [itemId, setItemId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<"msj" | "task" | null>(null);
   const [writeMessage, setWriteMessage] = useState(false);
+  const [ timelineData, setTimelineData ] = useState<timeLineInterface[]>([]);
+  const { user } = useAuth();
 
   useEffect(() => {
     const id = searchParams.get("notification");
@@ -42,6 +51,22 @@ const NotificacionesYActividad = () => {
       setShowActivity(!showActivity);
     }
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const timelineData = await getActivityTimeline(user?.id.toString() || "");
+        //console.log(timelineData); // Aquí verás los arrays correctos
+        setTimelineData(timelineData); // Asegúrate de que `setTimelineData` está bien definido
+      } catch (error) {
+        console.error("Error al obtener la línea de tiempo:", error);
+      }
+    };
+  
+    fetchData(); // Ejecuta la función
+  
+  }, []);
+  
 
   return (
     <>
@@ -80,8 +105,10 @@ const NotificacionesYActividad = () => {
             <NotificationDetail notificationId={itemId} />
           ) : selectedItem === "task" && itemId ? (
             <TaskDetail taskId={itemId} />
-          ) : showActivity ? (
-            <ActivityTimeline />
+          ) : showActivity ? (<>
+           
+            {timelineData && timelineData.length >0 && (<TimelineLayout timelineData={timelineData} />)}
+            </>
           ) : writeMessage ? (
             <SendMessage />
           ) : (
