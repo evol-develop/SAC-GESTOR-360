@@ -11,8 +11,15 @@ import {
 } from "@tanstack/react-table";
 import { useState } from "react";
 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { PropsResults } from "./ConfigCatalogo";
-import { Separator } from "@/components/ui/separator";
 import { DataTableToolbar } from "./data-table-toolbar";
 import { DataTablePagination } from "./data-table-pagination";
 
@@ -22,6 +29,7 @@ export const GridCatalogo = ({
   filtro,
   showSendUsuarioMessage,
   showSendEmpresaMessage,
+  showViewOptions = true,
 }: PropsResults) => {
   const [rowSelection, setRowSelection] = useState({});
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -48,14 +56,15 @@ export const GridCatalogo = ({
   });
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-2">
       <DataTableToolbar
         filtro={filtro}
         table={table}
         showSendUsuarioMessage={showSendUsuarioMessage}
         showSendEmpresaMessage={showSendEmpresaMessage}
+        showViewOptions={showViewOptions}
       />
-      <div className="overflow-auto max-h-[400px] border rounded-md">
+      <div className="overflow-hidden border rounded-md">
         <div className="hidden sm:block">
           <div className="p-2 grid grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-2">
             {table.getHeaderGroups().map((headerGroup) =>

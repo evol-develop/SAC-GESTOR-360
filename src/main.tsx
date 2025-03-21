@@ -16,15 +16,15 @@ import "react-image-crop/dist/ReactCrop.css";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
-      <Provider store={store}>
-        <AuthProvider>
-          <NotificationProvider>
-            <HelmetProvider>
+      <HelmetProvider>
+        <Provider store={store}>
+          <AuthProvider>
+            <NotificationProvider>
               <App />
-            </HelmetProvider>
-          </NotificationProvider>
-        </AuthProvider>
-      </Provider>
+            </NotificationProvider>
+          </AuthProvider>
+        </Provider>
+      </HelmetProvider>
     </BrowserRouter>
   </StrictMode>
 );

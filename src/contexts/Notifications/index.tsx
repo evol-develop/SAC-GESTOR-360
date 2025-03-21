@@ -102,58 +102,60 @@ export const NotificationProvider = ({
   const { idEmpresa, user } = useAuth();
 
   useEffect(() => {
-    const notificationQuery = query(
-      collection(db, "notifications"),
-      where("empresaId", "in", [idEmpresa, "all"]),
-      orderBy("createdAt", "desc")
-      // limit(10)
-    );
+    if (user?.id) {
+      const notificationQuery = query(
+        collection(db, "notifications"),
+        where("empresaId", "in", [idEmpresa, "all"]),
+        orderBy("createdAt", "desc")
+        // limit(10)
+      );
 
-    const unsubscribeNotifications = onSnapshot(
-      notificationQuery,
-      (snapshot) => {
+      const unsubscribeNotifications = onSnapshot(
+        notificationQuery,
+        (snapshot) => {
+          const data = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })) as Notification[];
+          setNotifications(data);
+        }
+      );
+
+      const taskQuery = query(
+        collection(db, "tasks"),
+        where("empresaId", "in", [idEmpresa, "all"]),
+        orderBy("createdAt", "desc")
+        // limit(10)
+      );
+
+      const unsubscribeTasks = onSnapshot(taskQuery, (snapshot) => {
         const data = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        })) as Notification[];
-        setNotifications(data);
-      }
-    );
+        })) as Task[];
+        setTasks(data);
+      });
 
-    const taskQuery = query(
-      collection(db, "tasks"),
-      where("empresaId", "in", [idEmpresa, "all"]),
-      orderBy("createdAt", "desc")
-      // limit(10)
-    );
+      const myTasksQuery = query(
+        collection(db, "tasks"),
+        where("senderId", "==", user?.id ?? ""),
+        orderBy("createdAt", "desc")
+      );
 
-    const unsubscribeTasks = onSnapshot(taskQuery, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Task[];
-      setTasks(data);
-    });
+      const unsubscribeMyTasks = onSnapshot(myTasksQuery, (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Task[];
+        setMyTasks(data);
+      });
 
-    const myTasksQuery = query(
-      collection(db, "tasks"),
-      where("senderId", "==", user?.id ?? ""),
-      orderBy("createdAt", "desc")
-    );
-
-    const unsubscribeMyTasks = onSnapshot(myTasksQuery, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Task[];
-      setMyTasks(data);
-    });
-
-    return () => {
-      unsubscribeNotifications();
-      unsubscribeTasks();
-      unsubscribeMyTasks();
-    };
+      return () => {
+        unsubscribeNotifications();
+        unsubscribeTasks();
+        unsubscribeMyTasks();
+      };
+    }
   }, [idEmpresa, user]);
 
   const markAsRead = async (id: string) => {
@@ -312,15 +314,15 @@ const NotificationItem = ({
     >
       <div className="flex flex-col gap-1 w-full">
         <div className="flex items-center">
-          <div className="flex gap-2 items-center">
-            <div className="font-semibold">
+          <div className="grid grid-cols-[minmax(0,1fr)_0.5rem] gap-2 items-center mr-1">
+            <span className="font-semibold truncate">
               <UserAvatar userId={senderId} showAvatar={false} />
-            </div>
+            </span>
             {!read && <span className="size-2 flex bg-blue-600 rounded-full" />}
           </div>
           <div
             className={cn(
-              "ml-auto text-xs",
+              "text-nowrap ml-auto text-xs",
               isActive ? "text-foreground" : "text-muted-foreground"
             )}
           >
@@ -359,17 +361,17 @@ const TaskItem = ({ task, className }: { task: Task; className?: string }) => {
     >
       <div className="flex flex-col gap-1 w-full">
         <div className="flex items-center">
-          <div className="flex gap-2 items-center">
-            <div className="font-semibold">
+          <div className="grid grid-cols-[minmax(0,1fr)_0.5rem] gap-2 items-center mr-1">
+            <span className="font-semibold truncate">
               <UserAvatar userId={senderId} showAvatar={false} />
-            </div>
+            </span>
             {!isCompleted && (
               <span className="size-2 flex bg-blue-600 rounded-full" />
             )}
           </div>
           <div
             className={cn(
-              "ml-auto text-xs",
+              "text-nowrap ml-auto text-xs",
               isActive ? "text-foreground" : "text-muted-foreground"
             )}
           >

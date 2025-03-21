@@ -1,26 +1,59 @@
 import { useDropzone } from "react-dropzone";
 import { useState, useCallback, useRef } from "react";
 import ReactCrop, { Crop, PixelCrop } from "react-image-crop";
-import { UseFormReturn, UseFormSetValue } from "react-hook-form";
-import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogFooter,} from "@/components/ui/dialog";
+import {
+  FieldPath,
+  FieldValues,
+  PathValue,
+  UseFormReturn,
+  UseFormSetValue,
+} from "react-hook-form";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import FormInput from "./form-base";
 import { Button } from "@/components/ui/button";
 import { cropImageToFile } from "@/lib/utils/cropImageToFile";
-import { FaFilePdf, FaFileWord, FaFileExcel, FaFileAlt, FaFileImage } from 'react-icons/fa'; // Íconos para distintos tipos de archivo
+import {
+  FaFilePdf,
+  FaFileWord,
+  FaFileExcel,
+  FaFileAlt,
+  FaFileImage,
+} from "react-icons/fa"; // Íconos para distintos tipos de archivo
 import { on } from "events";
 
-type CropImageProps = {
-  form: UseFormReturn<any, any, undefined>;
-  name: string;
-  setValue: UseFormSetValue<any>;
+type CropImageProps<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+> = {
+  form: UseFormReturn<TFieldValues, any, undefined>;
+  name: TName;
+  setValue: UseFormSetValue<TFieldValues>;
   onImageCropped?: (croppedFile: string) => void;
-  showPreview?: boolean ;
+  showPreview?: boolean;
   handleFile?: (file: File) => void;
   height?: string;
   width?: string;
 };
 
-export const CropImage = ({ form, name, setValue,onImageCropped, showPreview= true, handleFile, height="161px", width="100%" }: CropImageProps) => {
+export const CropImage = <
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+>({
+  form,
+  name,
+  setValue,
+  onImageCropped,
+  showPreview = true,
+  handleFile,
+  height = "161px",
+  width = "100%",
+}: CropImageProps<TFieldValues, TName>) => {
   const [file, setFile] = useState<File | null>(null);
   const [image, setImage] = useState<string | null>(null);
   const [crop, setCrop] = useState<Crop>({
@@ -45,13 +78,13 @@ export const CropImage = ({ form, name, setValue,onImageCropped, showPreview= tr
     } else {
       // Si no es imagen, solo muestra el nombre del archivo o un ícono representativo
       setImage(null);
-      handleFile && handleFile(file);
+      handleFile?.(file);
     }
   }, []);
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
-    accept: { '*': [] }, // Acepta cualquier tipo de archivo
+    accept: { "*": [] }, // Acepta cualquier tipo de archivo
     multiple: false,
   });
 
@@ -74,9 +107,9 @@ export const CropImage = ({ form, name, setValue,onImageCropped, showPreview= tr
         "image.jpg"
       );
 
-      onImageCropped && onImageCropped(URL.createObjectURL(croppedFile));
+      onImageCropped?.(URL.createObjectURL(croppedFile));
       setCroppedImage(URL.createObjectURL(croppedFile));
-      setValue(name, croppedFile);
+      setValue(name, croppedFile as PathValue<TFieldValues, TName>);
     }
     setDialogOpen(false);
   }, [completedCrop, image, name, setValue]);
@@ -86,11 +119,13 @@ export const CropImage = ({ form, name, setValue,onImageCropped, showPreview= tr
       if (file.type.startsWith("image/")) {
         // Si es una imagen, muestra la vista previa
         return croppedImage ? (
-          showPreview && <img
-          src={croppedImage}
-          alt="Cropped"
-          className="object-contain h-auto max-w-full rounded-md aspect-square"
-        />
+          showPreview && (
+            <img
+              src={croppedImage}
+              alt="Cropped"
+              className="object-contain h-auto max-w-full rounded-md aspect-square"
+            />
+          )
         ) : (
           <div className="flex items-center justify-center p-2 border rounded-md aspect-square border-muted">
             <p className="text-sm text-center text-muted-foreground">
@@ -99,27 +134,35 @@ export const CropImage = ({ form, name, setValue,onImageCropped, showPreview= tr
           </div>
         );
       } else {
-        
         let icon;
         if (file.type === "application/pdf") {
           icon = <FaFilePdf size={48} />;
-        } else if (file.type === "application/msword" || file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+        } else if (
+          file.type === "application/msword" ||
+          file.type ===
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ) {
           icon = <FaFileWord size={48} />;
-        } else if (file.type === "application/vnd.ms-excel" || file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
+        } else if (
+          file.type === "application/vnd.ms-excel" ||
+          file.type ===
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ) {
           icon = <FaFileExcel size={48} />;
         } else {
           icon = <FaFileAlt size={48} />;
         }
 
         return (
-          showPreview && <div className="flex items-center justify-center p-2 border rounded-md aspect-square border-muted">
-            <div className="text-center text-muted-foreground">
-              {icon}
-              <p className="mt-2 text-sm">{file.name}</p>
+          showPreview && (
+            <div className="flex items-center justify-center p-2 border rounded-md aspect-square border-muted">
+              <div className="text-center text-muted-foreground">
+                {icon}
+                <p className="mt-2 text-sm">{file.name}</p>
+              </div>
             </div>
-          </div>
+          )
         );
-        
       }
     }
     return null;
@@ -127,14 +170,18 @@ export const CropImage = ({ form, name, setValue,onImageCropped, showPreview= tr
 
   return (
     <div>
-      <div className="flex flex-col gap-2 md:flex-row" style={{ height, width }}>
+      <div
+        className="flex flex-col gap-2 md:flex-row"
+        style={{ height, width }}
+      >
         <div
           {...getRootProps()}
           className="flex items-center justify-center w-full p-4 text-center border rounded-sm cursor-pointer md:w-3/4"
         >
           <input {...getInputProps()} />
           <p className="text-sm text-muted-foreground">
-            Arrastra y suelta un archivo aquí o haz clic para seleccionar un archivo
+            Arrastra y suelta un archivo aquí o haz clic para seleccionar un
+            archivo
           </p>
         </div>
 

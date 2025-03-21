@@ -12,6 +12,7 @@ interface DataTableToolbarProps<TData> {
   table: Table<TData>;
   showSendUsuarioMessage?: boolean;
   showSendEmpresaMessage?: boolean;
+  showViewOptions?: boolean;
 }
 
 export function DataTableToolbar<TData>({
@@ -19,6 +20,7 @@ export function DataTableToolbar<TData>({
   table,
   showSendUsuarioMessage,
   showSendEmpresaMessage,
+  showViewOptions = true,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
 
@@ -31,6 +33,7 @@ export function DataTableToolbar<TData>({
           table.getColumn(filtro)?.setFilterValue(event.target.value)
         }
         className="h-8 w-full lg:w-[400px] text-sm"
+        autoComplete="off"
       />
       {isFiltered && (
         <Button
@@ -45,7 +48,7 @@ export function DataTableToolbar<TData>({
       <div className="flex flex-col w-full gap-2 sm:ml-auto sm:flex-row sm:w-auto">
         {showSendUsuarioMessage && <MessageUsuario />}
         {showSendEmpresaMessage && <MessageEmpresa />}
-        <DataTableViewOptions table={table} />
+        {showViewOptions && <DataTableViewOptions table={table} />}
       </div>
     </div>
   );

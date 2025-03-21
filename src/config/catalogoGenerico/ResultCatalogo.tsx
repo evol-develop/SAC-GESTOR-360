@@ -1,9 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 
-import { P } from "@/components/typography";
-import { Card } from "@/components/ui/card";
 import { GridCatalogo } from "./GridCatalogo";
-import { Loading } from "@/components/Loading";
 import { DeleteDialog } from "./ConfigCatalogo";
 import { useCatalogo } from "@/hooks/useCatalogo";
 
