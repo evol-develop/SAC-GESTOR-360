@@ -17,7 +17,7 @@ export interface IPage {
   isSuccess: boolean;
   isOpenModal: boolean;
   isEditing: boolean;
-  dataModal: {} | any;
+  dataModal: any;
   slots: PageSlotState;
   modalSize: string;
 }
@@ -76,7 +76,7 @@ export const pageSlice = createSlice({
     },
     updateItemSlot: (state, { payload }: PayloadAction<StatePayload>) => {
       const nombreSlot = payload.state;
-      state.slots[nombreSlot] = state.slots[nombreSlot].map((item) =>
+      state.slots[nombreSlot] = state.slots[nombreSlot].map((item: any) =>
         item.id === payload.data.id ? payload.data : current(item)
       );
     },
@@ -84,7 +84,7 @@ export const pageSlice = createSlice({
     deleteItemSlot: (state, { payload }: PayloadAction<StatePayload>) => {
       const nombreSlot = payload.state;
       state.slots[nombreSlot] = state.slots[nombreSlot].filter(
-        (item) => item.id !== payload.data
+        (item: any) => item.id !== payload.data
       );
     },
     deleteSlot: (state, action: PayloadAction<string>) => {

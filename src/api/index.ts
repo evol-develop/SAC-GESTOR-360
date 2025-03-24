@@ -14,7 +14,7 @@ import {
 } from "firebase/firestore";
 
 import { firebaseDB as db } from "@/firebase/firebase-config";
-import { AuthState } from "@/contexts/Auth/AuthContext";
+import { type AuthState } from "@/contexts/Auth/types";
 
 export const createItem = async (
   collectionName: string,

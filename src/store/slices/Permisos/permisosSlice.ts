@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 
 export interface StatePayload {
   state: string;
@@ -21,7 +21,7 @@ export const permisosSlice = createSlice({
   name: "page",
   initialState,
   reducers: {
-    createSlotPermisos: (state, action: PayloadAction<PageSlotState>) => {
+    createSlotPermisos: (state, action) => {
       state.slots = { ...state.slots, ...action.payload };
     },
   },

@@ -22,7 +22,7 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isInitialized: false,
   user: undefined,
-  error: null,
+  error: undefined,
 };
 
 //slice auth
@@ -31,15 +31,13 @@ export const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    LOGIN: (state, action: PayloadAction<AuthState>) => {
+    LOGIN: (state, action) => {
       state.isAuthenticated = true;
       state.user = action.payload.user;
-      state.error = null;
     },
     LOGOUT: (state) => {
       state.isAuthenticated = false;
       state.user = undefined;
-      state.error = null;
     },
     LOGIN_ERROR: (state, action: PayloadAction<AuthState>) => {
       state.isAuthenticated = false;
