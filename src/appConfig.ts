@@ -1,6 +1,6 @@
 export const appConfig = {
-  NOMBRE: "SAC Web",
-  DESCRIPCION: "SAC Web",
+  NOMBRE: "SAC 360",
+  DESCRIPCION: "SAC 360 2025",
   VERSION: "1.1.0",
   FECHA_COMPILACION: "10/07/2024",
   URL_API: "https://localhost:44398/",

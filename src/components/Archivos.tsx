@@ -50,7 +50,7 @@ const Archivos = ({ movimientoId, ticketId,clienteId,comentarioId, showComentari
           );
           
 
-          console.log(response.data.result)
+          console.log("CAMBIO DE COMENTARIO")
     
           if (response.data.isSuccess ) {
     
@@ -58,7 +58,7 @@ const Archivos = ({ movimientoId, ticketId,clienteId,comentarioId, showComentari
             
             const ticket = response.data.result.ticket;
             const archivos = response.data.result.archivos;
-
+            const comentario = response.data.result.comentario;
             
             const audioExtensions = ["audio"];
             const imageExtensions = ["png", "jpeg", "jpg", "gif", "bmp", "tiff", "webp"];
@@ -93,30 +93,25 @@ const Archivos = ({ movimientoId, ticketId,clienteId,comentarioId, showComentari
             if(comentarioId === 0 && movimientoId === 0){
               setComentario(ticket.descripcion as string)
             }else{
-
-              // if(comentarioSlot==null || comentarioSlot === undefined)
-              // {
-                setComentario(archivos[0].ticketComentario.comentario)
-              // }
-              // else{
-              //   setComentario(comentarioSlot)
-              // }
+              setComentario(comentario)
             }
 
           }else{
+            dispatch(setIsLoading(false));
             toast.error("Ocurrió un error el cargar los archivos");
           }
           
         } catch (err) {
+          dispatch(setIsLoading(false));
           console.error(err);
         }
       };
 
-      
-    useEffect(()=>{
-        CargarArchivosByComentario()
-    },[movimientoId, ticketId,clienteId,comentarioId]);
-
+     
+      useEffect(() => {
+        CargarArchivosByComentario();
+      }, []);
+    
     return (
 
     <div className="flex flex-col w-full h-full overflow-y-auto bg-background max-h-1/2 sm:max-h-none">
@@ -201,7 +196,11 @@ const Archivos = ({ movimientoId, ticketId,clienteId,comentarioId, showComentari
             </div>
           )}
 
-          </>):(<div><Loading/></div>)}
+          </>):(
+               <div className="flex items-center justify-center w-full h-full">
+               <Loading ml="ml-16 lg:ml-60" />
+             </div>
+          )}
 
           </div>
       </section> 

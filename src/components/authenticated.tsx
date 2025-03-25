@@ -30,10 +30,15 @@ const Authenticated = ({ children }: Props) => {
     );
   }
 
+  console.log(location.pathname)
+
   const currentPath = location.pathname
-    .replace("/site/", "")
-    .replace(/\/$/, "")
-    .replace(/\/\d+\/\d+\/\d+\/\d+$/g, "");
+  .replace(/^\/site\//, "")  // Elimina "/site/"
+  .replace(/\/[0-9a-fA-F-]{36}\b/g, "") // Elimina el UUID al final
+  .replace(/(\/\d+)+$/g, ""); // Elimina todos los segmentos numéricos al final
+
+  console.log(currentPath)
+
   if (currentPath !== "/site") {
     const permiso = permisos.find((p) => p.ruta === currentPath);
 

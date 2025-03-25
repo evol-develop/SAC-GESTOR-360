@@ -22,16 +22,19 @@ export const Results = () => {
   const data =useAppSelector((state: RootState) => state.page.slots.TICKETS) || [];
   const { authState: { user },logout,} = useAuth();
 
-  const createSlots =(e:any)=>{
-    dispatch(createSlot({ ticketId: e.ticketId }));
-    dispatch(createSlot({ clienteId: e.clienteId }));
-    dispatch(createSlot({ idUserCliente: e.userId }));
-    dispatch(createSlot({ userId: e.ticket.userId }));
-    dispatch(createSlot({ etapaActual: e.ticketEstatusId }));
+  const mostrarComentarios =(e:any)=>{
+    console.log(e)
+    let url =`/site/procesos/consultaTickets/mostrarComentarios/${e.clienteId}/${e.ticketId}/${e.ticketEstatusId}/${e.ticket.userId}/${e.userId}`;
+    navigate(url);
   }
 
   const abrirTicket = (e: any) => {
     let url =`/site/procesos/consultaTickets/mostrarTicket/${e.clienteId}/${e.ticketId}/${0}/${0}`;
+    navigate(url);
+  };
+
+  const mostrarMovimientos = (e: any) => {
+    let url =`/site/procesos/consultaTickets/mostrarEtapa/${e.ticketId}`;
     navigate(url);
   };
 
@@ -128,7 +131,9 @@ export const Results = () => {
             openButton={true}
             handleConfirmOpen={(e) => abrirTicket(e)}
             viewButton={true}
-            handleConfirmView={(e) => createSlots(e)}
+            handleConfirmView={(e) => mostrarComentarios(e)}
+            viewEtapas={true}
+            handleConfirmEtapas={(e) => mostrarMovimientos(e)}
           />
         );
       },

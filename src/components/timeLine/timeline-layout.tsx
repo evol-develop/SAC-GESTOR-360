@@ -8,7 +8,7 @@ interface TimelineLayoutProps {
   }
 
   export const TimelineLayout = ({ timelineData }: TimelineLayoutProps) => {
-    console.log("Timeline Data:", timelineData); // Verifica que los datos se están pasando correctamente
+    //console.log("Timeline Data:", timelineData); // Verifica que los datos se están pasando correctamente
   
     return (
       <Timeline className="mt-8">
@@ -26,7 +26,7 @@ interface TimelineLayoutProps {
           const hasHTML = /<\/?[a-z][\s\S]*>/i.test(item.description? item.description:"");
           
           return (
-            <TimelineItem key={item.id}>
+            <TimelineItem key={item.id} className='m-5'>
               <TimelineHeader>
                 <TimelineTime>{formattedTime}</TimelineTime> {/* 📅 Aquí mostramos la fecha formateada */}
                 <TimelineTitle>{item.title}</TimelineTitle>

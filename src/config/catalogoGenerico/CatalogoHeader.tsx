@@ -90,7 +90,7 @@ export const CatalogoHeader = ({
           { values, globalState },
           idEmpresa as number
         )) as ResponseInterface;
-
+        console.log(itemResponse.result)
         if (itemResponse.isSuccess) {
           dispatch(
             addItemSlot({ state: PAGE_SLOT, data: itemResponse.result })
@@ -129,27 +129,28 @@ export const CatalogoHeader = ({
   };
 
   return (
-    <div className="sm:flex-row container flex flex-col justify-between items-center mx-auto mb-4">
+    <div className="container flex flex-col items-center justify-between mx-auto mb-4 sm:flex-row">
       <div>
         <h2 className="text-2xl font-bold tracking-tight">{titulos.titulo}</h2>
         <p className="text-muted-foreground">{titulos.descripcion}</p>
       </div>
       <div>
-        {showCreateButton && (
+       
           <Dialog
             open={open}
             onOpenChange={(open) => !open && handleCreateItemClose()}
           >
             <DialogTrigger asChild>
+            {showCreateButton && (
               <Button
                 onClick={handleCreateItemOpen}
                 size="sm"
                 type="button"
-                className="sm:mt-0 mt-4"
+                className="mt-4 sm:mt-0"
               >
                 <LuPlus />
                 {"Crear " + titulos.nombreItem}
-              </Button>
+              </Button>)}
             </DialogTrigger>
             <DialogContent className="w-fit max-w-7xl">
               <DialogHeader>
@@ -178,7 +179,7 @@ export const CatalogoHeader = ({
               />
             </DialogContent>
           </Dialog>
-        )}
+        
       </div>
     </div>
   );

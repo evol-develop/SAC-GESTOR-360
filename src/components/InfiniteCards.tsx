@@ -33,12 +33,12 @@ interface InfiniteCardsProps {
   etapas: CardData[];
 }
 
-const InfiniteCards: React.FC<InfiniteCardsProps> = ({ etapas }) => {
+const InfiniteCards = ({ etapas}: InfiniteCardsProps) => {
   //const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const isLoading = useAppSelector((state: RootState) => state.page.isLoading);
   const comentariosCliente = useAppSelector((state: RootState) => state.page.slots.COMENTARIOS_CLIENTE as any);
   const comentariosAsignado = useAppSelector((state: RootState) => state.page.slots.COMENTARIOS_ASIGNADO as any);
-  const userId = useAppSelector((state: RootState) => state.page.slots.userId);
+  const asignado = useAppSelector((state: RootState) => state.page.slots.asignado);
   const { dispatch } = usePage();
   const [comentarioId,setComentarioId]  = useState<number>(0);
   const ticketId = useAppSelector((state: RootState) => state.page.slots.ticketId as any);
@@ -46,14 +46,19 @@ const InfiniteCards: React.FC<InfiniteCardsProps> = ({ etapas }) => {
   const movimientoId = useAppSelector((state: RootState) => state.page.slots.movimientoId as any);
   const showArchivos = useAppSelector((state: RootState) => state.page.slots.SHOWARCHIVOS as boolean);
   const selectedIndex = useAppSelector((state: RootState) => state.page.slots.ETAPA);
-  const idUserCliente = useAppSelector((state: RootState) => state.page.slots.idUserCliente as any);
+  const clienteAuth = useAppSelector((state: RootState) => state.page.slots.clienteAuth as any);
   const { authState: { user },logout,} = useAuth();
   
     
   const handleCardClick = (id:number, index: number ) => {
+
+    dispatch(deleteSlot("COMENTARIOS_ASIGNADO"))
+    dispatch(deleteSlot("COMENTARIOS_CLIENTE"))
     dispatch(deleteSlot("COMENTARIOS"))
     dispatch(createSlot({ movimientoId: id }));
     dispatch(createSlot({ ETAPA: index }));
+    
+    
   };
   
   const openComentario = (comentario:ticketComentariosInterface) => {
@@ -64,6 +69,8 @@ const InfiniteCards: React.FC<InfiniteCardsProps> = ({ etapas }) => {
   };
 
   const CargarComentariosByMovimiento = async () => {
+
+    dispatch(setIsLoading(true));
     try {
       const response = await axios.get(
         `/api/tickets/getComentariosByMovimiento/${movimientoId}/${ticketId}/${clienteId}`,
@@ -71,10 +78,12 @@ const InfiniteCards: React.FC<InfiniteCardsProps> = ({ etapas }) => {
           headers: { "Content-Type": "application/text" },
         }
       );
-      console.log(response.data);
+      //console.log(response.data);
       
       if (response.data.isSuccess && Array.isArray(response.data.result)) {
       
+        dispatch(setIsLoading(false));
+        
         const comentarios = response.data.result.map((item:any) => ({
           fecha: item.fechaCrea,
           id: item.id,
@@ -83,29 +92,28 @@ const InfiniteCards: React.FC<InfiniteCardsProps> = ({ etapas }) => {
           asunto: item.asunto,
           dirigido_a: item.dirigido_a,
         }));
-        console.log(comentarios[0])
-        
+        //console.log(comentarios[0])
+        console.log("CAMBIO DE ETAPA");  // Para verificar cuándo cambia
 
-        dispatch(createSlot({ COMENTARIOS_ASIGNADO: comentarios.filter((item: any) => item.dirigido_a === "ASIGNADO") })); // Filtrar comentarios asignados
-        dispatch(createSlot({ COMENTARIOS_CLIENTE: comentarios.filter((item: any) => item.dirigido_a === "CLIENTE") })); // Filtrar comentarios de clientes
+        dispatch(createSlot({ COMENTARIOS_ASIGNADO: comentarios.filter((item: any) => item.dirigido_a === "ASIGNADO") })); 
+        dispatch(createSlot({ COMENTARIOS_CLIENTE: comentarios.filter((item: any) => item.dirigido_a === "CLIENTE") })); 
       }
       
     } catch (err) {
+      dispatch(setIsLoading(false));
       console.error(err);
     }
   };
   
-  useEffect(() => {
-    if(movimientoId != null && ticketId && clienteId){
-      CargarComentariosByMovimiento();
-    }
-  }, []);
+
 
   useEffect(() => {
-    if(movimientoId != null && ticketId && clienteId){
+   
+    if (movimientoId) {
       CargarComentariosByMovimiento();
     }
-  }, [movimientoId,ticketId,clienteId]);
+  }, [movimientoId]);
+  
 
   const [isSmallScreen, setIsSmallScreen] = useState(false);
 
@@ -126,17 +134,16 @@ const InfiniteCards: React.FC<InfiniteCardsProps> = ({ etapas }) => {
     };
   }, []);
     
-  function OpenModalComentario(item : any, userId : string, dirigido : string){
+  function OpenModalComentario(userId : string, dirigido : string){
    
     dispatch(createSlot({"Dirigido": dirigido} ));
     dispatch(createSlot({"Destinatario": userId} ));
-    // dispatch(createSlot({ ModalType: "Comentarios" }));
+    
     dispatch(setIsOpenModal(true));
-    dispatch(setDataModal(item));
+    dispatch(createSlot({ ModalType: "COMENTARIOS" }));
+   
   }
-  // console.log(comentariosAsignado)
-  // console.log(comentariosAsignado.lenght)
-  
+
   return (
     <TooltipProvider>
       <div
@@ -146,7 +153,7 @@ const InfiniteCards: React.FC<InfiniteCardsProps> = ({ etapas }) => {
           msOverflowStyle: "none",
         }}
       >
-        {etapas.map((item, index) => {
+        {etapas && etapas.map((item, index) => {
           const positionValue = index * 50;
           const topValue = index * 30;
           const widthValue = 120 - index * 5;
@@ -182,7 +189,13 @@ const InfiniteCards: React.FC<InfiniteCardsProps> = ({ etapas }) => {
                     {item.description}
                     <br />
                     {new Date(item.fecha).toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit", year: "numeric" })} -
-                    {new Date(item.fechaTermina).toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                    {item.fechaTermina.toString() === "0001-01-01T00:00:00+00:00" 
+                      ? "Vigente" 
+                      : new Date(item.fechaTermina).toLocaleDateString("es-MX", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric"
+                        })}
                   </TooltipContent>
                 </Tooltip>
               )}
@@ -256,10 +269,10 @@ const InfiniteCards: React.FC<InfiniteCardsProps> = ({ etapas }) => {
                     )}
                     
                     <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4">
-                        <Button size="sm" className="text-xs " onClick={(e) => OpenModalComentario(e, idUserCliente, "CLIENTE")}>
-                        Responder
-                        </Button>
-                      </div>
+                      <Button size="sm" className="text-xs " onClick={(e) => OpenModalComentario( clienteAuth, "CLIENTE")}>
+                      {comentariosCliente && comentariosCliente.length === 0 ? (<>Inicar conversación</>):(<>Responder</>)}
+                      </Button>
+                    </div>
                   
                     </div>
                     
@@ -313,8 +326,8 @@ const InfiniteCards: React.FC<InfiniteCardsProps> = ({ etapas }) => {
                   )}
           
                     <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4">
-                      <Button size="sm" className="text-xs " onClick={(e) => OpenModalComentario(e, userId, "ASIGNADO")}>
-                      Responder
+                      <Button size="sm" className="text-xs " onClick={(e) => OpenModalComentario(asignado, "ASIGNADO")}>
+                      {comentariosAsignado && comentariosAsignado.length === 0 ? (<>Inicar conversación</>):(<>Responder</>)}
                       </Button>
                     </div>
                     </div>
@@ -328,9 +341,9 @@ const InfiniteCards: React.FC<InfiniteCardsProps> = ({ etapas }) => {
 
             ) : (
               <>
-                {movimientoId && ticketId && clienteId && comentarioId && (
+               
                   <Archivos movimientoId={movimientoId} ticketId={ticketId} clienteId={clienteId} comentarioId={comentarioId} />
-                )}
+              
               </>
             )}
           </div>

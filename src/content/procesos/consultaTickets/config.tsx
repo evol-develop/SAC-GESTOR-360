@@ -1,3 +1,5 @@
+
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { CheckCircle, Circle, Clock } from "lucide-react";
 import { format } from "date-fns";
@@ -51,6 +53,8 @@ import { FaUserCheck } from "react-icons/fa";
 import { CiCirclePlus } from "react-icons/ci";
 import { Notification } from "@/contexts/Notifications";
 import { useNotifications } from "@/hooks/useNotifications";
+
+const fileList: { archivoURL: string; tipoArchivo: string; nombreArchivo: string }[] = [];
 
 export const OperacionesFormulario = () => {
   const createItemCatalogo = async (
@@ -115,251 +119,6 @@ export const OperacionesFormulario = () => {
   };
 };
 
-export const TicketsMovimientos = () => {
-  const { idEmpresa } = useAuth();
-  const { dispatch } = usePage(); 
-  const movimientos = useAppSelector((state: RootState) => state.page.slots.MOVIMIENTOS as any);
-  const showArchivos = useAppSelector((state: RootState) => state.page.slots.SHOWARCHIVOS as boolean);
-  const ticketId = useAppSelector((state: RootState) => state.page.slots.ticketId as any);
-  const isLoading = useAppSelector((state: RootState) => state.page.isLoading);
-  const [etapas, setEtapas] = useState<any[]>([{ title: "", description: "", id:0 }]);
-  const movimientoId = useAppSelector((state: RootState) => state.page.slots.movimientoId as number);
-  const clienteId = useAppSelector((state: RootState) => state.page.slots.clienteId as any);
-  const userId = useAppSelector((state: RootState) => state.page.slots.userId);
-  const usuarios =useAppSelector((state: RootState) => state.page.slots.USUARIOS as any[] );
-  const etapaActual = useAppSelector((state: RootState) => state.page.slots.etapaActual as number);
-  const { authState: { user },logout,} = useAuth();
-
-  function BuscarEtapa(id: number): string | undefined {
-    return Object.keys(estatus).find(key => estatus[key as keyof typeof estatus] === id);
-  }
-
-  const CargarMovimientos = async () => {
-    try {
-      const response = await axios.get(
-        `/api/tickets/getMovimientosByTicket/${ticketId}/${true}`,{headers: { "Content-Type": "application/text" },}
-      );
-
-      if (response.data.isSuccess && Array.isArray(response.data.result)) {
-        
-        const movimientos = response.data.result.map((item:any) => ({
-          fechaTermina: item.fechaTermina,
-          fecha: item.fechaCrea,
-          estado: item.ticketEstatus.nombre,
-          id: item.id,
-          
-        }));
-
-        const ultimoMovimiento = movimientos.length - 1;
-
-        // console.log(ultimoMovimiento)
-        // console.log(movimientos)
-
-        // console.log(movimientos[ultimoMovimiento].id)
-       
-        dispatch(createSlot({ movimientoId: movimientos[ultimoMovimiento].id }));
-        dispatch(createSlot({ MOVIMIENTOS: movimientos }));
-        dispatch(createSlot({ ETAPA: ultimoMovimiento }));
-      }
-
-    } catch (err) {
-      console.error(err);
-    }
-  };
-    
-  useEffect(() => {
-    if(ticketId){
-    CargarMovimientos();
-    }
-  }, [ticketId]);
-  
-  function OpenModalComentario(item : any){
-   
-    dispatch(createSlot({ ModalType: "Comentarios" }));
-    dispatch(setIsOpenModal(true));
-    dispatch(setDataModal(item));
-  }
-
-  function OpenModalAsignarUsuario(item : any){
-    dispatch(createSlot({ openModal: true }));
-  }
-
-  useEffect(() => {
-    if (movimientos && movimientos.length > 0) {
-      const updatedEtapas = movimientos.map((movimiento :any, index:any) => ({
-        title: movimiento.estado, 
-        description: movimiento.estado, 
-        id: movimiento.id,
-        fecha: movimiento.fecha,
-        fechaTermina: movimiento.fechaTermina
-      }));
-
-      setEtapas(updatedEtapas);
-    }
-  }, [movimientos]);
-
-  function setShowArchivosFalse(){
-
-    dispatch(deleteSlot("COMENTARIO"))
-    dispatch(deleteSlot("SHOWARCHIVOS"))
-  }
-
-  function ocultarComentarios(){
-    dispatch(deleteSlot("ticketId"))
-    dispatch(deleteSlot("clienteId"))
-
-    dispatch(deleteSlot("etapaActual"))
-    dispatch(deleteSlot("userId"))
-    
-    
-    dispatch(deleteSlot("MOVIMIENTOS"))
-    dispatch(deleteSlot("COMENTARIOS"))
-  }
-
-  function cambiarEstatus(){
-    
-      Autorizar(
-        () => handleClick(),
-        TiposAutorizacion.CambiarEtapa
-      );
-  }
-
-  const handleClick = async () => {
-    
-    try {       
-         
-        const valoresForm = {
-          id : ticketId,
-          clienteId: clienteId,
-          empresaId: idEmpresa
-        };
-
-        const response = await axios.post<ResponseInterface>(
-          "/api/tickets/registrarMovimiento",
-          valoresForm
-        );
-
-        if(response.data.isSuccess){
-        console.log(response.data.result)
-
-        var movimiento = response.data.result as ticketMovimientoInterface;
-        
-        //console.log(movimiento)
-        
-        var newMovimiento ={
-          fechaTermina: new Date(),
-          fecha : movimiento.fechaCrea,
-          estado: movimiento.ticketEstatus.nombre,
-          id: movimiento.id
-        }
-
-         dispatch(
-          addItemSlot({ state: "MOVIMIENTOS", data: newMovimiento })
-        );      
-        dispatch(deleteSlot("COMENTARIOS"))
-       
-
-         dispatch(createSlot({ etapaActual: movimiento.ticketEstatusId }));
-         dispatch(createSlot({ ETAPA: movimiento.ticketEstatusId-1 }));
-        
-        toast.success(response.data.message);
-        }else{
-          toast.error(response.data.message);
-        }
-
-      return response.data;
-
-    } catch (err) {
-      console.error(err);
-      throw new Error("Error al actualizar al registrar el ticket");
-    }
-  };
-    
- // console.log(user?.userRoll)
-
-  return (<>
-    {ticketId ? (
-    <div className="container mx-auto">
-    <Card className="w-full h-full">
-      <CardHeader className="flex flex-col items-center justify-between w-full sm:flex-row">
-        <div className="flex flex-col w-full gap-1 sm:flex-row sm:w-auto">
-          <Button
-            size="sm"
-            variant="default"
-            onClick={() => showArchivos ? setShowArchivosFalse() : ocultarComentarios()}
-          >
-            <span className="hidden lg:inline-block">Volver</span>
-            <LuUndo2 />
-          </Button>
-
-          {!showArchivos && (
-            <>
-              {user?.userRoll !== "Cliente" && (
-                <>
-                  <Button
-                    size="sm"
-                    className="text-xs"
-                    onClick={(e) => cambiarEstatus()}
-                    disabled={(etapaActual - 1) === estatus.CERRADO}
-                  >
-                    <GrLinkNext />
-                    Avanzar a la siguiente etapa
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    className="text-xs"
-                    onClick={(e) => OpenModalAsignarUsuario(e)}
-                    disabled={(etapaActual - 1) === estatus.CERRADO}
-                  >
-                    <FaUserCheck />
-                    Asignar Usuario
-                  </Button>
-                </>
-              )}
-
-              {/* <Button size="sm" className="text-xs" onClick={(e) => OpenModalComentario(e)}>
-                <CiCirclePlus />
-                Añadir comentario
-              </Button> */}
-            </>
-          )}
-
-        </div>
-
-        {!showArchivos && (
-             <div className="flex items-center justify-center w-full gap-2 sm:w-auto">
-              {user?.userRoll !== "Cliente" && (
-                <><div className="p-1 text-xs font-bold text-black border rounded-md ">
-                    Usuario asignado :
-                  </div><div className="p-1 text-xs text-black border rounded-md">
-                      {usuarios && usuarios.find((user) => user.id === userId)?.fullName}
-                    </div>
-                </>
-              )}
-              <div className="flex flex-row p-1 text-xs font-bold text-black border rounded-md ">Folio :</div>
-                <div className="flex flex-row p-1 text-xs text-black border rounded-md"> # {ticketId}</div>
-                <div className="p-1 text-xs font-bold text-black border rounded-md ">
-                  Estatus :
-                </div>
-                <div className="p-1 text-xs text-black border rounded-md">
-                  {BuscarEtapa(etapaActual-1)}
-                </div>
-              </div>
-        )}
-      </CardHeader>
-      <CardContent>
-     
-      <InfiniteCards etapas={etapas}  /> 
-  
-     </CardContent>  
-    </Card> 
-    </div>):
-    ( <Results/>)}
-    </>
-  );
-};
-
 export const crearComentario = () => {
   
   const { dispatch } = usePage(); 
@@ -369,7 +128,7 @@ export const crearComentario = () => {
   const [archivosList, setArchivosList] = React.useState<{ url: string; id: string; tipo:string; nombre:string; blob:Blob}[]>([]);
   const { authState: { user },logout,} = useAuth();
   const { idEmpresa } = useAuth();
-  const fileList: { archivoURL: string; tipoArchivo: string; nombreArchivo: string }[] = [];
+  
   const clienteId = useAppSelector((state: RootState) => state.page.slots.clienteId as any);
   const ticketId = useAppSelector((state: RootState) => state.page.slots.ticketId as any);
   //const movimientoId = useAppSelector((state: RootState) => state.page.slots.movimientoId as any);
@@ -377,7 +136,7 @@ export const crearComentario = () => {
   const selectedIndex = useAppSelector((state: RootState) => state.page.slots.ETAPA);
   const { sendNotification } = useNotifications();
   const destinatario = useAppSelector((state: RootState) => state.page.slots.Destinatario);
-  const userId = useAppSelector((state: RootState) => state.page.slots.userId);
+  const asignado = useAppSelector((state: RootState) => state.page.slots.asignado);
   const dirigido_a  = useAppSelector((state: RootState) => state.page.slots.Dirigido);
    
   const addAudioElement = (blob: Blob) => {
@@ -497,8 +256,7 @@ export const crearComentario = () => {
         setAudioList([]);
         setImageList([]);
 
-        dispatch(deleteSlot("NEWCOMENTARIO"))
-        dispatch(deleteSlot("Destinatario"))
+
 
         console.log(response.data)  
         
@@ -525,8 +283,12 @@ export const crearComentario = () => {
             console.error("Error al enviar la notificación", error);
           }
           console.log(destinatario)
+          console.log(etapaActual)
+          console.log(selectedIndex)
           if(etapaActual===selectedIndex+1){
             console.log("LA MISMA ETAPA")
+          }else{
+            console.log("DIFERENTE ETAPA")
           }
           
           if(etapaActual===selectedIndex+1){
@@ -551,10 +313,12 @@ export const crearComentario = () => {
           toast.error(response.data.message);
         }
 
-        dispatch(setIsEditing(false));
-        dispatch(setDataModal({}));
-        dispatch(setIsOpenModal(false));
-        dispatch(setModalSize("lg"));
+        dispatch(deleteSlot("Dirigido"))
+        dispatch(deleteSlot("Destinatario"))
+        
+            // dispatch(setIsOpenModal(false));
+            // dispatch(setDataModal({}));
+            // dispatch(setModalSize("lg"));
 
         return response.data;
 
@@ -568,7 +332,7 @@ export const crearComentario = () => {
 
     
   function onSubmit1(valores: any) {
-    console.log("hello!", valores);
+    //generalForm.handleSubmit()
   }
   
   const onError = (valores: any) => {
@@ -728,6 +492,7 @@ export const asignarUsuario = () => {
       const valoresForm = {
         id : ticketId,
         userId: valores.userId,
+        clienteId: clienteId
       };
 
         const response = await axios.post<ResponseInterface>(
@@ -742,7 +507,8 @@ export const asignarUsuario = () => {
         
         if(response.data.isSuccess){
           
-           dispatch(createSlot({ userId: response.data.result.userId }));
+           dispatch(createSlot({ asignado: response.data.result.userId }));
+           
            toast.success(response.data.message);
 
            const notification: Notification = {
@@ -842,4 +608,3 @@ export const asignarUsuario = () => {
 
     );
   };
-

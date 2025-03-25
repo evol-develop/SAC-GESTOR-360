@@ -86,6 +86,14 @@ const MostrarTicket = Loader(
   lazy(() => import("@/content/procesos/consultaTickets/mostrarArchivos"))
 );
 
+const MostrarEtapas = Loader(
+  lazy(() => import("@/content/procesos/consultaTickets/mostrarEtapas"))
+);
+
+const MostrarComentarios = Loader(
+  lazy(() => import("@/content/procesos/consultaTickets/mostrarComentarios"))
+);
+
 export const Router = () => {
   return (
     <Routes>
@@ -131,7 +139,8 @@ export const Router = () => {
           <Route path="tickets" element={<ManagementTickets />} />
           <Route path="consultaTickets" element={<ConsultaTickets />} />
           <Route path="consultaTickets/mostrarTicket/:clienteId/:ticketId/:movimientoId/:comentarioId" element={<MostrarTicket />} /> 
-          {/* <Route path="consultaTickets/mostrarTicket" element={<MostrarTicket />} /> */}
+          <Route path="consultaTickets/mostrarEtapa/:ticketId" element={<MostrarEtapas />} />
+          <Route path="consultaTickets/mostrarComentarios/:clienteId/:ticketId/:etapaActual/:userId/:clienteidAuth" element={<MostrarComentarios />} /> 
         </Route>
 
         <Route

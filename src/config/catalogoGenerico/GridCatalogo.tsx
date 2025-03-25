@@ -22,6 +22,7 @@ import {
 import { PropsResults } from "./ConfigCatalogo";
 import { DataTableToolbar } from "./data-table-toolbar";
 import { DataTablePagination } from "./data-table-pagination";
+import { Separator } from "@/components/ui/separator";
 
 export const GridCatalogo = ({
   data,

@@ -4,16 +4,17 @@ import { appConfig } from "@/appConfig";
 import { useNavigate } from 'react-router';
 import { Card,CardContent, CardHeader} from "@/components/ui/card";
 import Archivos from '@/components/Archivos';
-const MostrarTicket = () => {
-  const { clienteId, ticketId,movimientoId, comentarioId } = useParams();
-  //console.log(clienteId,ticketId,movimientoId)
-  const navigate = useNavigate();
+import { Button } from "@/components/ui/button";
+import { LuUndo2 } from "react-icons/lu";
 
-  // const abrirTicket = () => {
-  //   let url =`/site/procesos/consultaTickets`;
-  //   navigate(url);
-  // };
- 
+const MostrarTicket = () => {
+  const navigate = useNavigate();
+  const { clienteId, ticketId,movimientoId, comentarioId } = useParams();
+
+  function volver(){
+    let url =`/site/procesos/consultaTickets`;
+    navigate(url);
+  }
   
   return (
   <>
@@ -22,21 +23,29 @@ const MostrarTicket = () => {
 
   <Card>
   <CardHeader className="flex flex-row items-center justify-between text-xs">
-    <a href='/site/procesos/consultaTickets' 
-       className="text-start" 
-       style={{ textDecoration: 'underline', color: 'blue' }}>
-       Consulta de tickets {'>'}
-    </a>
+
+    <Button
+      size="sm"
+      variant="default"
+      onClick={() =>  volver()}
+    >
+      <span className="hidden lg:inline-block">Ver tickets</span>
+      <LuUndo2 />
+    </Button>
 
     <h5 className="flex-grow font-bold tracking-tight text-center">
       Ticket {" "} #{ticketId}
     </h5>
 
-    <a href='/site/procesos/consultaTickets' 
-       className="text-start" 
-       style={{ textDecoration: 'underline', color: 'blue' }}>
-       Ver comentarios {'>'}
-    </a>
+    <Button
+      size="sm"
+      variant="default"
+      onClick={() =>  volver()}
+    >
+      <span className="hidden lg:inline-block">Ver comentarios</span>
+      <LuUndo2 />
+    </Button>
+    
 
   </CardHeader> 
     <CardContent>

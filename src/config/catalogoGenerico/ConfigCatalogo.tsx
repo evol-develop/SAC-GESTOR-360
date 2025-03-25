@@ -19,7 +19,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { MdComment } from "react-icons/md";
 import { IoTicketOutline } from "react-icons/io5";
+import { FaHistory } from "react-icons/fa";
 
 export interface PropsResults {
   data: any[];
@@ -69,6 +71,8 @@ type AccionesProps = {
   openButton?: boolean;
   handleConfirmOpen?: (item: any) => void;
   className?: string;
+  viewEtapas?: boolean;
+  handleConfirmEtapas?: (item: any) => void;
 };
 
 export const Acciones = ({
@@ -81,9 +85,11 @@ export const Acciones = ({
   handleConfirmView,
   openButton = false,
   handleConfirmOpen,
+  viewEtapas = false,
+  handleConfirmEtapas,
 }: AccionesProps) => {
   return (
-    <div className="flex justify-start items-center space-x-2">
+    <div className="flex items-center justify-start space-x-2">
       {editButton && handleEditItem && (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -130,14 +136,32 @@ export const Acciones = ({
               variant={"warning"}
               size="icon"
             >
-              <GrView />
+              <MdComment  />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="right" colorClass="bg-yellow-500 text-black">
+          <TooltipContent side="right" colorClass="bg-yellow-500 text-white">
+            ver comentarios
+          </TooltipContent>
+        </Tooltip>
+      )}
+
+      {viewEtapas && handleConfirmEtapas && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              onClick={() => handleConfirmEtapas(item)}
+              variant={"default"}
+              size="icon"
+            >
+              <FaHistory  />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right" colorClass="bg-primary text-white">
             ver movimientos
           </TooltipContent>
         </Tooltip>
       )}
+      
     </div>
   );
 };
