@@ -2,7 +2,7 @@
 export const JWT_SECRET = 'jwt-secret-key';
 export const JWT_EXPIRES_IN = 3600 * 24 * 2;
 
-export const sign = (payload, privateKey, header) => {
+export const sign = (payload:any, privateKey:any, header:any) => {
   const now = new Date();
   header.expiresIn = new Date(now.getTime() + header.expiresIn);
   const encodedHeader = btoa(JSON.stringify(header));
@@ -20,7 +20,7 @@ export const sign = (payload, privateKey, header) => {
   return `${encodedHeader}.${encodedPayload}.${signature}`;
 };
 
-export const decode = (token) => {
+export const decode = (token:any) => {
   const [encodedHeader, encodedPayload, signature] = token.split('.');
   const header = JSON.parse(atob(encodedHeader));
   const payload = JSON.parse(atob(encodedPayload));
@@ -31,7 +31,7 @@ export const decode = (token) => {
   }
 
   const verifiedSignature = btoa(
-    Array.from(encodedPayload)
+    Array.from(encodedPayload as string)
       .map((item: string, key) =>
         String.fromCharCode(
           item.charCodeAt(0) ^ JWT_SECRET[key % JWT_SECRET.length].charCodeAt(0)
@@ -47,7 +47,7 @@ export const decode = (token) => {
   return payload;
 };
 
-export const verify = (token, privateKey) => {
+export const verify = (token :any, privateKey:any) => {
   const [encodedHeader, encodedPayload, signature] = token.split('.');
   const header = JSON.parse(atob(encodedHeader));
   const payload = JSON.parse(atob(encodedPayload));
@@ -59,9 +59,15 @@ export const verify = (token, privateKey) => {
 
   const verifiedSignature = btoa(
     Array.from(encodedPayload)
-      .map((item : string, key) =>
+      // .map((item : string, key) =>
+      //   String.fromCharCode(
+      //     item.charCodeAt(0) ^ privateKey[key % privateKey.length].charCodeAt(0)
+      //   )
+      // )
+
+      .map((item, key) =>
         String.fromCharCode(
-          item.charCodeAt(0) ^ privateKey[key % privateKey.length].charCodeAt(0)
+          (item as string).charCodeAt(0) ^ privateKey[key % privateKey.length].charCodeAt(0)
         )
       )
       .join('')

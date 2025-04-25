@@ -83,7 +83,7 @@ const Header = ({ open }: { open: boolean }) => {
   ) as unknown as EmpresaInterface;
 
   return (
-    <div className="bg-primary-foreground relative z-10 flex items-center justify-end w-full h-24 px-4 py-4 shadow-md">
+    <div className="relative z-10 flex items-center justify-end w-full h-24 px-4 py-4 shadow-md bg-primary-foreground">
       <CustomTrigger
         className="absolute left-0 z-10 rounded-l-none shadow-md"
         open={open}
@@ -93,7 +93,7 @@ const Header = ({ open }: { open: boolean }) => {
         <Small>{dataEmpresa.direccion}</Small>
         <Small>{dataEmpresa.telefono}</Small>
       </div>
-      <div className="right-4 absolute z-10 flex items-center gap-2">
+      <div className="absolute z-10 flex items-center gap-2 right-4">
         <NotificationsButton className="relative shadow-md" />
         <HeaderUserbox />
       </div>

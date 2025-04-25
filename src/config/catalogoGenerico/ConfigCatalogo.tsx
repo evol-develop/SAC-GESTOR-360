@@ -89,7 +89,8 @@ export const Acciones = ({
   handleConfirmEtapas,
 }: AccionesProps) => {
   return (
-    <div className="flex items-center justify-start space-x-2">
+    <div className="flex flex-wrap items-center justify-start gap-2">
+
       {editButton && handleEditItem && (
         <Tooltip>
           <TooltipTrigger asChild>

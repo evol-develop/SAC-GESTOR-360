@@ -7,12 +7,17 @@ import Archivos from '@/components/Archivos';
 import { Button } from "@/components/ui/button";
 import { LuUndo2 } from "react-icons/lu";
 
-const MostrarTicket = () => {
+const MostrarArchivos = () => {
   const navigate = useNavigate();
-  const { clienteId, ticketId,movimientoId, comentarioId } = useParams();
+  const {ticketId, comentarioId } = useParams();
 
   function volver(){
     let url =`/site/procesos/consultaTickets`;
+    navigate(url);
+  }
+
+  function comentarios(){
+    let url =`/site/procesos/consultaTickets/mostrarComentarios/${ticketId}`;
     navigate(url);
   }
   
@@ -40,7 +45,7 @@ const MostrarTicket = () => {
     <Button
       size="sm"
       variant="default"
-      onClick={() =>  volver()}
+      onClick={() =>  comentarios()}
     >
       <span className="hidden lg:inline-block">Ver comentarios</span>
       <LuUndo2 />
@@ -49,16 +54,13 @@ const MostrarTicket = () => {
 
   </CardHeader> 
     <CardContent>
-
-    {movimientoId && ticketId && clienteId && comentarioId  && (
-      <Archivos showComentario={false} movimientoId={parseInt(movimientoId)} ticketId={parseInt(ticketId)} clienteId={parseInt(clienteId)} comentarioId={parseInt(comentarioId)} />)}
-
+    { ticketId && comentarioId  && (
+      <Archivos showComentario={false}  ticketId={parseInt(ticketId)}  comentarioId={parseInt(comentarioId)} />)}
     </CardContent>  
   </Card>
-        
   </>
 
   );
 };
 
-export default MostrarTicket;
+export default MostrarArchivos;

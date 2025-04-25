@@ -24,13 +24,17 @@ const Authenticated = ({ children }: { children: React.ReactNode }) => {
     </div>
   );
 
-  // Función mejorada para normalizar la ruta
   const getNormalizedPath = (path: string): string => {
     return path
-      .replace(/^\/site\//, "") // Elimina /site/ del inicio
-      .replace(/\/{2,}/g, "/") // Elimina múltiples slashes consecutivos
-      .replace(/\/$/, "") // Elimina el slash final
-      .toLowerCase(); // Normaliza a minúsculas
+    .replace(/^\/site\//, "")  // Elimina "/site/"
+    //.replace(/\/[0-9a-fA-F-]{36}\b/g, "") // Elimina el UUID al final
+    .replace(/\/null\b/g, "")
+    .replace(/(\/\d+)+$/g, "") // Elimina todos los segmentos numéricos al final  
+   
+      // .replace(/^\/site\//, "") // Elimina /site/ del inicio
+      // .replace(/\/{2,}/g, "/") // Elimina múltiples slashes consecutivos
+      // .replace(/\/$/, "") // Elimina el slash final
+    //.toLowerCase(); // Normaliza a minúsculas
   };
 
   useEffect(() => {
@@ -58,13 +62,14 @@ const Authenticated = ({ children }: { children: React.ReactNode }) => {
   if (loading || !permisos || permisos.length === 0) {
     return <LoadingSpinner />;
   }
-
+  //console.log(location.pathname);
   // No validamos permisos si estamos en la ruta principal del sitio
   const currentPath = getNormalizedPath(location.pathname);
   if (currentPath === "/site") {
     return <>{children}</>;
   }
 
+  //console.log(currentPath);
   const tienePermiso = permisos?.some((p) => p.ruta === currentPath);
   if (!tienePermiso) {
     navigate("/", { replace: true, state: { from: location } });

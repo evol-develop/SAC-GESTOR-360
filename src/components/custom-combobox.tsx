@@ -10,12 +10,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
-import axios from "@/lib/utils/axios";
+import axios, { axiosIns2 } from "@/lib/utils/axios";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { EvolRolInterface } from "@/interfaces/userInterface";
 import { ResponseInterface, userResult } from "@/interfaces/responseInterface";
 import { EmpresaInterface } from "@/interfaces/empresaInterface";
+import { alertasInterface } from "@/interfaces/catalogos/alertasInterface";
+import { appConfig } from "@/appConfig";
+import axiosIns from "@/lib/utils/axios";
 
 type Props = {
   tipo:
@@ -24,16 +27,31 @@ type Props = {
     | "ROL"
     | "ReporteEmpresa"
     | "PRIORIDAD"
-    | "EMPRESAS";
+    | "EMPRESAS"
+    | "FRECUENCIAS"
+    | "ANIO"
+    | "MES"
+    | "CLIENTES"
+    | "ALERTAS"
+    | "TIPOS_CLIENTES"
+    | "SERVICIOS"
+    | "CFDI"
+    | "METODOSPAGO"
+    | "FormasPago"
+    | "REGIMEN"
+    | "DEPARTAMENTOS"
+    | "EVENTOS"
   label: string;
   name: string;
   form: UseFormReturn<any, any, undefined>;
   placeholder?: string;
+  disabled?: boolean; 
+  onchange?: () => void;
 };
 
 type dataProps = {
   label: string;
-  value: string;
+  value: string| number;
   disabled?: boolean;
 };
 
@@ -43,12 +61,13 @@ export const ComboboxForm = ({
   name,
   form,
   placeholder = "Selecciona una opción...",
+  disabled = false,
 }: Props) => {
   const [data, setData] = useState<
     {
       disabled?: boolean;
       label: string;
-      value: string;
+      value: string | number;
     }[]
   >([]);
   const [open, setOpen] = useState(false);
@@ -58,6 +77,7 @@ export const ComboboxForm = ({
   const listRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
+    // if (disabled) return;
     const getData = async () => {
       switch (tipo) {
         case "ROLESUSUARIO":
@@ -68,7 +88,11 @@ export const ComboboxForm = ({
               // { label: 'SUPER-ADMINISTRADOR', value: 'SuperAdmin' },
             ];
 
-            setData(data);
+            setData(data.map(item => ({
+              label: item.label,
+              value: item.value.toString(),
+              disabled: item.disabled
+            })));
           } catch (err) {
             console.error(err);
           }
@@ -87,7 +111,11 @@ export const ComboboxForm = ({
                 value: `${item.id}`,
               }));
 
-            setData(data);
+            setData(data.map(item => ({
+              label: item.label,
+              value: item.value.toString(),
+              disabled: item.disabled
+            })));
           } catch (err) {
             console.error(err);
           } finally {
@@ -107,7 +135,11 @@ export const ComboboxForm = ({
               value: item.id.toString(),
               disabled: item.nombre === "Cliente", // Deshabilitar la opción "Cliente"
             }));
-            setData(data);
+            setData(data.map(item => ({
+              label: item.label,
+              value: item.value.toString(),
+              disabled: item.disabled
+            })) );
           } catch (err) {
             console.error(err);
           }
@@ -125,7 +157,11 @@ export const ComboboxForm = ({
               })
             );
             if (response.data.result.length > 0) {
-              setData(data);
+              setData(data.map(item => ({
+                label: item.label,
+                value: item.value.toString(),
+                disabled: item.disabled
+              })));
             }
           } catch (err) {
             console.error(err);
@@ -139,7 +175,11 @@ export const ComboboxForm = ({
               value: `${item.value}`,
             }));
 
-            setData(data);
+            setData(data.map(item => ({
+              label: item.label,
+              value: item.value.toString(),
+              disabled: item.disabled
+            })));
           } catch (err) {
             console.error(err);
           } finally {
@@ -159,6 +199,81 @@ export const ComboboxForm = ({
               value: `${item.id}`,
             }));
             if (response.data.result.length > 0) {
+              setData(data.map(item => ({
+                label: item.label,
+                value: item.value.toString(),
+                disabled: item.disabled
+              })));
+            }
+          } catch (err) {
+            console.error(err);
+          } finally {
+            setLoading(false);
+          }
+          break;
+        case "FRECUENCIAS":
+          
+         const frecuencias: { label: string; value: string }[] = [
+          {
+            label: "MENSUAL",
+            value: "MENSUAL",
+          },
+          {
+            label: "ÚNICA",
+            value: "ÚNICA",
+          },
+          {
+            label: "ANUAL",
+            value: "ANUAL",
+          },
+         ];
+
+         setData(frecuencias);
+         break;
+         case "MES":
+          const meses: { label: string; value: number }[] = [
+            { label: "Enero", value: 1 },
+            { label: "Febrero", value: 2 },
+            { label: "Marzo", value: 3 },
+            { label: "Abril", value: 4 },
+            { label: "Mayo", value: 5 },
+            { label: "Junio", value: 6 },
+            { label: "Julio", value: 7 },
+            { label: "Agosto", value: 8 },
+            { label: "Septiembre", value: 9 },
+            { label: "Octubre", value: 10 },
+            { label: "Noviembre", value: 11 },
+            { label: "Diciembre", value: 12 },
+          ];
+          
+        setData(meses);
+        break;
+        case "ANIO":
+          const currentYear = new Date().getFullYear();
+          const years: { label: string; value: string }[] = [];
+
+        for (let year = 2014; year <= currentYear; year++) {
+          years.push({
+            label: year.toString(),
+            value: year.toString(),
+          });
+        }
+
+        setData(years);
+        break;
+        case "CLIENTES":
+          try {
+            setLoading(true);
+            const response = await axios.get<ResponseInterface>(
+              `/api/clientes/getclientes`
+            );
+            const data: dataProps[] = (
+              response.data.result as EmpresaInterface[]
+            ).map((item) => ({
+              label: `${item.nombre}`,
+              value: `${item.id}`,
+            }));
+            if (response.data.result.length > 0) {
               setData(data);
             }
           } catch (err) {
@@ -167,6 +282,159 @@ export const ComboboxForm = ({
             setLoading(false);
           }
           break;
+        case "ALERTAS":
+          try {
+            setLoading(true);
+            const response = await axios.get<ResponseInterface>(
+              `/api/alertas/getAlertas`
+            );
+
+            console.log(response.data.result)
+            const data: dataProps[] = (
+              response.data.result as alertasInterface[]
+            ).map((item) => ({
+              label: `${item.descripcion}`,
+              value: `${item.id}`,
+            }));
+            if (response.data.result.length > 0) {
+              setData(data);
+            }
+          } catch (err) {
+            console.error(err);
+          } finally {
+            setLoading(false);
+          }
+          break;
+        case "REGIMEN":
+          try {
+            setLoading(true);
+            const response = await axiosIns2.get<ResponseInterface>(
+              `/api/getCatalogoSAT?code=${appConfig.TOKEN}&Catalogo=RegimenFiscal`
+            );
+            const data: dataProps[] = (
+              response.data.result as { id: number; descripcion: string; clave: string }[]
+            ).map((item) => ({
+              label: `${item.clave}- ${item.descripcion}`,
+              value: item.id,
+            }));
+            if (response.data.result.length > 0) {
+              setData(data);
+            }
+          } catch (err) {
+            console.error(err);
+          } finally {
+            setLoading(false);
+          }
+          break;
+
+        case "CFDI":
+          try {
+            setLoading(true);
+            const response = await axiosIns2.get<ResponseInterface>(
+              `/api/getCatalogoSAT?code=${appConfig.TOKEN}&Catalogo=UsoCFDI`
+            );
+            const data: dataProps[] = (
+              response.data.result as { id: number; descripcion: string; clave: string }[]
+            ).map((item) => ({
+              label: `${item.clave}- ${item.descripcion}`,
+              value: item.id,
+            }));
+            if (response.data.result.length > 0) {
+              setData(data);
+            }
+          } catch (err) {
+            console.error(err);
+          } finally {
+            setLoading(false);
+          }
+          break;
+
+        case "SERVICIOS":
+          try {
+            setLoading(true);
+            const response = await axios.get<ResponseInterface>(
+              `/api/servicios/getServicios`
+            );
+            const data: dataProps[] = (
+              response.data.result as { id: number; descripcion: string; clave: string }[]
+            ).map((item) => ({
+              label: item.descripcion,
+              value: item.id.toString(),
+            }));
+            if (response.data.result.length > 0) {
+              setData(data);
+            }
+          } catch (err) {
+            console.error(err);
+          } finally {
+            setLoading(false);
+          }
+          break;  
+          
+        case "TIPOS_CLIENTES":
+          try {
+            setLoading(true);
+            const response = await axios.get<ResponseInterface>(
+              `/api/tipos/getTipos`
+            );
+            const data: dataProps[] = (
+              response.data.result as { id: number; descripcion: string; clave: string }[]
+            ).map((item) => ({
+              label: item.descripcion,
+              value: item.id,
+            }));
+            if (response.data.result.length > 0) {
+              setData(data);
+            }
+          } catch (err) {
+            console.error(err);
+          } finally {
+            setLoading(false);
+          }
+          break;
+        case "FormasPago":
+          try {
+            setLoading(true);
+            const response = await axiosIns2.get<ResponseInterface>(
+              `/api/getCatalogoSAT?code=${appConfig.TOKEN}&Catalogo=FormasPago`
+            );
+            const data: dataProps[] = (
+              response.data.result as { id: number; descripcion: string; clave: string }[]
+            ).map((item) => ({
+              label: `${item.clave}- ${item.descripcion}`,
+              value: item.id,
+            }));
+            if (response.data.result.length > 0) {
+              setData(data);
+            }
+          } catch (err) {
+            console.error(err);
+          } finally {
+            setLoading(false);
+          }
+          break;
+
+          case "METODOSPAGO":
+            try {
+              setLoading(true);
+              const response = await axiosIns2.get<ResponseInterface>(
+                `/api/getCatalogoSAT?code=${appConfig.TOKEN}&Catalogo=MetodoPago`
+              );
+              const data: dataProps[] = (
+                response.data.result as { id: number; descripcion: string; clave: string }[]
+              ).map((item) => ({
+                label: `${item.clave}- ${item.descripcion}`,
+                value: item.id,
+              }));
+              if (response.data.result.length > 0) {
+                setData(data);
+              }
+            } catch (err) {
+              console.error(err);
+            } finally {
+              setLoading(false);
+            }
+            break;
       }
     };
     getData();
@@ -178,7 +446,7 @@ export const ComboboxForm = ({
     );
   }, [data, search]);
 
-  const handleSelect = (selectedValue: string) => {
+  const handleSelect = (selectedValue: any) => {
     form.setValue(name, selectedValue);
     setOpen(false);
     setSearch("");
@@ -190,7 +458,7 @@ export const ComboboxForm = ({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
+          <FormLabel >{label}</FormLabel>
           <div className="relative w-full">
             <FormControl>
               <Button
@@ -201,44 +469,50 @@ export const ComboboxForm = ({
                   "w-full justify-between",
                   !field.value && "text-muted-foreground"
                 )}
+                disabled={disabled}
               >
-                {field.value
-                  ? data.find(
-                      (option) =>
-                        option.value === field.value ||
-                        option.label === field.value
-                    )?.label
-                  : placeholder}
+               <span className="truncate block max-w-[calc(100%-2rem)]">
+                  {field.value
+                    ? data.find(
+                        (option) =>
+                          option.value === field.value ||
+                          option.label === field.value
+                      )?.label
+                    : placeholder}
+                </span>
                 {!loading ? (
-                  <LuChevronsUpDown className="w-4 h-4 ml-2 opacity-50 shrink-0" />
+                  <LuChevronsUpDown className="ml-2 w-4 h-4 opacity-50 shrink-0" />
                 ) : (
-                  <LuLoaderCircle className="w-4 h-4 ml-2 shrink-0 animate-spin" />
+                  <LuLoaderCircle className="ml-2 w-4 h-4 animate-spin shrink-0" />
                 )}
               </Button>
             </FormControl>
             {open && (
-              <div className="absolute z-50 w-full mt-1 border rounded shadow-md bg-primary-foreground">
+              <div className="absolute z-50 mt-1 w-full rounded border shadow-md bg-primary-foreground">
                 <Input
                   ref={inputRef}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Buscar..."
+                  disabled={disabled} 
                 />
                <ul ref={listRef} className="overflow-y-auto max-h-60">
-  {filteredOptions.map((option) => (
-    <li
-      key={option.value}
-      className={cn(
-        "cursor-pointer px-2 py-1 hover:bg-primary/25",
-        field.value === option.value && "bg-primary/50",
-        option.disabled && "text-gray-400 cursor-not-allowed" // Estilo visual para opciones deshabilitadas
-      )}
-      onClick={() => !option.disabled && handleSelect(option.value)} // Evitar selección si está deshabilitado
-    >
-      {option.label}
-    </li>
-  ))}
-</ul>
+                {filteredOptions.map((option) => (
+                  <li
+                  key={option.value}
+                  className={cn(
+                    "cursor-pointer px-2 py-1 hover:bg-primary/25",
+                    "truncate", // <- esto corta el texto con puntos suspensivos si es muy largo
+                    "max-w-full", // <- asegura que no se extienda más allá de su contenedor
+                    field.value === option.value && "bg-primary/50",
+                    option.disabled && "text-gray-400 cursor-not-allowed"
+                  )}
+                  onClick={() => !option.disabled && handleSelect(option.value)}
+                >
+                  {option.label}
+                </li>
+                ))}
+              </ul>
 
               </div>
             )}

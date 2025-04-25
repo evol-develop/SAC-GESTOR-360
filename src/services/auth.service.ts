@@ -199,6 +199,8 @@ export class AuthService {
         }
       );
 
+      //console.log("Respuesta de login:", response.data.result);
+
       if (!response.data?.isSuccess) {
         throw new Error(response.data?.message || "Error al iniciar sesión");
       }

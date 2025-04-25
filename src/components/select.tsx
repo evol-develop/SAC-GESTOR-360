@@ -57,8 +57,8 @@ const SelectGrid = <T extends { [key: string]: any }>({
 
   return (
     
-      <><div className="flex items-center gap-2">
-          <div className="flex items-center w-full gap-2">
+      <><div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center w-full">
               {/* Select */}
               <div className="flex-1">
                   <Select onValueChange={(value) => setSelectedValue(value)}>
@@ -91,7 +91,7 @@ const SelectGrid = <T extends { [key: string]: any }>({
               )}
 
               {selectedItems.length > 0 && (
-                  <div className="mt-4 overflow-hidden border rounded-md">
+                  <div className="overflow-hidden mt-4 rounded-md border">
                       <div className="overflow-y-auto max-h-40">
                           <table className="w-full text-xs border-collapse">
                               <thead className="sticky top-0 z-10 bg-gray-100 shadow-sm">
@@ -100,9 +100,9 @@ const SelectGrid = <T extends { [key: string]: any }>({
                                       {titulo ==="Servicios" ?(
                                         <><th className="w-[70%] px-4 py-2 text-left border-b">Precio</th>
                                         <th className="w-[70%] px-4 py-2 text-left border-b">Frecuencia</th></>
-                                      ):
-                                      (<th className="w-[70%] px-4 py-2 text-left border-b">Rol</th>)
-                                      }
+                                      ): (<>
+                                      {titulo ==="usuarios" && (<th className="w-[70%] px-4 py-2 text-left border-b">Rol</th>)}
+                                      </>)}
                                       <th className="w-[30%] px-4 py-2 text-center border-b">Acciones</th>
                                   </tr>
                               </thead>
@@ -127,9 +127,10 @@ const SelectGrid = <T extends { [key: string]: any }>({
                                                 : "ÚNICA"}
                                             </td>
                                             </>
-                                        ) : (
-                                            <td className="px-4 py-2 text-sm">{userRoll}</td>
-                                        )}
+                                        ) : (<>
+                                      {titulo ==="usuarios" && (
+                                            <td className="px-4 py-2 text-sm">{userRoll}</td>)}
+                                            </>)}
                                         <td className="px-4 py-2 text-center">
                                             <button
                                             className="p-2 text-white bg-red-500 rounded hover:bg-red-700"

@@ -39,6 +39,53 @@ export const unreadNotificationsCount = (
   return unreadNotifications.length;
 };
 
+export const unreadNotificationsCount2 = (
+  notifications: Notification[],
+  authState?: AuthState
+) => {
+  const { markAsNotified } = useNotifications();
+  const auth =authState || (JSON.parse(localStorage.getItem("authState") || "{}") as AuthState);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const unreadNotifications = notifications.filter((notification) => {
+    const isUndisplayedUser =
+      notification.userId === auth.user?.id && notification.motivo ==="ticket" &&
+      notification.notificationDisplay === false;
+
+    // const isUndisplayedAll =
+    //   notification.userId === "all" &&  notification.motivo ==="ticket" &&
+    //   notification.notificationDisplay === false;
+
+      const isUndisplayedFind =
+      (notification.groupIds?.includes(auth.user?.id || "")) &&  notification.motivo ==="ticket" &&
+      notification.notificationDisplay === false;
+
+      //console.log("all"+isUndisplayedAll)
+      // console.log("user:"+isUndisplayedUser)
+      // console.log("find:"+isUndisplayedFind)
+
+    return isUndisplayedUser  ||isUndisplayedFind; //|| isUndisplayedAll;
+  });
+
+  unreadNotifications.forEach( async (notification) => {
+
+    console.log(notification)
+    if (notification?.id) {
+      if (markAsNotified) {
+        await markAsNotified(notification?.id as string);
+      }
+    }
+  });
+
+  return {
+     unreadNotifications,
+  };
+
+};
+
+
 export const notificationsAndTasksCount = (
   notifications: Notification[],
   tasks: Task[],

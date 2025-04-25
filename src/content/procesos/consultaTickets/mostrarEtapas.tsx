@@ -1,6 +1,5 @@
 import { Helmet } from "react-helmet-async";
 import { useEffect, useState } from "react";
-import {getActivityTimeline} from "@/api/notificationsApi";
 import { appConfig } from "@/appConfig";
 import { Large } from "@/components/typography";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,7 @@ import { useNavigate } from "react-router";
 import { LuUndo2 } from "react-icons/lu";
 import axios from "@/lib/utils/axios";
 
-const mostrarEtapas = () => {
+const MostrarEtapas = () => {
   const navigate = useNavigate();
   const [ timelineData, setTimelineData ] = useState<timeLineInterface[]>([]);
   const { user } = useAuth();
@@ -29,7 +28,7 @@ const mostrarEtapas = () => {
           `/api/tickets/getMovimientosByTicket/${ticketId}/${false}`,{headers: { "Content-Type": "application/text" },}
         );
 
-        console.log("response", response.data);
+        console.log("response", response.data.result);
   
         if (response.data.isSuccess && Array.isArray(response.data.result)) {
           
@@ -71,7 +70,7 @@ const mostrarEtapas = () => {
             };
           });
 
-          console.log("movimientos", movimientos);
+         // console.log("movimientos", movimientos);
           
           setTimelineData(movimientos);
           
@@ -100,33 +99,31 @@ const mostrarEtapas = () => {
       <Helmet>
         <title>{appConfig.NOMBRE} - Movimientos del ticket</title>
       </Helmet>
-      <section className="relative h-[calc(100dvh-252px)] sm:h-[calc(100dvh-200px)] flex flex-col sm:flex-row gap-4">
-        <div className="flex flex-col w-full h-full border rounded-sm bg-background sm:w-1/4 max-h-1/2 sm:max-h-none">
+     
+      <div className="flex flex-col w-full">
 
-        <div className="flex flex-col items-center justify-between p-4 text-xs sm:flex-row">
+
+        <div className="flex flex-col justify-between items-center p-4 text-xs rounded-sm border sm:flex-row">
           <Button
             size="sm"
             variant="default"
             onClick={() => volver()}
-            className="w-full sm:w-1/3"
+            className="w-full sm:w-1/12"
           >
             <span className="hidden lg:inline-block">Volver</span>
             <LuUndo2 />
           </Button>
-
           <Large className="p-4 pb-0 sm:ml-4">{`Ticket # ${ticketId}`}</Large>
         </div>
 
-        </div>
-        <div className="flex flex-col w-full h-full overflow-y-auto border rounded-sm bg-background max-h-1/2 sm:max-h-none">
-
+         <div className="overflow-y-auto rounded-sm border bg-background" style={{ maxHeight: 'calc(86vh - 200px)' }}>
+         {timelineData && timelineData.length >0 && (<TimelineLayout timelineData={timelineData} />)}
+         </div>
         
-            {timelineData && timelineData.length >0 && (<TimelineLayout timelineData={timelineData} />)}
-         
-        </div>
-      </section>
+           
+        </div> 
     </>
   );
 };
 
-export default mostrarEtapas;
+export default MostrarEtapas;

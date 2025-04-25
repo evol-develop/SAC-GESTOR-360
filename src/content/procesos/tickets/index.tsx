@@ -3,12 +3,10 @@ import { appConfig } from "@/appConfig";
 import { Formulario } from "./config";
 import { useGetData } from "@/hooks/useGetData";
 import { useAuth } from "@/hooks/useAuth";
-import { useAppSelector } from "@/hooks/storeHooks";
-import { RootState } from "@/store/store";
 import { usePage } from "@/hooks/usePage";
 import { createSlot } from "@/store/slices/page";
-const ManagementTickets = () => {
 
+const ManagementTickets = () => {
   const {init, dispatch } = usePage();
   const { authState: { user },logout,} = useAuth();
 
@@ -19,7 +17,7 @@ const ManagementTickets = () => {
     useGetData({ ruta: "/api/clientes/getClientes", slot: "CLIENTES" });
   }else {
     
-    dispatch(createSlot({ ["clienteId"]: parseInt(user.id) }));
+    dispatch(createSlot({ ["clienteId"]: user?.clienteId }));
   }
 
   useGetData({ ruta: "/api/user/getusers", slot: "USUARIOS" });

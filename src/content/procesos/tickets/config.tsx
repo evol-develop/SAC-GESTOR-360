@@ -36,7 +36,7 @@ import { CardFooter } from "@/components/ui/card";
 import UserAvatar from "@/components/UserAvatar";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Notification } from "@/contexts/Notifications";
-import { useMemo } from "react";
+import { useMemo,useRef } from "react";
 
 const validationSchema = z
   .object({
@@ -52,8 +52,6 @@ export const Formulario = () => {
   const { dispatch } = usePage();
   const { authState: { user },logout,} = useAuth();
 
-  //console.log(user)
-  
   const dataModal = useAppSelector((state: RootState) => state.page.dataModal);
   const { idEmpresa } = useAuth();
   const fileList: { archivoURL: string; tipoArchivo: string; nombreArchivo: string }[] = [];
@@ -75,8 +73,7 @@ export const Formulario = () => {
 
   const handleImageCropped = (croppedFile: string) => {
     const id = new Date().toISOString();
-    //console.log(croppedFile);
-  
+
     fetch(croppedFile)
     .then((res) => res.blob())
     .then((blob) => {
@@ -97,11 +94,10 @@ export const Formulario = () => {
   };
 
   const handleFile = (croppedFile: File) => {
-    //console.log(croppedFile);
     const id = new Date().toISOString();
     setArchivosList((prevList) => [...prevList, { id: id, url: URL.createObjectURL(croppedFile), tipo: croppedFile.type.toString(), nombre: croppedFile.name, blob: croppedFile }]);
   };
-
+  
   const eliminarAudio = (id: string) => {
     setAudioList((prevList) => prevList.filter((audio) => audio.id !== id));
   };
@@ -136,7 +132,7 @@ export const Formulario = () => {
   };
 
   const onSubmit: SubmitHandler<any> = async (valores) => {
-    console.log(valores);
+    //console.log(valores);
     
     try {          
       await uploadFile(audioList, "AUDIOS_TICKETS");
@@ -147,7 +143,6 @@ export const Formulario = () => {
 
       var clienteId = "";
 
-      //COMPROBAR QUE TIPO DE ROL TIENE EL USUARIO LOGUEADO
       if(user?.userRoll != "Cliente"){
         clienteId = valores.clienteId;
       }else{
@@ -165,9 +160,7 @@ export const Formulario = () => {
         servicioId: valores.servicioId,
         userId: valores.userId,
       };
-
-      //console.log(valoresForm);
-
+      
         const response = await axios.post<ResponseInterface>(
           "/api/tickets/create",
           valoresForm
@@ -175,8 +168,6 @@ export const Formulario = () => {
 
         if(response.data.isSuccess){
         
-        //toast.success(response.data.message);
-
         generalForm.reset();
         setArchivosList([]);
         setAudioList([]);
@@ -184,16 +175,24 @@ export const Formulario = () => {
 
         console.log(response.data.result)
 
+        const  groupIds =  usuarios && usuarios
+        .filter((item) => item.departamento ? item.departamento.nombre === "Soporte":null)
+        .map((item) => item.id); // Asumí que `id` es el campo que quieres agregar a `groupIds`
+
          const notification: Notification = {
-          title: "Se ha generado un nuevo ticket con el folio #"+response.data.result.id,
+          title: "Se ha generado un nuevo ticket con el folio #"+response.data.result.ticketId,
           message: 
-          "<a href='/site/procesos/consultaTickets/mostrarTicket/"+response.data.result.clienteId+
-          "/"+response.data.result.ticketId+"/"+0+"/"+0+"' style={{ textDecoration: 'underline', color: 'blue' }}> Ver ticket</a>  <br/>"+
+          "<a href='/site/procesos/consultaTickets/mostrarArchivos/"
+          +response.data.result.ticketId+"/"+0+"' style={{ textDecoration: 'underline', color: 'blue' }}> Ver ticket</a>  <br/>"+
           "<div  className='text-xs'><b>Asunto:</b> "+valores.titulo+" <br/>"+ 
           "<b>Descripción:</b> "+valores.descripcion+" </div>",
           type:"importante",
-          groupIds:usuarios.map((item) => item.id),
+          groupIds:groupIds,
           userId: valores.userId,
+          notificationDisplay: false,
+          ticketId:response.data.result.ticketId,
+          comentarioId:0,
+          motivo:"ticket"
         };
             
         try {
@@ -247,16 +246,8 @@ export const Formulario = () => {
 
     setUsuariosResponsable(servicioSeleccionado.usuario_responsable.id);
 
-    //console.log(servicioSeleccionado)
-  
-    //const usuarios = servicioSeleccionado?.usuarios;
-
-    //console.log(usuarios)
-    
-    //dispatch(createSlot({"USUARIOS": usuarios}));
     generalForm.setValue("userId", servicioSeleccionado.usuario_responsable.id);
   };
-
 
   const CargaServicios = async () => {
     try {
@@ -268,10 +259,7 @@ export const Formulario = () => {
       );
       
       if (response.data.isSuccess && Array.isArray(response.data.result)) {
-        // Mapear los servicios obtenidos
-
-        //console.log(response.data.result);
-        
+       
         const servicios = response.data.result.map((item:any) => ({
           id: item.servicio?.id,
           descripcion: item.servicio?.descripcion || "",
@@ -321,12 +309,50 @@ export const Formulario = () => {
     }
   }, [usuarios]);
 
-  return (
-    <>
-    
-    <Card>
+
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+
+  useEffect(() => {
+    const handleDragEnter = (e: DragEvent) => {
+      if (e.dataTransfer?.types.includes('Files')) {
+        setIsDraggingFile(true);
+      }
+    };
+
+    const handleDragLeave = (e: DragEvent) => {
+      if (e.relatedTarget === null || e.clientY <= 0) {
+        setIsDraggingFile(false);
+      }
+    };
+
+    const handleDrop = () => {
+      setIsDraggingFile(false);
+    };
+
+    window.addEventListener('dragenter', handleDragEnter);
+    window.addEventListener('dragleave', handleDragLeave);
+    window.addEventListener('drop', handleDrop);
+
+    return () => {
+      window.removeEventListener('dragenter', handleDragEnter);
+      window.removeEventListener('dragleave', handleDragLeave);
+      window.removeEventListener('drop', handleDrop);
+    };
+  }, []);
+  
+    return (
+      <>
+   
+
+    {isDraggingFile && (
+      <div className="flex absolute inset-0 justify-center items-center bg-gray-500 bg-opacity-30 pointer-events-none">
+        {/* <span className="text-lg font-bold text-red-700">🚫 Aquí no se permite soltar archivos</span> */}
+      </div>
+    )}
+
+      <Card >
     <CardHeader>
-    <div className="flex items-center justify-center ">
+    <div className="flex justify-center items-center">
       <h5 className="text-sm enter font-xbold sm:text-left">
         Generación de Tickets
       </h5>
@@ -337,223 +363,238 @@ export const Formulario = () => {
      <form onSubmit={generalForm.handleSubmit(onSubmit)}>
      <div className="flex flex-col w-full h-full md:flex-row">
 
-      <div className="w-full h-full px-4 md:w-1/2">
+      <div className="px-4 w-full h-full md:w-1/2">
           <div className="h-full min-h-[200px]">
             <div className="grid grid-cols-1 gap-4 p-1">
 
             {user?.userRoll != "Cliente" && 
-                  <div className="flex items-center gap-4">
-                  <FormLabel className="text-xs">Cliente</FormLabel>
-                  <Select name="clienteId" onValueChange={seleccionarCliente} key={generalForm.watch("clienteId")}>
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={clientes && clientes.length > 0
-                          ? clientes.find((x) => x.id === generalForm.watch("clienteId"))
-                            ?.nombre || "Seleccione un cliente"
-                          : "Cargando..."} />
-                    </SelectTrigger>
-                    <SelectContent >
-                      {clientes && clientes.map((item: { id: number; nombre: string; }) => (
-                        <SelectItem key={item.id} value={item.id.toString()}>
-                          {item.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              }
-              
-              <div className="flex items-center gap-2">
-              <FormLabel className="text-xs">Servicio: </FormLabel>
-              <Select name="servicioId" onValueChange={seleccionarServicio}  key={generalForm.watch("servicioId")}>
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={servicios && servicios.length > 0
-                      ? servicios.find((x) => x.id === generalForm.watch("servicioId"))
-                        ?.descripcion || "Seleccione un servicio"
-                      : "Cargando..."} />
-                </SelectTrigger>
-                <SelectContent>
-                  {servicios && servicios.map((item: { id: number; descripcion: string; }) => (
-                    <SelectItem key={item.id} value={item.id.toString()}>
-                      {item.descripcion}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* {user?.userRoll != "Cliente" && usuariosResponsable && (
-                      <><FormLabel className="text-xs">Responsable</FormLabel><UserAvatar
-                            withTooltip
-                            userId={usuariosResponsable}
-                            className="size-6"
-                            rounded="rounded-full" /></>)}  */}
-                            
-            </div>
-
-            {user?.userRoll != "Cliente" && 
-                  <>
-                  <div className="flex items-center gap-2">  
-                        <FormLabel className="text-xs whitespace-nowrap">Asignar a: </FormLabel>
-                        <Select name="userId" onValueChange={(value) => generalForm.setValue("userId", value)}>
-                          <SelectTrigger>
-                            <SelectValue
-                              placeholder={
-                                usuariosFiltrados && usuariosFiltrados.length > 0
-                                  ? usuariosFiltrados.find((x) => x.id === generalForm.watch("userId"))?.fullName ||
-                                    "Selecciona un usuario"
-                                  : "Cargando..."
-                              }
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {usuariosFiltrados &&
-                              usuariosFiltrados.map((item: { id: string; fullName: string }) => (
-                                <SelectItem key={item.id} value={item.id.toString()}>
-                                  {item.fullName}
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
-                      
-                      {/* {usuariosResponsable && (
-                      <><FormLabel className="text-xs">Usuario responsable</FormLabel><UserAvatar
-                            withTooltip
-                            userId={usuariosResponsable}
-                            className="size-6"
-                            rounded="rounded-full" /></>)} */}
-                          
-                    </div></>
-              }
-
-              <FormInput
-                form={generalForm}
-                name="titulo"
-                label="Asunto :"
-                placeholder=""
-                required />
-
-              <label className="block text-xs font-medium text-black ">
-                Descripción del problema :
-              </label>
-              <textarea
-                {...generalForm.register("descripcion")}
-                placeholder="Describa su problema aqui ..."
-                required
-                className="w-full h-48 p-1 mb-5 text-sm border rounded-md shadow resize-none border-muted focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-
-            </div>
-          </div>
-      </div>
-        
-        <div className="w-full h-full px-4 md:w-1/2"> 
-          <div className="mb-0 h-full min-h-[30px] mt-4 ">
-            
-              <div className="p-1 shadow min-h-80">
-                {/* Carrusel de Audios */}
-                {audioList.length > 0 && (
-                  <div>
-                    <h3 className="text-xs font-bold">{audioList.length} Audio(s) </h3>
-                    <Swiper navigation modules={[Navigation]} spaceBetween={10} slidesPerView={3}>
-                      {audioList.map((audio) => (
-                        <SwiperSlide key={audio.id} className="flex items-center justify-between p-2 border rounded-md">
-                          <button onClick={() => eliminarAudio(audio.id)} className="absolute text-red-500 top-1 right-1">
-                            <FaTimes size={16} />
-                          </button>
-                          <Reproductor audioUrl={audio.url} style={{ width: "100%" }} />
-                        </SwiperSlide>
-                      ))}
-                    </Swiper>
-                  </div>
-                )}
-
-                {/* Carrusel de Archivos */}
-                {archivosList.length > 0 && (
-                  <div>
-                    <h3 className="text-xs font-bold">{archivosList.length} Archivo(s) </h3>
-                    <Swiper navigation modules={[Navigation]} spaceBetween={10} slidesPerView={3}>
-                      {archivosList.map((archivo) => (
-                        <SwiperSlide key={archivo.id} className="relative p-2 border rounded-md">
-                          <button onClick={() => eliminarArchivo(archivo.id)} className="absolute text-red-500 top-1 right-1">
-                            <FaTimes size={16} />
-                          </button>
-                          <div className="flex flex-col items-center">
-                            <FaFileAlt size={30} />
-                            <p className="text-xs truncate max-w-[100px]">{archivo.nombre}</p>
-                          </div>
-                        </SwiperSlide>
-                      ))}
-                    </Swiper>
-                  </div>
-                )}
-
-                {/* Carrusel de Imágenes */}
-                {imageList.length > 0 && (
-                  <div>
-                    <h3 className="text-xs font-bold">{imageList.length} Imágen(es) </h3>
-                    <Swiper navigation modules={[Navigation]} spaceBetween={10} slidesPerView={3}>
-                      {imageList.map((croppedImage) => (
-                        <SwiperSlide key={croppedImage.url} className="relative p-2 border rounded-md">
-                          <button onClick={() => eliminarImagen(croppedImage.url)} className="absolute text-red-500 top-1 right-1">
-                            <FaTimes size={16} />
-                          </button>
-                          <img src={croppedImage.url} alt="Imagen Adjunta" className="object-contain w-24 h-24 rounded-md" />
-                        </SwiperSlide>
-                      ))}
-                    </Swiper>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-row items-end gap-1 mt-2 ">
-              <CropImage
-                  form={generalForm}
-                  name="pictureURL"
-                  setValue={generalForm.setValue}
-                  onImageCropped={handleImageCropped}
-                  showPreview={false}
-                  handleFile={handleFile}
-                  height="100%"
-                  width="100%"
-                />
-              
-              <div style={{marginTop:'-15% !important'}}  >
-              <AudioRecorder
-                  onRecordingComplete={addAudioElement}
-                  audioTrackConstraints={{
-                    noiseSuppression: true,
-                    echoCancellation: true,
-                  }}
-                  downloadOnSavePress={false}
-                  downloadFileExtension="webm"
-                />
-              </div>
-
-              </div>
-
-              <div className="flex flex-col items-end mt-10 right-4"  >
-                <CardFooter className="flex justify-end gap-2">
-                  <Button
-                    type="submit"
-                    className="text-xs"
-                    disabled={generalForm.formState.isSubmitting}
-                  >
-                  {generalForm.formState.isSubmitting && (<LuLoaderCircle className="animate-spin" />)}
-                    Generar ticket
-                    
-                  </Button>
-                </CardFooter>
-              </div>
-              
-          </div>
-        </div>
-      </div>
+                  <div className="flex gap-4 items-center">
+                    {/* <ComboboxForm
+                      label="Cliente"
+                      tipo="CLIENTES"
+                      name="clienteId"
+                      form={generalForm}
+                      onSelect={seleccionarCliente}
+                    /> */}
+                    <FormLabel className="text-xs">Cliente</FormLabel>
+                    <Select name="clienteId" onValueChange={seleccionarCliente} key={generalForm.watch("clienteId")}>
+                     <SelectTrigger>
+                       <SelectValue
+                         placeholder={clientes && clientes.length > 0
+                           ? clientes.find((x) => x.id === generalForm.watch("clienteId"))
+                             ?.nombre || "Seleccione un cliente"
+                           : "Cargando..."} />
+                     </SelectTrigger>
+                     <SelectContent >
+                       {clientes && clientes.map((item: { id: number; nombre: string; }) => (
+                         <SelectItem key={item.id} value={item.id.toString()}>
+                           {item.nombre}
+                         </SelectItem>
+                       ))}
+                     </SelectContent>
+                   </Select>
+                 </div>
+               }
+               
+               <div className="flex gap-2 items-center">
+               <FormLabel className="text-xs">Servicio: </FormLabel>
+               <Select name="servicioId" onValueChange={seleccionarServicio}  key={generalForm.watch("servicioId")}>
+                 <SelectTrigger>
+                   <SelectValue
+                     placeholder={servicios && servicios.length > 0
+                       ? servicios.find((x) => x.id === generalForm.watch("servicioId"))
+                         ?.descripcion || "Seleccione un servicio"
+                       : "Cargando..."} />
+                 </SelectTrigger>
+                 <SelectContent>
+                   {servicios && servicios.map((item: { id: number; descripcion: string; }) => (
+                     <SelectItem key={item.id} value={item.id.toString()}>
+                       {item.descripcion}
+                     </SelectItem>
+                   ))}
+                 </SelectContent>
+               </Select>
+             </div>
+ 
+             {user?.userRoll != "Cliente" && 
+                   <>
+                   <div className="flex gap-2 items-center">  
+                         <FormLabel className="text-xs whitespace-nowrap">Asignar a: </FormLabel>
+                         <Select name="userId" onValueChange={(value) => generalForm.setValue("userId", value)}>
+                           <SelectTrigger>
+                             <SelectValue
+                               placeholder={
+                                 usuariosFiltrados && usuariosFiltrados.length > 0
+                                   ? usuariosFiltrados.find((x) => x.id === generalForm.watch("userId"))?.fullName ||
+                                     "Selecciona un usuario"
+                                   : "Cargando..."
+                               }
+                             />
+                           </SelectTrigger>
+                           <SelectContent>
+                             {usuariosFiltrados &&
+                               usuariosFiltrados.map((item: { id: string; fullName: string }) => (
+                                 <SelectItem key={item.id} value={item.id.toString()}>
+                                   {item.fullName}
+                                 </SelectItem>
+                               ))}
+                           </SelectContent>
+                         </Select>
+                       
+                       {/* {usuariosResponsable && (
+                       <><FormLabel className="text-xs">Usuario responsable</FormLabel><UserAvatar
+                             withTooltip
+                             userId={usuariosResponsable}
+                             className="size-6"
+                             rounded="rounded-full" /></>)} */}
+                           
+                     </div></>
+               }
+ 
+               <FormInput
+                 form={generalForm}
+                 name="titulo"
+                 label="Asunto :"
+                 placeholder=""
+                 required />
+ 
+               <label className="block text-xs font-medium text-black dark:text-white">
+                 Descripción del problema :
+               </label>
+               <textarea
+                 {...generalForm.register("descripcion")}
+                 placeholder="Describa su problema aquí..."
+                 required
+                 className="p-1 mb-5 w-full h-48 text-sm text-black bg-white rounded-md border shadow resize-none border-muted focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-950 dark:text-white"
+               />
+ 
+ 
+             </div>
+           </div>
+       </div>
+         
+         <div className="px-4 w-full h-full md:w-1/2"> 
+           <div className="mb-0 h-full min-h-[30px] mt-4 ">
+             
+               <div className="relative rounded-md border shadow min-h-80">
+                 {/* Carrusel de Audios */}
+                 {audioList.length > 0 && (
+                   <div>
+                     <h3 className="text-xs font-bold">{audioList.length} Audio(s) </h3>
+                     <Swiper navigation modules={[Navigation]} spaceBetween={10} slidesPerView={3}>
+                       {audioList.map((audio) => (
+                         <SwiperSlide key={audio.id} className="flex justify-between items-center p-2 rounded-md border">
+                           <button onClick={() => eliminarAudio(audio.id)} className="absolute top-1 right-1 z-10 text-red-500">
+                             <FaTimes size={16} />
+                           </button>
+                           <Reproductor audioUrl={audio.url} style={{ width: "100%" }} />
+                         </SwiperSlide>
+                       ))}
+                     </Swiper>
+                   </div>
+                 )}
+ 
+                 {/* Carrusel de Archivos */}
+                 {archivosList.length > 0 && (
+                   <div>
+                     <h3 className="text-xs font-bold">{archivosList.length} Archivo(s) </h3>
+                     <Swiper navigation modules={[Navigation]} spaceBetween={10} slidesPerView={3}>
+                       {archivosList.map((archivo) => (
+                         <SwiperSlide key={archivo.id} className="relative p-2 rounded-md border">
+                           <button onClick={() => eliminarArchivo(archivo.id)} className="absolute top-1 right-1 text-red-500">
+                             <FaTimes size={16} />
+                           </button>
+                           <div className="flex flex-col items-center">
+                             <FaFileAlt size={30} />
+                             <p className="text-xs truncate max-w-[100px]">{archivo.nombre}</p>
+                           </div>
+                         </SwiperSlide>
+                       ))}
+                     </Swiper>
+                   </div>
+                 )}
+ 
+                 {/* Carrusel de Imágenes */}
+                 {imageList.length > 0 && (
+                   <div>
+                     <h3 className="text-xs font-bold">{imageList.length} Imágen(es) </h3>
+                     <Swiper navigation modules={[Navigation]} spaceBetween={10} slidesPerView={3}>
+                       {imageList.map((croppedImage) => (
+                         <SwiperSlide key={croppedImage.url} className="relative p-2 rounded-md border">
+                           <button onClick={() => eliminarImagen(croppedImage.url)} className="absolute top-1 right-1 text-red-500">
+                             <FaTimes size={16} />
+                           </button>
+                           <img src={croppedImage.url} alt="Imagen Adjunta" className="object-contain w-full h-24 rounded-md" />
+                         </SwiperSlide>
+                       ))}
+                     </Swiper>
+                   </div>
+                 )}
+ 
+               {imageList.length ===0 && archivosList.length ===0&& audioList.length ===0 &&(
+               <div className="flex absolute inset-0 justify-center items-center text-gray-400 opacity-70">
+               <span>Sin archivos adjuntos</span>
+             </div>)}
+                 
+               </div>
+ 
+               <div className={`flex z-10 flex-row gap-1 items-end mt-2 bg-white dark:bg-gray-950`}>
+                
+                 {/* <span  className={` ${isDraggingFile ? 'bg-white border-2 border-blue-500 shadow-lg' : ''}`}> */}
+               <CropImage
+                 form={generalForm}
+                 name="pictureURL"
+                 setValue={generalForm.setValue}
+                 onImageCropped={handleImageCropped}
+                 showPreview={false}
+                 handleFile={handleFile}
+                 height="100%"
+                 width="100%"
+                 isDraggingFile={isDraggingFile}
+               /> 
+              {/* </span> */}
+ 
+       
+     
+               
+               <div style={{marginTop:'-15% !important'}}  >
+               <AudioRecorder
+                   onRecordingComplete={addAudioElement}
+                   audioTrackConstraints={{
+                     noiseSuppression: true,
+                     echoCancellation: true,
+                   }}
+                   downloadOnSavePress={false}
+                   downloadFileExtension="webm"
+                  
+                   
+                 />
+               </div>
+ 
+               </div>
+ 
+               <div className="flex right-4 flex-col items-end mt-10"  >
+                 <CardFooter className="flex gap-2 justify-end">
+                   <Button
+                     type="submit"
+                     className="text-xs"
+                     disabled={generalForm.formState.isSubmitting}
+                   >
+                   {generalForm.formState.isSubmitting && (<LuLoaderCircle className="animate-spin" />)}
+                     Generar ticket
+                     
+                   </Button>
+                 </CardFooter>
+               </div>
+               
+           </div>
+         </div>
+       </div>
       </form>
       </Form>
       </CardContent>  
       </Card>
-    </>
-  );
+        
+    </>);
 
 };

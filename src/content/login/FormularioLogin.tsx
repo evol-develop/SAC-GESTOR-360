@@ -100,12 +100,12 @@ export default function FormularioLogin({
                 control={form.control}
                 name="password"
                 render={({ field }) => (
-                  <FormItem className="flex flex-wrap gap-y-2 justify-between items-center space-y-0">
+                  <FormItem className="flex flex-wrap items-center justify-between space-y-0 gap-y-2">
                     <FormLabel>Contraseña</FormLabel>
                     <Button
                       variant="link"
                       onClick={setVista}
-                      className="p-0 m-0 w-auto h-auto"
+                      className="w-auto h-auto p-0 m-0"
                       type="button"
                     >
                       ¿Olvidaste tu contraseña?

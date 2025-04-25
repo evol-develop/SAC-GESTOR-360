@@ -1,9 +1,10 @@
 import Swal from "sweetalert2";
 import { AxiosResponse } from "axios";
-
+import { useState, useEffect } from "react";
 import axios from "@/lib/utils/axios";
 import { AutorizarInterface } from "@/interfaces/autorizar";
 import { buttonVariants } from "../ui/button";
+import { TiposAutorizacion } from "@/interfaces/autorizar";
 
 const MENSAJES = {
   TITULO_CONFIRMAR: "Confirmar Autorización",
@@ -45,13 +46,13 @@ async function mostrarDialogoPassword(): Promise<string | null> {
     title: MENSAJES.TITULO_CONFIRMAR,
     html: `
       <div class="grid gap-2">
-        <label class="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-sm font-medium leading-none" for="password">
+        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="password">
           Contraseña
         </label>
         <input 
           type="password" 
           id="password" 
-          class="border-input file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm flex px-3 py-1 w-full h-9 text-base bg-transparent rounded-md border shadow-sm transition-colors"
+          class="flex px-3 py-1 w-full h-9 text-base bg-transparent rounded-md border shadow-sm transition-colors border-input file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
           placeholder="Ingrese su contraseña..."
         >
       </div>
@@ -84,7 +85,65 @@ async function mostrarMensajeError(titulo: string, texto?: string) {
   });
 }
 
-async function verificarAutorizacion(id: string): Promise<string | boolean> {
+export function useAutorizacionesSecuenciales() {
+  const [autorizaciones, setAutorizaciones] = useState<any>({
+    servicios: false,
+    notas: false,
+    eventos: false,
+    fiscales: false,
+    documentos: false,
+    movimientos: false,
+  });
+
+  useEffect(() => {
+    const verificarTodas = async () => {
+      const nuevoEstado: any = {
+        servicios: false,
+        notas: false,
+        eventos: false,
+        fiscales: false,
+        documentos: false,
+        movimientos: false,
+      };
+
+      const result1 = await verificarAutorizacion(TiposAutorizacion.AñadirServicios);
+      if (result1 === "go" || result1 === "true" || result1 === true) {
+        nuevoEstado.servicios = true;
+      }
+
+      const result2 = await verificarAutorizacion(TiposAutorizacion.AñadirNotas);
+      if (result2 === "go" || result2 === "true" || result2 === true) {
+        nuevoEstado.notas = true;
+      }
+
+      const result3 = await verificarAutorizacion(TiposAutorizacion.AñadirEventos);
+      if (result3 === "go" || result3 === "true" || result3 === true) {
+        nuevoEstado.eventos = true;
+      }
+
+      const result4 = await verificarAutorizacion(TiposAutorizacion.AñadirDatosFiscales);
+      if (result4 === "go" || result4 === "true" || result4 === true) {
+        nuevoEstado.fiscales = true;
+      }
+      const result5 = await verificarAutorizacion(TiposAutorizacion.VerDocumentos );
+      if (result5 === "go" || result5 === "true" || result5 === true) {
+        nuevoEstado.documentos = true;
+      }
+      const result6 = await verificarAutorizacion(TiposAutorizacion.VerMovimientos);
+      if (result6 === "go" || result6 === "true" || result6 === true) {
+        nuevoEstado.movimientos = true;
+      }
+
+      setAutorizaciones(nuevoEstado);
+    };
+
+    verificarTodas();
+  }, []);
+
+  return autorizaciones;
+}
+
+export async function verificarAutorizacion(id: string): Promise<string | boolean> {
   const respuesta = await axios.get(
     `api/autorizaciones/tieneautorizacion/${id}`
   );

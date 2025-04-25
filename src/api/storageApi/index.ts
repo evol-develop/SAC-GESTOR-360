@@ -1,5 +1,14 @@
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytesResumable, getDownloadURL,deleteObject } from "firebase/storage";
 import { firebaseStorage } from "@/firebase/firebase-config";
+
+export const deleteFile = async (file: string, subFolder: string ): Promise<any> => {
+  
+  const folder = (subFolder === null) ? '' : subFolder
+  const fileRef   = await ref(firebaseStorage, `/${folder}/${file}`)
+  const response  = await deleteObject(fileRef)
+
+  return response
+}
 
 export const uploadImage = async (file: File, path = "images") => {
   try {

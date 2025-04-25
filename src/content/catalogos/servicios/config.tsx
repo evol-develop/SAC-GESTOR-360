@@ -86,11 +86,19 @@ export const OperacionesFormulario = () => {
         valoresForm
       );
 
+      
+
+      if(response.data.isSuccess){
+        toast.success(response.data.message)
+      }else{
+        toast.error(response.data.message)
+      }
       return response.data;
+      
     } catch (err) {
      
       console.error(err);
-      throw new Error("Error al actualizar la informacion del usuario");
+      throw new Error("Error al crear el servicio");
     }
   };
 
@@ -130,10 +138,17 @@ export const OperacionesFormulario = () => {
         ...valoresForm,
       });
 
+     
+      if(response.data.isSuccess){
+        toast.success(response.data.message)
+      }else{
+        toast.error(response.data.message)
+      }
       return response.data;
+      
     } catch (error) {
       console.error(error);
-      throw `Error al actualizar la informacion del usuario`;
+      throw `Error al editar el servicio`;
     }
   };
 
@@ -250,8 +265,8 @@ export const Formulario = ({
             <Card className="h-[560px] w-full overflow-y-auto">
              
             <Tabs defaultValue="general" className="w-full gap-3">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="general">Datos generales</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="general">Generales</TabsTrigger>
               <TabsTrigger value="departamento">Departamento y usuarios</TabsTrigger>
           
             </TabsList>
@@ -334,29 +349,32 @@ export const Formulario = ({
 
                 </CardContent>
                
-                <CardContent className="relative grid grid-cols-2 gap-3 py-1">
-               
+              <CardContent className="relative grid grid-cols-2 gap-2 py-1">
+              
 
-                <FormInput
-                  form={generalForm}
-                  name="descripcion"
-                  label="Descripción"
-                  placeholder=""
-                  required
-                />
+              <FormInput
+                form={generalForm}
+                name="descripcion"
+                label="Descripción"
+                placeholder=""
+                required
+                className="w-96"
+              />
 
-                <FormInput
-                  form={generalForm}
-                  name="precio"
-                  label="Precio"
-                  placeholder=""
-                  type="number"
-                  required
-                />
-                </CardContent>
+ 
+              </CardContent>
 
               <CardContent className="relative grid grid-cols-3 gap-2">
 
+              <FormInput
+                form={generalForm}
+                name="precio"
+                label="Precio"
+                placeholder=""
+                type="number"
+                required
+              />
+              
                 <FormInput
                   form={generalForm}
                   name="porcentaje_retencion_isr"
@@ -376,7 +394,7 @@ export const Formulario = ({
                 />
               </CardContent>
 
-              <CardContent className="relative grid grid-cols-3 gap-6 py-2">
+              <CardContent className="relative grid grid-cols-2 gap-5 py-2">
 
               <div>
                 <FormLabel className="text-xs">Tasa Iva(%) </FormLabel>
@@ -579,7 +597,7 @@ export const Formulario = ({
 
               <TabsContent value="departamento">
 
-              <CardContent className="relative grid grid-cols-3 gap-6 py-2">
+              <CardContent className="relative grid grid-cols-1 gap-1 py-1">
                 <div>
                 <FormLabel className="text-xs">Departamento al que pertenece</FormLabel>
                 <Controller
@@ -653,14 +671,19 @@ export const Formulario = ({
                 )}
               />
                 </div>
+
                 
               </CardContent>
-              
+
+              <div className="absolute bottom-4 right-4">
               <FormFooter
                 handleCreateItemClose={handleCreateItemClose}
                 form={generalForm}
                 dataModal={dataModal}
               />
+            </div>
+              
+             
               </TabsContent>
               
 

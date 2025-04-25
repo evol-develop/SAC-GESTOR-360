@@ -25,6 +25,9 @@ import { SiCodefactor } from "react-icons/si";
 import { IoCellularOutline } from "react-icons/io5";
 import { IoTicketOutline } from "react-icons/io5";
 import { BsFileText } from "react-icons/bs";
+import { MdEvent } from "react-icons/md";
+import { HiDocumentDuplicate } from "react-icons/hi2";
+
 export type MenuItem = {
   id?: number;
   heading?: string;
@@ -65,6 +68,16 @@ const menuItems: MenuItems[] = [
     ],
   },
   {
+    heading: "Módulos",
+    items: [
+      {
+        id: MenuEnums.Facturacion,
+        Icon: IoTicketOutline ,
+      },
+
+    ],
+  },
+  {
     heading: "Configuración",
     items: [
       {
@@ -82,6 +95,14 @@ const menuItems: MenuItems[] = [
           {
             id: MenuEnums.Departamentos,
             Icon: RiCustomerService2Fill,
+          },
+          {
+            id: MenuEnums.Documentos,
+            Icon: HiDocumentDuplicate,
+          },
+          {
+            id: MenuEnums.Eventos,
+            Icon: MdEvent,
           },
           {
             id: MenuEnums.Facturacion,

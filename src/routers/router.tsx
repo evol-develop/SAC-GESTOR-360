@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from "react-router";
 import { Suspense, lazy, type ComponentType } from "react";
-
 import Authenticated from "@/components/authenticated";
 import SuspenseLoader from "@/components/SuspenseLoader";
 import SidebarLayout from "@/layout/sidebar/SidebarLayout";
@@ -53,9 +52,7 @@ const ManagementClientes = Loader(
 const ManagementAlertas = Loader(
   lazy(() => import("@/content/catalogos/alertas"))
 );
-const ManagementFacturacion = Loader(
-  lazy(() => import("@/content/catalogos/facturacion"))
-);
+
 const ManagementLineas = Loader(
   lazy(() => import("@/content/catalogos/lineas"))
 );
@@ -73,6 +70,14 @@ const ManagementDepartamentos = Loader(
   lazy(() => import("@/content/catalogos/departamentos"))
 );
 
+const ManagementEventos = Loader(
+  lazy(() => import("@/content/catalogos/eventos"))
+);
+
+const ManagementDocumentos = Loader(
+  lazy(() => import("@/content/catalogos/documentos"))
+);
+
 //PROCESOS
 const ManagementTickets = Loader(
   lazy(() => import("@/content/procesos/tickets"))
@@ -82,7 +87,7 @@ const ConsultaTickets = Loader(
   lazy(() => import("@/content/procesos/consultaTickets"))
 );
 
-const MostrarTicket = Loader(
+const MostrarArchivos = Loader(
   lazy(() => import("@/content/procesos/consultaTickets/mostrarArchivos"))
 );
 
@@ -93,6 +98,15 @@ const MostrarEtapas = Loader(
 const MostrarComentarios = Loader(
   lazy(() => import("@/content/procesos/consultaTickets/mostrarComentarios"))
 );
+
+//MODULOS
+
+const ManagementFaturacion = Loader(
+  lazy(() => import("@/content/modulos/facturacion"))
+);
+
+
+
 
 export const Router = () => {
   return (
@@ -118,29 +132,40 @@ export const Router = () => {
         }
       >
         <Route index element={<Index />} />
+
         <Route path="configuracion">
+
           <Route path="usuarios" element={<ManagementUsers />} />
           <Route path="empresas" element={<ManagementEmpresas />} />
           <Route path="roles" element={<ManagementRoles />} />
           <Route path="autorizaciones" element={<ManagementAutorizaciones />} />
        
-          {/* Rutas de estado */}
+        </Route>
+
+        <Route path="catalogos">
+          
           <Route path="clientes" element={<ManagementClientes />} />
           <Route path="alertas" element={<ManagementAlertas />} />
-          <Route path="facturacion" element={<ManagementFacturacion />} />
           <Route path="lineas" element={<ManagementLineas />} />
           <Route path="sublineas" element={<ManagementSublineas />} />
           <Route path="servicios" element={<ManagementServicios />} />
           <Route path="tipos" element={<ManagementTipos />} />
           <Route path="departamentos" element={<ManagementDepartamentos />} />
+          <Route path="eventos" element={<ManagementEventos />} />
+          <Route path="documentos" element={<ManagementDocumentos />} />
         </Route>
 
         <Route path="procesos">
           <Route path="tickets" element={<ManagementTickets />} />
           <Route path="consultaTickets" element={<ConsultaTickets />} />
-          <Route path="consultaTickets/mostrarTicket/:clienteId/:ticketId/:movimientoId/:comentarioId" element={<MostrarTicket />} /> 
-          <Route path="consultaTickets/mostrarEtapa/:ticketId" element={<MostrarEtapas />} />
-          <Route path="consultaTickets/mostrarComentarios/:clienteId/:ticketId/:etapaActual/:userId/:clienteidAuth" element={<MostrarComentarios />} /> 
+          <Route path="consultaTickets/mostrarArchivos/:ticketId/:comentarioId" element={<MostrarArchivos />} /> 
+          <Route path="consultaTickets/mostrarEtapas/:ticketId" element={<MostrarEtapas />} />
+          <Route path="consultaTickets/mostrarComentarios/:ticketId" element={<MostrarComentarios />} /> 
+        </Route>
+
+        <Route path="modulos">
+          <Route path="facturacion" element={<ManagementFaturacion />} />
+     
         </Route>
 
         <Route

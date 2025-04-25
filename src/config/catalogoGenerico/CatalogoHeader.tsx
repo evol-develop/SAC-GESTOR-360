@@ -54,6 +54,9 @@ interface Props {
     handleCreateItemClose: () => void;
   }) => JSX.Element;
   showCreateButton?: boolean;
+  handleClose?:()=>void;
+  showEncabezado?:boolean;
+  handleOpen?:()=>void;
 }
 
 export const CatalogoHeader = ({
@@ -63,23 +66,41 @@ export const CatalogoHeader = ({
   titulos,
   Formulario,
   showCreateButton = true,
+  handleClose,
+  showEncabezado=true,
+  handleOpen,
 }: Props) => {
   const { idEmpresa } = useAuth();
   const { dispatch } = usePage(PAGE_SLOT);
   const open = useAppSelector((state: RootState) => state.page.isOpenModal);
   const globalState = useAppSelector((state: RootState) => state.page.slots);
   const dataModal = useAppSelector((state: RootState) => state.page.dataModal);
+  const modalSize = useAppSelector((state: RootState) =>(state.page.modalSize as keyof typeof modalSizeClasses) || "lg"
+  );
+
+  const modalSizeClasses = {
+    sm: "max-w-md",
+    md: "max-w-lg",
+    lg: "max-w-2xl",
+    xl: "max-w-4xl",
+    "2xl": "max-w-6xl",
+    full: "max-w-full",
+  };
+
+  const modalSizeClass = modalSizeClasses[modalSize] || "max-w-4xl";
 
   const handleCreateItemOpen = () => {
     dispatch(createSlot({ ModalType: PAGE_SLOT }));
     dispatch(setIsOpenModal(true));
+    handleOpen?.();
   };
 
   const handleCreateItemClose = () => {
     dispatch(setIsEditing(false));
     dispatch(setDataModal({}));
     dispatch(setIsOpenModal(false));
-    dispatch(setModalSize("lg"));
+   // dispatch(setModalSize("lg"));
+   handleClose?.();
   };
 
   const onSubmit: SubmitHandler<any> = async (values) => {
@@ -90,7 +111,6 @@ export const CatalogoHeader = ({
           { values, globalState },
           idEmpresa as number
         )) as ResponseInterface;
-        console.log(itemResponse.result)
         if (itemResponse.isSuccess) {
           dispatch(
             addItemSlot({ state: PAGE_SLOT, data: itemResponse.result })
@@ -108,9 +128,7 @@ export const CatalogoHeader = ({
         }
       }
 
-      const message = itemResponse.message;
-      const isSuccess = itemResponse.isSuccess;
-      handleCreateItemSuccess(isSuccess, message);
+      handleCreateItemSuccess(itemResponse.isSuccess, itemResponse.message);
     } catch (err) {
       console.error(err);
       if (err instanceof Error) handleCreateItemSuccess(false, err.message);
@@ -125,7 +143,7 @@ export const CatalogoHeader = ({
     }
     dispatch(setIsOpenModal(false));
     dispatch(setDataModal({}));
-    dispatch(setModalSize("lg"));
+    //dispatch(setModalSize("lg"));
   };
 
   return (
@@ -135,12 +153,11 @@ export const CatalogoHeader = ({
         <p className="text-muted-foreground">{titulos.descripcion}</p>
       </div>
       <div>
-       
-          <Dialog
-            open={open}
-            onOpenChange={(open) => !open && handleCreateItemClose()}
-          >
-            <DialogTrigger asChild>
+        <Dialog
+          open={open}
+          onOpenChange={(open) => !open && handleCreateItemClose()}
+        >
+          <DialogTrigger asChild>
             {showCreateButton && (
               <Button
                 onClick={handleCreateItemOpen}
@@ -150,36 +167,36 @@ export const CatalogoHeader = ({
               >
                 <LuPlus />
                 {"Crear " + titulos.nombreItem}
-              </Button>)}
-            </DialogTrigger>
-            <DialogContent className="w-fit max-w-7xl">
-              <DialogHeader>
-                <DialogTitle>
+              </Button>
+            )}
+          </DialogTrigger>
+          <DialogContent className={` ${modalSizeClass}`}>
+            <DialogHeader>
+              {showEncabezado && (
+              <><DialogTitle>
                   {titulos.tituloModal === undefined ||
-                  titulos.tituloModal === ""
+                    titulos.tituloModal === ""
                     ? dataModal.id === undefined
                       ? "Agregar " + titulos.nombreItem
                       : "Editar " + titulos.nombreItem
                     : titulos.tituloModal}
-                </DialogTitle>
-                <DialogDescription>
-                  {titulos.descripcionModal === undefined ||
-                  titulos.descripcionModal === ""
-                    ? dataModal.id === undefined
-                      ? `Llena los campos para crear ${titulos.nombreItem}.`
-                      : `Llena los campos para editar ${titulos.nombreItem}.`
-                    : titulos.descripcionModal}
-                </DialogDescription>
-              </DialogHeader>
+                </DialogTitle><DialogDescription>
+                    {titulos.descripcionModal === undefined ||
+                      titulos.descripcionModal === ""
+                      ? dataModal.id === undefined
+                        ? `Llena los campos para crear ${titulos.nombreItem}.`
+                        : `Llena los campos para editar ${titulos.nombreItem}.`
+                      : titulos.descripcionModal}
+                  </DialogDescription></>)}
+            </DialogHeader>
 
-              <Formulario
-                dataModal={dataModal}
-                onSubmit={onSubmit}
-                handleCreateItemClose={handleCreateItemClose}
-              />
-            </DialogContent>
-          </Dialog>
-        
+            <Formulario
+              dataModal={dataModal}
+              onSubmit={onSubmit}
+              handleCreateItemClose={handleCreateItemClose}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

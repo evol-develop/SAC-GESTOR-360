@@ -81,11 +81,11 @@ export const useCatalogo = (
     setPage(newPage);
   };
 
-  const handleLimitChange = (event) => {
+  const handleLimitChange = (event:any) => {
     setLimit(parseInt(event.target.value));
   };
 
-  const handleViewOrientation = (_event, newValue) => {
+  const handleViewOrientation = (_event:any, newValue:any) => {
     setToggleView(newValue);
   };
 

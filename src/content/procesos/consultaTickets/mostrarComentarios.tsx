@@ -2,12 +2,11 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useEffect ,useState} from "react";
 import axios from "@/lib/utils/axios";
 import { usePage } from "@/hooks/usePage";
-import { motion } from "framer-motion"; // 🔹 Asegúrate de importar motion
-import { ticketComentariosInterface, ticketInterface, ticketMovimientoInterface } from "@/interfaces/procesos/ticketInterface";
-import '/node_modules/swiper/swiper-bundle.css'; //ESTE SIRVE PARA EL CARRUSEL DE ARCHIVOS, FOTOS Y AUDIOS
+import { motion } from "framer-motion";
+import {  ticketMovimientoInterface } from "@/interfaces/procesos/ticketInterface";
+import '/node_modules/swiper/swiper-bundle.css'; 
 import { Button } from "@/components/ui/button";
 import { LuUndo2 } from "react-icons/lu";
-import {createSlot,deleteSlot, setIsLoading,setIsOpenModal,setDataModal,addItemSlot, updateItemSlot, setIsEditing, setModalSize} from "@/store/slices/page";
 import { useAuth } from "@/hooks/useAuth";
 import { ResponseInterface } from "@/interfaces/responseInterface";
 import { toast } from "sonner";
@@ -16,45 +15,67 @@ import { GrLinkNext } from "react-icons/gr";
 import { estatus } from "@/interfaces/procesos/estatus";
 import { Autorizar } from "@/components/Autorizar";
 import { TiposAutorizacion } from "@/interfaces/autorizar";
-import { FaUserCheck } from "react-icons/fa";
 import { useParams } from 'react-router';
-import { CiCirclePlus } from "react-icons/ci";
 import { useNavigate } from 'react-router';
-import { Modal } from "@/config/Modal";
+import { ModalGenerico } from "@/components/ModalGenerico";
 import { Helmet } from "react-helmet-async";
 import { appConfig } from "@/appConfig";
-import {  crearComentario,OperacionesFormulario, asignarUsuario } from "./config";
+import {  OperacionesFormulario } from "./config";
 import { useGetData } from "@/hooks/useGetData";
 import { PAGE_SLOT } from "./constants";
 import { CatalogoHeader } from "@/config/catalogoGenerico";
 import {titulos} from "./constants";
 import { useAppSelector } from "@/hooks/storeHooks";
 import { RootState } from "@/store/store";
+import { UsuarioAdicionalesInterface } from "@/interfaces/UsuarioAdicionalesInterface";
+import {UsersInterface} from "@/interfaces/userInterface";
+import { useNotifications } from "@/hooks/useNotifications";
+import {Results } from "./Results";
+import { Loading } from "@/components/Loading";
+import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from "@/components/ui/select";
+import { useMemo } from "react";
+import { FaUserCheck } from "react-icons/fa";
+import { CiCirclePlus } from "react-icons/ci";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { SubmitHandler } from "react-hook-form";
+import {Form,FormLabel} from "@/components/ui/form";
+import { CardFooter } from "@/components/ui/card";
+import { Notification } from "@/contexts/Notifications";
+import { LuLoaderCircle } from "react-icons/lu";
+import { CropImage } from "@/components/crop-image";
+import { AudioRecorder } from 'react-audio-voice-recorder';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { FaFileAlt, FaFileExcel, FaFilePdf, FaFileWord } from "react-icons/fa";
+import { FaTimes  } from 'react-icons/fa';
+import { Navigation } from 'swiper/modules';
+import '/node_modules/swiper/swiper-bundle.css'; //ESTE SIRVE PARA EL CARRUSEL DE ARCHIVOS, FOTOS Y AUDIOS
+import  Reproductor  from "@/components/Reproductor";
+import React from "react";
+import { uploadImage } from "@/api/storageApi";
+import {createSlot,deleteSlot, deleteItemSlot, setIsLoading,setIsOpenModal,setDataModal,addItemSlot, updateItemSlot, setIsEditing, setModalSize} from "@/store/slices/page";
+import { crearComentario } from "./config";
 
-
- const mostrarComentarios = () => {
+ const MostrarComentarios = () => {
   const { idEmpresa } = useAuth();
   const { dispatch } = usePage(); 
    const { createItemCatalogo, updateItemCatalogo } = OperacionesFormulario();
   const movimientos = useAppSelector((state: RootState) => state.page.slots.MOVIMIENTOS as any);
   const showArchivos = useAppSelector((state: RootState) => state.page.slots.SHOWARCHIVOS as boolean);
-  //const ticketId = useAppSelector((state: RootState) => state.page.slots.ticketId as any);
-  const isLoading = useAppSelector((state: RootState) => state.page.isLoading);
   const [etapas, setEtapas] = useState<any[]>([{ title: "", description: "", id:0, fecha:"", fechaTermina:"" }]);
-
-  const usuarios =useAppSelector((state: RootState) => state.page.slots.USUARIOS as any[] );
-  //const etapaActual = useAppSelector((state: RootState) => state.page.slots.etapaActual as number);
+  const usuarios =useAppSelector((state: RootState) => state.page.slots.USUARIOS as UsersInterface[] );
   const { authState: { user },logout,} = useAuth();
   const navigate = useNavigate();
-   const { clienteId, ticketId, etapaActual, userId,clienteidAuth} = useParams();
-  
-  const etapaActualNumber = parseInt(etapaActual as string);
-  const asignadoId = userId as string;
-  const ticketIdNumber = parseInt(ticketId as string);
-  const clienteIdNumber = parseInt(clienteId as string);
-  const clienteAuth = clienteidAuth as string;
 
-  function BuscarEtapa(id: number): string | undefined {
+  const usuarioAsignado =useAppSelector((state: RootState) => state.page.slots.usuarioAsignado as string );
+  const etapaActual =useAppSelector((state: RootState) => state.page.slots.etapaActual as number );
+  const clienteId =useAppSelector((state: RootState) => state.page.slots.clienteId as number );
+  const { ticketId} = useParams(); //etapaActual, userId,
+
+  const ticketIdNumber = parseInt(ticketId as string);
+  
+  function BuscarEtapa(id: number) {
     return Object.keys(estatus).find(key => estatus[key as keyof typeof estatus] === id);
   }
 
@@ -74,12 +95,22 @@ import { RootState } from "@/store/store";
           
         }));
 
+        //console.log(response.data.result)
+
+        var usuarioAsignado = response.data.result[0].ticket.userId;
+        var etapaActual = response.data.result[movimientos.length - 1].ticketEstatusId;
+        var clienteAuth = response.data.result[0].clienteAuth;
+        var clienteId = response.data.result[0].ticket.clienteId;
+
+        dispatch(createSlot({ usuarioAsignado: usuarioAsignado }));
+        dispatch(createSlot({ etapaActual: etapaActual }));
+        dispatch(createSlot({ clienteAuth: clienteAuth }));
+        dispatch(createSlot({ clienteId: clienteId }));
+        
         const ultimoMovimiento = movimientos.length - 1;
-
-
         dispatch(createSlot({ movimientoId: movimientos[ultimoMovimiento].id }));
         dispatch(createSlot({ MOVIMIENTOS: movimientos }));
-        dispatch(createSlot({ ETAPA: ultimoMovimiento }));
+        dispatch(createSlot({ etapaSeleccionada: ultimoMovimiento }));
       }
 
     } catch (err) {
@@ -113,22 +144,14 @@ import { RootState } from "@/store/store";
   }, [movimientos]);
 
   function setShowArchivosFalse(){
-
     dispatch(deleteSlot("COMENTARIO"))
     dispatch(deleteSlot("SHOWARCHIVOS"))
   }
 
   function ocultarComentarios(){
-    // dispatch(deleteSlot("ticketId"))
-    // dispatch(deleteSlot("clienteId"))
 
-    // dispatch(deleteSlot("etapaActual"))
-    // dispatch(deleteSlot("userId"))
     
-    
-    // dispatch(deleteSlot("MOVIMIENTOS"))
-    // dispatch(deleteSlot("COMENTARIOS"))
-
+  
     let url =`/site/procesos/consultaTickets`;
     navigate(url);
   }
@@ -173,11 +196,13 @@ import { RootState } from "@/store/store";
          dispatch(
           addItemSlot({ state: "MOVIMIENTOS", data: newMovimiento })
         );      
-        dispatch(deleteSlot("COMENTARIOS"))
-       
+        
+        dispatch(deleteSlot("COMENTARIOS_ASIGNADO"))
+        dispatch(deleteSlot("COMENTARIOS_CLIENTE"))
+        
 
          dispatch(createSlot({ etapaActual: movimiento.ticketEstatusId }));
-         dispatch(createSlot({ ETAPA: movimiento.ticketEstatusId-1 }));
+         dispatch(createSlot({ etapaSeleccionada: movimiento.ticketEstatusId-1 }));
         
         toast.success(response.data.message);
         }else{
@@ -197,11 +222,6 @@ import { RootState } from "@/store/store";
   useEffect(() => {
 
     dispatch(createSlot({ "ticketId": ticketIdNumber }));
-    dispatch(createSlot({ "clienteId": clienteIdNumber }));
-    dispatch(createSlot({ "etapaActual": etapaActualNumber }));
-    dispatch(createSlot({ "asignado": userId }));
-    dispatch(createSlot({ "clienteAuth": clienteAuth }));
-    
     getUsuarios();
   }, []);
 
@@ -223,12 +243,25 @@ import { RootState } from "@/store/store";
     }
   };
 
+  const eliminarSlots =()=>{
+    dispatch(deleteSlot("audios"))
+    dispatch(deleteSlot("imagenes"))
+    dispatch(deleteSlot("archivos"))
+    dispatch(deleteSlot("tipoOperacion"))
+
+    dispatch(deleteSlot("comentarioId"))
+    dispatch(deleteSlot("comentario"))
+
+    dispatch(deleteSlot("Dirigido"))
+    dispatch(deleteSlot("Destinatario"))
+  }
+
   return (<>
   
-    <div className="container mx-auto">
-    <Card className="w-full h-full">
-      <CardHeader className="flex flex-col items-center justify-between w-full sm:flex-row">
-        <div className="flex flex-col w-full gap-1 sm:flex-row sm:w-auto">
+  {/* style={{maxHeight: 'calc(80vh - 50px)',minHeight: 'calc(200vh - 50px)' }} */}
+    <Card >
+      <CardHeader className="flex flex-col justify-between items-center w-full sm:flex-row">
+        <div className="flex flex-col gap-1 w-full sm:flex-row sm:w-auto">
           <Button
             size="sm"
             variant="default"
@@ -246,17 +279,17 @@ import { RootState } from "@/store/store";
                     size="sm"
                     className="text-xs"
                     onClick={(e) => cambiarEstatus()}
-                    disabled={(etapaActualNumber - 1) === estatus.CERRADO}
+                    disabled={(etapaActual - 1) === estatus.CERRADO}
                   >
                     <GrLinkNext />
-                    Avanzar a la siguiente etapa
+                    Siguiente etapa
                   </Button>
 
                   <Button
                     size="sm"
                     className="text-xs"
                     onClick={(e) => OpenModalAsignarUsuario(e)}
-                    disabled={(etapaActualNumber - 1) === estatus.CERRADO}
+                    disabled={(etapaActual - 1) === estatus.CERRADO}
                   >
                     <FaUserCheck />
                     Asignar Usuario
@@ -264,61 +297,219 @@ import { RootState } from "@/store/store";
                 </>
               )}
 
-              {/* <Button size="sm" className="text-xs" onClick={(e) => OpenModalComentario(e)}>
-                <CiCirclePlus />
-                Añadir comentario
-              </Button> */}
             </>
           )}
 
         </div>
 
         {!showArchivos && (
-             <div className="flex items-center justify-center w-full gap-2 sm:w-auto">
+             <div className="flex gap-2 justify-center items-center w-full sm:w-auto">
               {user?.userRoll !== "Cliente" && (
-                <><div className="p-1 text-xs font-bold text-black border rounded-md ">
+                <><div className="p-1 text-xs font-bold text-black rounded-md border">
                     Usuario asignado :
-                  </div><div className="p-1 text-xs text-black border rounded-md">
-                      {usuarios && usuarios.find((user) => user.id === asignadoId.toString())?.fullName}
+                  </div>
+                  <div className="p-1 text-xs text-black rounded-md border">
+                      {usuarios && usuarios.find((user) => user.id === usuarioAsignado)?.fullName}
                     </div>
                 </>
               )}
-              <div className="flex flex-row p-1 text-xs font-bold text-black border rounded-md ">Folio :</div>
-                <div className="flex flex-row p-1 text-xs text-black border rounded-md"> # {ticketId}</div>
-                <div className="p-1 text-xs font-bold text-black border rounded-md ">
+              <div className="flex flex-row p-1 text-xs font-bold text-black rounded-md border">Folio :</div>
+                <div className="flex flex-row p-1 text-xs text-black rounded-md border"> # {ticketId}</div>
+                <div className="p-1 text-xs font-bold text-black rounded-md border">
                   Estatus :
                 </div>
-                <div className="p-1 text-xs text-black border rounded-md">
-                  {BuscarEtapa(etapaActualNumber -1)}
+                <div className="p-1 text-xs text-black rounded-md border">
+                  {etapaActual && (<>{BuscarEtapa(etapaActual -1)}</>)}
                 </div>
               </div>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent >
      
       {etapas && etapas.length >0 && (<InfiniteCards etapas={etapas}  />) }
    
      </CardContent>  
     </Card> 
-    </div>
+  
   
 
-        <CatalogoHeader
-          PAGE_SLOT={PAGE_SLOT}
-          createItemCatalogo={createItemCatalogo}
-          UpdateItemCatalogo={updateItemCatalogo}
-          titulos={titulos}
-          Formulario={ crearComentario}
-          showCreateButton={false}
-        />
-        
-        <Modal
-        titulo="Asignar Usuario"
-        Content={asignarUsuario}
-        />
+    <CatalogoHeader
+      PAGE_SLOT={PAGE_SLOT}
+      createItemCatalogo={createItemCatalogo}
+      UpdateItemCatalogo={updateItemCatalogo}
+      titulos={titulos}
+      Formulario={ crearComentario}
+      showCreateButton={false}
+      handleClose={eliminarSlots}
+      showEncabezado={false}
+    />
+    
+    <ModalGenerico
+    titulo="Asignar Usuario"
+    Content={asignarUsuario}
+    // handleClose={eliminarSlots}
+    />
+
+    
         
     </>
   );
 };
 
-export default mostrarComentarios;
+export const asignarUsuario = () => {
+  const { dispatch } = usePage(); 
+  const dataModal = useAppSelector((state: RootState) => state.page.dataModal);
+  const usuarios =useAppSelector((state: RootState) => state.page.slots.USUARIOS as any[] );
+  const { authState: { user },logout,} = useAuth();
+  const ticketId = useAppSelector((state: RootState) => state.page.slots.ticketId as any);
+  const clienteId = useAppSelector((state: RootState) => state.page.slots.clienteId as any);
+  const etapaActual = useAppSelector((state: RootState) => state.page.slots.etapaActual as any);
+  //const userId = useAppSelector((state: RootState) => state.page.slots.userId);
+  const { sendNotification } = useNotifications();
+  
+  const validationSchema = z
+    .object({
+       userId: z.string()//.optional(),
+    })
+    
+  const generalForm = useForm<z.infer<typeof validationSchema>>({
+    resolver: zodResolver(validationSchema),
+    defaultValues: {
+      userId: dataModal.userId,
+    },
+  });
+
+    const onSubmit: SubmitHandler<any> = async (valores) => {
+  try {          
+
+      const valoresForm = {
+        id : ticketId,
+        userId: valores.userId,
+        clienteId: clienteId
+      };
+
+      console.log(valoresForm)
+
+        const response = await axios.post<ResponseInterface>(
+          "/api/tickets/asignarUsuario",
+          valoresForm
+        );
+        
+      
+        generalForm.reset();
+        dispatch(deleteSlot("ASIGNARUSUARIO"))
+        dispatch(deleteSlot("openModal"));
+        dispatch(createSlot({ usuarioAsignado: valores.userId }));
+        
+        if(response.data.isSuccess){
+          
+           dispatch(createSlot({ asignado: response.data.result.userId }));
+           
+           toast.success(response.data.message);
+
+           //console.log(response.data.result)
+
+           const notification: Notification = {
+            title: "Se te ha asignado un nuevo ticket con el folio #"+ticketId,
+            message: 
+            "<a href='/site/procesos/consultaTickets/mostrarArchivos/"
+            +ticketId+"/"+0+"' style={{ textDecoration: 'underline', color: 'blue' }}> Ver ticket</a>  <br/>"+
+            "<div  className='text-xs'><b>Asunto:</b> "+response.data.result.titulo+" <br/>"+ 
+            "<b>Descripción:</b> "+response.data.result.descripcion+" </div>",
+            type:"importante",
+            groupIds:[],
+            userId: valores.userId,
+            ticketId: ticketId,
+            comentarioId:1,
+            motivo:"ticket"
+          };
+              
+          try {
+            
+            sendNotification(notification);
+           
+          } catch (error) {
+            console.error("Error al enviar la notificación", error);
+          }
+           
+        }else{
+          toast.error(response.data.message)
+        }
+          
+        return response.data;
+
+    } catch (err) {
+      console.error(err);
+      throw new Error("Error al actualizar al asignar el usuario");
+    }
+      
+    };
+
+    
+  function onSubmit1(valores: any) {
+    console.log("hello!", valores);
+  }
+  
+  const onError = (valores: any) => {
+    console.log(valores);
+  };
+
+    const usuariosFiltrados = useMemo(() => {
+      return usuarios && usuarios.filter(user => user.userRoll !== "Cliente");
+    }, [usuarios]);
+  
+    return (
+    <Form {...generalForm}>
+      <form onSubmit={generalForm.handleSubmit(onSubmit)} className="flex flex-col h-full">
+        <Card className="h-[300px] w-full overflow-y-auto flex flex-col">
+          <CardContent className="grid flex-grow grid-cols-4 gap-2 py-3">
+            <div>
+              <FormLabel className="text-xs">Usuario encargado </FormLabel>
+              <Select name="userId" onValueChange={(value) => generalForm.setValue("userId", value)}>
+                <SelectTrigger className="w-72">
+                  <SelectValue
+                    placeholder={
+                      usuariosFiltrados && usuariosFiltrados.length > 0
+                        ? usuariosFiltrados.find((x) => x.id === generalForm.watch("userId"))?.fullName ||
+                          "Selecciona un usuario"
+                        : "Cargando..."
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {usuariosFiltrados &&
+                    usuariosFiltrados.map((item: { id: string; fullName: string }) => (
+                      <SelectItem key={item.id} value={item.id.toString()}>
+                        {item.fullName}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+
+          <div className="flex flex-col items-end"  >
+                <CardFooter className="flex gap-2 justify-end">
+                  <Button
+                    type="submit"
+                    className="text-xs"
+                    disabled={generalForm.formState.isSubmitting}
+                  >
+                  {generalForm.formState.isSubmitting && (<LuLoaderCircle className="animate-spin" />)}
+                  
+                    Asignar usuarios
+                  </Button>
+                </CardFooter>
+              </div>
+              
+        </Card>
+      </form>
+    </Form>
+
+    );
+};
+
+
+
+
+export default MostrarComentarios;

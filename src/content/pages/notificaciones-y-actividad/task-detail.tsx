@@ -41,7 +41,7 @@ const TaskDetail = ({ taskId }: { taskId: string }) => {
   return (
     <div className="flex flex-col flex-1">
       <Separator />
-      <div className="sm:flex-row sm:items-center flex flex-col p-4">
+      <div className="flex flex-col p-4 sm:flex-row sm:items-center">
         <div className="flex gap-4 items-start text-sm">
           <UserAvatar
             userId={task.senderId}
@@ -50,7 +50,7 @@ const TaskDetail = ({ taskId }: { taskId: string }) => {
           />
           <div className="grid gap-1">
             <div className="font-semibold">{task.title}</div>
-            <div className="text-primary/75 line-clamp-1 flex flex-wrap gap-1 text-xs">
+            <div className="flex flex-wrap gap-1 text-xs text-primary/75 line-clamp-1">
               <Status taskStatus={task.status} className="text-xs" />
               {!task.isCompleted && (
                 <span className="mr-2">
@@ -64,8 +64,8 @@ const TaskDetail = ({ taskId }: { taskId: string }) => {
             </div>
           </div>
         </div>
-        <div className="sm:ml-auto sm:mt-0 sm:flex-row sm:items-center sm:justify-end flex flex-col flex-wrap gap-2 mt-1 ml-12">
-          <span className="text-muted-foreground line-clamp-1 text-xs">
+        <div className="flex flex-col flex-wrap gap-2 mt-1 ml-12 sm:ml-auto sm:mt-0 sm:flex-row sm:items-center sm:justify-end">
+          <span className="text-xs text-muted-foreground line-clamp-1">
             {formatDistanceToNow(new Date(task.createdAt), {
               addSuffix: true,
             })}

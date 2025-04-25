@@ -10,7 +10,6 @@ import { Formulario, OperacionesFormulario } from "./config";
 const ManagementClientes = () => {
   const { createItemCatalogo, updateItemCatalogo } = OperacionesFormulario();
 
-  useGetData({ ruta: "/api/user/getClientes", slot: PAGE_SLOT });
 
   return (
     <>

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 
 export const Results = () => {
   const usuarios =useAppSelector((state: RootState) => state.page.slots.USUARIOS as any) || [];
-  const usuariosFiltrados = usuarios.filter(x => x.userRoll !== "Cliente");
+  const usuariosFiltrados = usuarios.filter((x: userResult) => x.userRoll !== "Cliente");
 
   const {
     openConfirmDelete,

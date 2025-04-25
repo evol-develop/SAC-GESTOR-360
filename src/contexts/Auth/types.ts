@@ -15,6 +15,7 @@ export type authUser = {
   userRoll: string;
   userName: string;
   is2FAEnabled?: boolean;
+  clienteId?: number;
 };
 
 export interface AuthState {

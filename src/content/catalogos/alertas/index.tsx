@@ -1,5 +1,4 @@
 import { Helmet } from "react-helmet-async";
-
 import { Results } from "./Results";
 import { appConfig } from "@/appConfig";
 import { useGetData } from "@/hooks/useGetData";
@@ -11,6 +10,7 @@ const ManagementClientes = () => {
   const { createItemCatalogo, updateItemCatalogo } = OperacionesFormulario();
 
   useGetData({ ruta: "/api/alertas/getAlertas", slot: PAGE_SLOT });
+
 
   return (
     <>

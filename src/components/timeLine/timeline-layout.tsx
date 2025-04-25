@@ -23,7 +23,7 @@ interface TimelineLayoutProps {
             second: "2-digit",
           });
   
-          const hasHTML = /<\/?[a-z][\s\S]*>/i.test(item.description? item.description:"");
+          // const hasHTML = /<\/?[a-z][\s\S]*>/i.test(item.description? item.description:"");
           
           return (
             <TimelineItem key={item.id} className='m-5'>
@@ -33,24 +33,26 @@ interface TimelineLayoutProps {
               </TimelineHeader>
               {item.description && (
                 <TimelineDescription>
-                  {hasHTML ? (
-                  parse(item.description, {
-                    replace: (domNode) => {
-                      if (domNode.type === 'tag') {
-                        if (domNode.name === 'a' && domNode.attribs) {
-                          return (
-                            <a href={domNode.attribs.href} style={{ textDecoration: 'underline', color: 'blue' }}>
-                              {domToReact(domNode.children as unknown as any[])}
-                            </a>
-                          );
+                {typeof item.description === 'string'
+                  ? parse(item.description, {
+                      replace: (domNode) => {
+                        if (domNode.type === 'tag') {
+                          if (domNode.name === 'a' && domNode.attribs) {
+                            return (
+                              <a
+                                href={domNode.attribs.href}
+                                style={{ textDecoration: 'underline', color: 'blue' }}
+                              >
+                                {domToReact(domNode.children as unknown as any[])}
+                              </a>
+                            );
+                          }
                         }
-                      }
-                    }
-                  })
-                ) : (
-                  item.description
-                )}
-                </TimelineDescription>
+                      },
+                    })
+                  : item.description}
+              </TimelineDescription>
+              
               )}
             </TimelineItem>
           );

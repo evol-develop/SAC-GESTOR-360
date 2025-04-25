@@ -56,6 +56,7 @@ const MessageEmpresa = () => {
         ...values,
         empresaId:
           values.empresaId !== "all" ? Number(values.empresaId) : "all",
+          motivo:""
       });
       toast.success("Mensaje enviado correctamente");
     } catch (error) {
@@ -86,7 +87,7 @@ const MessageEmpresa = () => {
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
-              <div className="grid grid-cols-2 gap-4 w-full">
+              <div className="grid w-full grid-cols-2 gap-4">
                 <FormInput
                   form={form}
                   name="title"

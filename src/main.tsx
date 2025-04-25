@@ -14,7 +14,7 @@ import "./styles/rich-text-editor.css";
 import "react-image-crop/dist/ReactCrop.css";
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
+  // <StrictMode>
     <BrowserRouter>
       <HelmetProvider>
         <Provider store={store}>
@@ -26,5 +26,5 @@ createRoot(document.getElementById("root")!).render(
         </Provider>
       </HelmetProvider>
     </BrowserRouter>
-  </StrictMode>
+  // </StrictMode>
 );

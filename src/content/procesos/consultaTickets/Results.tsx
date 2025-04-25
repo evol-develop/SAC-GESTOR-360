@@ -10,33 +10,40 @@ import UserAvatar from "@/components/UserAvatar";
 import { getItemAtendidoLabel } from "@/config/catalogoGenerico/utils";
 import { DataTableColumnHeader } from "@/config/catalogoGenerico/data-table-column-header";
 import { usePage } from "@/hooks/usePage";
-import {createSlot,deleteSlot, setIsLoading,setIsOpenModal,setDataModal} from "@/store/slices/page";
+import {createSlot,deleteSlot, setIsLoading,setIsOpenModal,setDataModal, setModalSize, addItemSlot} from "@/store/slices/page";
 import { useNavigate } from 'react-router';
 import { useAuth } from "@/hooks/useAuth";
+import axios from "@/lib/utils/axios";
+import {CargarArchivosByComentario} from "./config"
 
 export const getEtapaLabel = (etapa: number): string => {return estatus[etapa] || "Desconocido"; };
 
 export const Results = () => {
   const navigate = useNavigate();
-  const { dispatch } = usePage();
   const data =useAppSelector((state: RootState) => state.page.slots.TICKETS) || [];
   const { authState: { user },logout,} = useAuth();
-
-  const mostrarComentarios =(e:any)=>{
-    console.log(e)
-    let url =`/site/procesos/consultaTickets/mostrarComentarios/${e.clienteId}/${e.ticketId}/${e.ticketEstatusId}/${e.ticket.userId}/${e.userId}`;
-    navigate(url);
-  }
+ const { dispatch } = usePage();
+  
+  const editarTicket = (e: any) => {
+    //console.log(e);
+    dispatch(createSlot({ tipoOperacion: "EditarTicket" }));
+    CargarArchivosByComentario(e, dispatch,user, 0);
+  };
 
   const abrirTicket = (e: any) => {
-    let url =`/site/procesos/consultaTickets/mostrarTicket/${e.clienteId}/${e.ticketId}/${0}/${0}`;
+    let url =`/site/procesos/consultaTickets/mostrarArchivos/${e.ticketId}/${0}`;
     navigate(url);
   };
 
   const mostrarMovimientos = (e: any) => {
-    let url =`/site/procesos/consultaTickets/mostrarEtapa/${e.ticketId}`;
+    let url =`/site/procesos/consultaTickets/mostrarEtapas/${e.ticketId}`;
     navigate(url);
   };
+
+  const mostrarComentarios =(e:any)=>{
+    let url =`/site/procesos/consultaTickets/mostrarComentarios/${e.ticketId}`;
+    navigate(url);
+  }
 
   const columns: ColumnDef<ticketMovimientoInterface>[] = [
     {
@@ -128,6 +135,8 @@ export const Results = () => {
         return (
           <Acciones
             item={row.original}
+            editButton={user?.userRoll !== "Cliente"}
+            handleEditItem={(e) => editarTicket(e)}
             openButton={true}
             handleConfirmOpen={(e) => abrirTicket(e)}
             viewButton={true}
@@ -157,7 +166,7 @@ export const Results = () => {
       PAGE_SLOT={PAGE_SLOT}
       data={data}
       columns={filteredColumns} // Se usa la lista filtrada
-      filtro="cliente.nombre"
+      filtro={user?.userRoll !== "Cliente" ?"cliente.nombre": "ticket.titulo"}
     />
   );
 };

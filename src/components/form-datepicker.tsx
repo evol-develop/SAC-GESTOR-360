@@ -47,7 +47,8 @@ const FormDatepicker = ({ form, name, label }: FormDatepickerProps) => {
             <div className="relative">
               <Button
                 variant="outline"
-                className="flex items-center justify-between w-full"
+                className="flex justify-between items-center w-full"
+                type="button"
                 onClick={() => setIsOpen(!isOpen)}
               >
                 {selectedDate 

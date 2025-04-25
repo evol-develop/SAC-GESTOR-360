@@ -8,7 +8,7 @@ export enum MenuEnums {
   Clientes= 7,
   Departamentos= 8,
   Facturacion= 9,
-  FacturacionComplementos= 10,
+  Documentos= 10,
   Lineas= 11,
   Servicios= 12,
   SubLineas= 13,
@@ -20,4 +20,6 @@ export enum MenuEnums {
   Notificaciones = 19,
   Tareas = 20,
   ConsultaTickets = 21,
+  Eventos = 25,
+ 
 }

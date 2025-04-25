@@ -2,8 +2,9 @@ export const appConfig = {
   NOMBRE: "SAC 360",
   DESCRIPCION: "SAC 360 2025",
   VERSION: "1.1.0",
-  FECHA_COMPILACION: "10/07/2024",
+  FECHA_COMPILACION: "07/04/2025",
   URL_API: "https://localhost:44398/",
+  //URL_API : "https://sac-360-api.azurewebsites.net",
   /*TOKEN AZURE*/ TOKEN:
     "FpGsrctd-9Bg9BO-E8YmhHw2t8kX7nDAfAoHKLp-rWCIAzFuZLgbkg%3D%3D",
   /*FACTURACION AZURE*/ URL_API_FACTURACION:

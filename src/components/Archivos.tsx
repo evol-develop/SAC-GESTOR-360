@@ -16,14 +16,12 @@ import { ticketInterface } from '@/interfaces/procesos/ticketInterface';
 import { toast } from 'sonner';
 
 interface Props{
-    movimientoId : number,
     ticketId: number,
-    clienteId:number,
     comentarioId:number,
     showComentario?: boolean
 }
 
-const Archivos = ({ movimientoId, ticketId,clienteId,comentarioId, showComentario = true  }: Props) =>{
+const Archivos = ({ ticketId,comentarioId, showComentario = true  }: Props) =>{
 
     const [audioList, setAudioList] = useState<{ archivoURL: string; id: string; tipoArchivo:string; blob:Blob ; nombreArchivo:string }[]>([]);
     const [imageList, setImageList] = useState<{ archivoURL: string; id: string; tipoArchivo:string; blob:Blob ; nombreArchivo:string}[]>([]);
@@ -31,8 +29,7 @@ const Archivos = ({ movimientoId, ticketId,clienteId,comentarioId, showComentari
     const [comentario,setComentario]  = useState<string>('');
     const { dispatch } = usePage();
     const isLoading = useAppSelector((state: RootState) => state.page.isLoading);
-    const comentarioSlot = useAppSelector((state: RootState) => state.page.slots.COMENTARIO );
-    
+   
     const CargarArchivosByComentario = async () => {
         try {
           
@@ -40,18 +37,14 @@ const Archivos = ({ movimientoId, ticketId,clienteId,comentarioId, showComentari
           
           console.log("HOLA")
           const response = await axios.get(
-            `/api/tickets/getArchivosByComentario/${ticketId}/${clienteId}`, // Solo los parámetros de ruta van aquí
+            `/api/tickets/getArchivosByComentario/${ticketId}`,
             {
-              params: { // Los parámetros opcionales van en `params`
-                id_movimiento: movimientoId === 0 ? null: movimientoId,
+              params: { 
                 id_comentario: comentarioId === 0 ? null: comentarioId
               }
             }
           );
           
-
-          console.log("CAMBIO DE COMENTARIO")
-    
           if (response.data.isSuccess ) {
     
             dispatch(setIsLoading(false));
@@ -59,9 +52,10 @@ const Archivos = ({ movimientoId, ticketId,clienteId,comentarioId, showComentari
             const ticket = response.data.result.ticket;
             const archivos = response.data.result.archivos;
             const comentario = response.data.result.comentario;
+
             
             const audioExtensions = ["audio"];
-            const imageExtensions = ["png", "jpeg", "jpg", "gif", "bmp", "tiff", "webp"];
+            const imageExtensions = ["png", "jpeg", "jpg", "gif", "bmp", "tiff", "webp","image/jpeg"];
             const fileExtensions = ["application", "txt"];
 
             const audioList: any[] = [];
@@ -70,7 +64,7 @@ const Archivos = ({ movimientoId, ticketId,clienteId,comentarioId, showComentari
 
             archivos.forEach((item: any) => {
               const tipo = item.tipoArchivo.toLowerCase();
-
+           
               switch (true) {
                 case audioExtensions.some(ext => tipo.includes(ext)):
                   audioList.push(item);
@@ -90,7 +84,7 @@ const Archivos = ({ movimientoId, ticketId,clienteId,comentarioId, showComentari
             setImageList(imageList);
             setArchivosList(archivosList);
 
-            if(comentarioId === 0 && movimientoId === 0){
+            if(comentarioId === 0){
               setComentario(ticket.descripcion as string)
             }else{
               setComentario(comentario)

@@ -34,7 +34,7 @@ const mapToActivityTimelineItem = <T extends Notification | Task>(
 
 export const getActivityTimeline = async (userId: string): Promise<timeLineInterface[]> => {
   try {
-
+    console.log(userId)
     const [notifications, tasks] = await Promise.all([
       getItemsByConditionNoIdEmpresa("notifications", "senderId", "==", userId),
       getItemsByConditionNoIdEmpresa("tasks", "senderId", "==", userId),
@@ -52,15 +52,7 @@ export const getActivityTimeline = async (userId: string): Promise<timeLineInter
       "description"
     );
 
-    // // Combinar y ordenar
-    // return [...mappedNotifications, ...mappedTasks].sort(
-    //   (a, b) =>
-    //     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    // ) as ActivityTimelineItem[];
-
-    console.log("Mapped Notifications:", mappedNotifications);
-    console.log("Mapped Tasks:", mappedTasks);
-
+  
     const formattedNotifications: timeLineInterface[] = mappedNotifications.map((item) => ({
       id: String(item.id),
       title: String(item.title), // Ajusta la ruta correcta

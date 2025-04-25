@@ -37,4 +37,16 @@ export interface clienteInterface {
     password:string;
     clientesServicios: clientesServiciosInterface[];
     Servicios: any[];
+    id_tipo_cliente:any
+    id_alerta:number
+    Eventos: any[];
+    Notas: any[];
+  }
+
+  export interface clienteNotasInterface {
+    id: number;
+    clienteId: number;
+    fecha_crea: string;
+    nota: string;
+    usuarioCreaId: string;
   }

@@ -49,6 +49,7 @@ const SendMessage = () => {
       type: values.type,
       groupIds: values.to.length > 1 ? values.to : [],
       userId: values.to.length === 1 ? values.to[0] : "",
+      motivo:""
     };
     try {
       // console.log("Enviando notificación", notification);
@@ -62,15 +63,15 @@ const SendMessage = () => {
   };
 
   return (
-    <section className="size-full flex flex-col gap-2 pb-4 text-sm">
+    <section className="flex flex-col gap-2 pb-4 text-sm size-full">
       <Separator />
-      <div className="flex justify-center items-center px-4 h-full">
+      <div className="flex items-center justify-center h-full px-4">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col gap-2 mx-auto w-full max-w-lg"
+            className="flex flex-col w-full max-w-lg gap-2 mx-auto"
           >
-            <div className="grid grid-cols-2 gap-2 w-full">
+            <div className="grid w-full grid-cols-2 gap-2">
               <FormInput
                 form={form}
                 name="title"

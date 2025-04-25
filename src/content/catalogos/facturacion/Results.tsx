@@ -32,11 +32,11 @@ export const Results = () => {
       accessorKey: "fullName",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <UserAvatar
+          {/* <UserAvatar
             dataUsuario={row.original}
             withTooltip
             rounded="rounded-full"
-          />
+          /> */}
           <span>
             {row.original.nombre} {row.original.apellido}
           </span>

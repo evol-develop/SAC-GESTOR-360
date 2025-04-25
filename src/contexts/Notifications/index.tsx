@@ -20,6 +20,7 @@ import {
   uncompletedTasksCount,
   unreadNotificationsCount,
   useNotifications,
+  unreadNotificationsCount2
 } from "@/hooks/useNotifications";
 import { useAuth } from "@/hooks/useAuth";
 import UserAvatar from "@/components/UserAvatar";
@@ -27,6 +28,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Status } from "@/contexts/Notifications/components";
 import { firebaseDB as db } from "@/firebase/firebase-config";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React from "react";
+import { time } from "console";
 
 export type Notification = {
   id?: string;
@@ -39,6 +42,10 @@ export type Notification = {
   senderId?: string;
   createdAt?: string;
   empresaId?: number | string;
+  notificationDisplay?: boolean;
+  ticketId?: number;
+  comentarioId?:number;
+  motivo:string;
 };
 
 export type TaskStatus =
@@ -81,6 +88,7 @@ const NotificationContext = createContext<{
   sendNotification: (notification: Notification) => void;
   completeTask: (id: string) => void;
   createTask: (task: Task) => void;
+  markAsNotified?: (id: string) => void;
 }>({
   notifications: [],
   tasks: [],
@@ -89,6 +97,7 @@ const NotificationContext = createContext<{
   sendNotification: () => {},
   completeTask: () => {},
   createTask: () => {},
+  markAsNotified: () => {},
 });
 
 export const NotificationProvider = ({
@@ -161,13 +170,25 @@ export const NotificationProvider = ({
   const markAsRead = async (id: string) => {
     if (!id) return;
     const notificationRef = doc(db, "notifications", id);
+    console.log(notificationRef)
     await updateDoc(notificationRef, { isRead: true });
   };
 
+  const markAsNotified = async (id: string) => {
+    if (!id) return;
+    const notificationRef = doc(db, "notifications", id);
+    console.log(notificationRef)
+    await updateDoc(notificationRef, { notificationDisplay: true });
+
+    console.log("actualizada")
+  };
+
+  
   const sendNotification = async ({
     userId = "all",
     groupIds = [],
     empresaId = idEmpresa,
+    notificationDisplay = false,
     ...notification
   }: Notification) => {
     await addDoc(collection(db, "notifications"), {
@@ -178,6 +199,7 @@ export const NotificationProvider = ({
       senderId: user?.id,
       isRead: userId === "all" ? true : groupIds.length > 0 ? true : false,
       createdAt: new Date().toISOString(),
+      notificationDisplay,
     });
   };
 
@@ -207,6 +229,7 @@ export const NotificationProvider = ({
         sendNotification,
         completeTask,
         createTask,
+        markAsNotified
       }}
     >
       {children}
@@ -243,12 +266,12 @@ export const NotificationAndTaskList = ({
 
   return (
     <Tabs defaultValue="notifications" className="bg-background">
-      <TabsList className="bg-background grid grid-cols-2 gap-2 p-4 pb-0 w-full h-auto">
+      <TabsList className="grid grid-cols-2 gap-2 p-4 pb-0 w-full h-auto bg-background">
         <TabsTrigger value="notifications" className="relative border">
-          Mensajes <CountNotificationsAndTasks countTasks={false} />
+          Mensajes <CountNotificationsAndTasks countTasks={false} showNotificacion={false} />
         </TabsTrigger>
         <TabsTrigger value="tasks" className="relative border">
-          Tareas <CountNotificationsAndTasks countMessages={false} />
+          Tareas <CountNotificationsAndTasks countMessages={false} showNotificacion={false}/>
         </TabsTrigger>
       </TabsList>
       <TabsContent value="notifications">
@@ -263,7 +286,7 @@ export const NotificationAndTaskList = ({
                 />
               ))
             ) : (
-              <div className="text-secondary-foreground/50 flex gap-1 justify-center items-center p-2 w-full text-sm">
+              <div className="flex gap-1 justify-center items-center p-2 w-full text-sm text-secondary-foreground/50">
                 No hay mensajes
                 <LuBellOff />
               </div>
@@ -279,7 +302,7 @@ export const NotificationAndTaskList = ({
                 <TaskItem key={task.id} task={task} className={itemClassName} />
               ))
             ) : (
-              <div className="text-secondary-foreground/50 flex gap-1 justify-center items-center p-2 w-full text-sm">
+              <div className="flex gap-1 justify-center items-center p-2 w-full text-sm text-secondary-foreground/50">
                 No hay tareas
                 <LuClipboardX />
               </div>
@@ -303,14 +326,36 @@ const NotificationItem = ({
   const { id, title, createdAt, senderId, message } = notification;
   const read = isNotificationRead(notification, user?.id || "");
   const isActive = Boolean(searchParams.get("notification") === id);
-  return (
+
+  // Función para detectar si hay etiquetas HTML
+  const containsHTML = (str: string) => /<\/?[a-z][\s\S]*>/i.test(str);
+
+  const content = containsHTML(message) ? (
+    <div
+      className={cn(
+        "rich-text-content",
+        "text-xs line-clamp-1 text-muted-foreground"
+      )}
+      dangerouslySetInnerHTML={{ __html: message }}
+    />
+  ) : (
     <Link
+      className={cn(
+        "text-xs underline line-clamp-1 text-muted-foreground hover:text-primary"
+      )}
+      to={`/site/notificaciones-y-actividad?type=msj&notification=${id}`}
+    >
+      {message}
+    </Link>
+  );
+
+  return (
+    <div
       className={cn(
         "flex flex-col items-start gap-2 w-full rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent",
         isActive && "bg-muted",
         className
       )}
-      to={`/site/notificaciones-y-actividad?type=msj&notification=${id}`}
     >
       <div className="flex flex-col gap-1 w-full">
         <div className="flex items-center">
@@ -318,11 +363,11 @@ const NotificationItem = ({
             <span className="font-semibold truncate">
               <UserAvatar userId={senderId} showAvatar={false} />
             </span>
-            {!read && <span className="size-2 flex bg-blue-600 rounded-full" />}
+            {!read && <span className="flex bg-blue-600 rounded-full size-2" />}
           </div>
           <div
             className={cn(
-              "text-nowrap ml-auto text-xs",
+              "ml-auto text-xs text-nowrap",
               isActive ? "text-foreground" : "text-muted-foreground"
             )}
           >
@@ -333,16 +378,11 @@ const NotificationItem = ({
         </div>
         <div className="text-xs font-medium">{title}</div>
       </div>
-      <div
-        className={cn(
-          "rich-text-content",
-          "line-clamp-1 text-muted-foreground text-xs"
-        )}
-        dangerouslySetInnerHTML={{ __html: message }}
-      />
-    </Link>
+      {content}
+    </div>
   );
 };
+
 
 const TaskItem = ({ task, className }: { task: Task; className?: string }) => {
   const [searchParams] = useSearchParams();
@@ -366,12 +406,12 @@ const TaskItem = ({ task, className }: { task: Task; className?: string }) => {
               <UserAvatar userId={senderId} showAvatar={false} />
             </span>
             {!isCompleted && (
-              <span className="size-2 flex bg-blue-600 rounded-full" />
+              <span className="flex bg-blue-600 rounded-full size-2" />
             )}
           </div>
           <div
             className={cn(
-              "text-nowrap ml-auto text-xs",
+              "ml-auto text-xs text-nowrap",
               isActive ? "text-foreground" : "text-muted-foreground"
             )}
           >
@@ -382,7 +422,7 @@ const TaskItem = ({ task, className }: { task: Task; className?: string }) => {
         </div>
         <div className="text-xs font-medium">{title}</div>
       </div>
-      <div className="line-clamp-1 text-muted-foreground text-xs">
+      <div className="text-xs line-clamp-1 text-muted-foreground">
         {description.substring(0, 100)}
       </div>
       <div className="flex gap-2 items-center">
@@ -392,16 +432,18 @@ const TaskItem = ({ task, className }: { task: Task; className?: string }) => {
   );
 };
 
-export const CountNotificationsAndTasks = ({
+export const CountNotificationsAndTasks =  React.memo(({
   x = "right",
   y = "top",
   countMessages = true,
   countTasks = true,
+  showNotificacion = true,
 }: {
   x?: "left" | "right";
   y?: "top" | "bottom";
   countMessages?: boolean;
   countTasks?: boolean;
+  showNotificacion? : boolean;
 }) => {
   const { authState } = useAuth();
   const { notifications, tasks } = useNotifications();
@@ -453,6 +495,85 @@ export const CountNotificationsAndTasks = ({
       )}
     </div>
   );
+});
+
+export const CountNotifications2 = () => {
+  const { authState } = useAuth();
+  const { notifications, tasks } = useNotifications();
+
+  const filteredMessages = notifications.filter((notification) => {
+    const currentUserId = authState.user?.id || "";
+    return (
+      notification.userId === "all" ||
+      notification.userId === currentUserId ||
+      (notification.groupIds && notification.groupIds.includes(currentUserId))
+    );
+  });
+
+
+  var notificationCount = unreadNotificationsCount2(filteredMessages, authState);
+
+  var notif = notificationCount.unreadNotifications[0];
+  console.log("alertasPorEnviar", notificationCount.unreadNotifications.length);
+
+  if(notificationCount.unreadNotifications.length > 0) {
+    mostrarNotificacion({
+      title: notif.title,
+      message: notif.message,
+      ticketId: notif.ticketId,
+      comentarioId: notif.comentarioId,
+    });
+  }
+
+
+
+  return (<> </>);
 };
+
+async function mostrarNotificacion(notification: any) {
+  if (!("Notification" in window)) {
+    console.error("Este navegador no soporta notificaciones.");
+    return;
+  }
+
+  const permiso = await Notification.requestPermission();
+
+  if (permiso === "granted") {
+    try {
+      // const audio = new Audio(
+      //   "https://firebasestorage.googleapis.com/v0/b/sac-gestor-360.firebasestorage.app/o/SONIDOS_SISTEMA%2Fding-101492.mp3?alt=media&token=10619769-992b-4941-b062-03f2105f3288"
+      // );
+
+      // // Reproducir el sonido antes de mostrar la notificación
+      // await audio.play();
+
+      // Mostrar la notificación del sistema
+      const noti =new Notification(notification.title, {
+        //body: notification.message,
+        icon: "https://firebasestorage.googleapis.com/v0/b/sac-gestor-360.firebasestorage.app/o/SONIDOS_SISTEMA%2F1827272.png?alt=media&token=8ac05cab-a24b-426a-b216-0b7625c29555", // Cambia el icono si es necesario
+        
+      });
+
+      if(notification.ticketId != 0 && notification.comentarioId == 0) {
+
+        noti.onclick = () => {
+          window.open('/site/procesos/consultaTickets/mostrarArchivos/'+notification.ticketId+'/0', '_blank');
+        };
+      }
+      else{
+        noti.onclick = () => {
+          window.open('/site/procesos/consultaTickets/mostrarComentarios/'+notification.ticketId, '_blank');
+        };
+      }
+      
+    } catch (error) {
+      console.error("Error al mostrar la notificación:", error);
+    }
+  } else {
+    console.warn("Permiso de notificación no concedido:", permiso);
+  }
+  
+}
+
 
 export default NotificationContext;

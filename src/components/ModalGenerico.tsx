@@ -7,14 +7,16 @@ import {deleteSlot} from "@/store/slices/page";
 interface Props {
   titulo: string;
   Content: () => JSX.Element | null;
+  handleClose?:()=>void;
 }
 
-export const Modal = ({  titulo, Content }: Props) => {
+export const ModalGenerico = ({  titulo, Content, handleClose }: Props) => {
     const { dispatch } = usePage();
     const open = useAppSelector((state: RootState) => state.page.slots.openModal as boolean);
 
     const handleCreateItemClose = () => {
       dispatch(deleteSlot("openModal"));
+      if (handleClose) handleClose();
     };
 
   return (

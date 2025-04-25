@@ -161,7 +161,7 @@ export const Formulario = ({
             <Card className="h-[380px] w-full overflow-y-auto">
         
             <Tabs defaultValue="general" className="w-full gap-3">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="flex flex-wrap w-full h-full">
               <TabsTrigger value="general">Datos generales</TabsTrigger>
          
               <TabsTrigger value="usuarios">Usuarios</TabsTrigger>

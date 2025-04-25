@@ -43,7 +43,7 @@ export const Status = ({
   return (
     <div className={cn("flex items-center w-auto text-xs gap-1", className)}>
       <span>{status.label}</span>
-      {status.icon && <status.icon className="text-muted-foreground w-4 h-4" />}
+      {status.icon && <status.icon className="w-4 h-4 text-muted-foreground" />}
     </div>
   );
 };
@@ -66,7 +66,7 @@ export const Priority = ({
   return (
     <div className={cn("flex items-center text-xs gap-1", className)}>
       {priority.icon && (
-        <priority.icon className="text-muted-foreground w-4 h-4" />
+        <priority.icon className="w-4 h-4 text-muted-foreground" />
       )}
       <span>{priority.label}</span>
     </div>
