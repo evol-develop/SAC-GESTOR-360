@@ -10,9 +10,14 @@ export const deleteFile = async (file: string, subFolder: string ): Promise<any>
   return response
 }
 
-export const uploadImage = async (file: File, path = "images") => {
+export const uploadImage = async (file: File, path = "images", archivoEliminar?: string) => {
   try {
     if (!file) throw new Error("No file provided");
+
+    //Eliminar archivo anterior
+    if (archivoEliminar !="") {
+      await deleteFile(archivoEliminar as string, path);
+    }
 
     // Crea una referencia en el storage con una ruta personalizada
     const fileRef = ref(firebaseStorage, `${path}/${Date.now()}-${file.name}`);

@@ -37,6 +37,9 @@ import UserAvatar from "@/components/UserAvatar";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Notification } from "@/contexts/Notifications";
 import { useMemo,useRef } from "react";
+import { ComboboxForm } from "@/components/custom-combobox";
+import { Dialog } from "@radix-ui/react-dialog";
+import { ModalGenerico } from "@/components/ModalGenerico";
 
 const validationSchema = z
   .object({
@@ -44,14 +47,12 @@ const validationSchema = z
     titulo: z.string().max(120).min(1, "El título es un dato requerido"),
     clienteId: z.number().int(),
     servicioId: z.number().int(),
-    userId: z.string(),
+    userId: z.string().optional(),
   })
-
 
 export const Formulario = () => {
   const { dispatch } = usePage();
   const { authState: { user },logout,} = useAuth();
-
   const dataModal = useAppSelector((state: RootState) => state.page.dataModal);
   const { idEmpresa } = useAuth();
   const fileList: { archivoURL: string; tipoArchivo: string; nombreArchivo: string }[] = [];
@@ -60,10 +61,11 @@ export const Formulario = () => {
   const [archivosList, setArchivosList] = React.useState<{ url: string; id: string; tipo:string; nombre:string; blob:Blob}[]>([]);
   const Cliente =  useAppSelector((state: RootState) => state.page.slots.clienteId);
   const servicios =useAppSelector((state: RootState) => state.page.slots.SERVICIOS as any[] );
-  const clientes =useAppSelector((state: RootState) => state.page.slots.CLIENTES as clienteInterface[] );
   const usuarios =useAppSelector((state: RootState) => state.page.slots.USUARIOS as any[] );
   const { sendNotification } = useNotifications();
   const [usuariosResponsable, setUsuariosResponsable] = useState<string>('');
+  const [imagenSeleccionada, setImagenSeleccionada] = useState<string | null>(null);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
   
   const addAudioElement = (blob: Blob) => {
     const url = URL.createObjectURL(blob);
@@ -146,7 +148,7 @@ export const Formulario = () => {
       if(user?.userRoll != "Cliente"){
         clienteId = valores.clienteId;
       }else{
-        clienteId = user?.id.toString();
+        clienteId = user?.clienteId?.toString() || "";
       }
 
       const valoresForm = {
@@ -160,11 +162,14 @@ export const Formulario = () => {
         servicioId: valores.servicioId,
         userId: valores.userId,
       };
+      console.log(valoresForm);
       
         const response = await axios.post<ResponseInterface>(
           "/api/tickets/create",
           valoresForm
         );
+
+        console.log("response", response.data);
 
         if(response.data.isSuccess){
         
@@ -176,10 +181,18 @@ export const Formulario = () => {
         console.log(response.data.result)
 
         const  groupIds =  usuarios && usuarios
-        .filter((item) => item.departamento ? item.departamento.nombre === "Soporte":null)
-        .map((item) => item.id); // Asumí que `id` es el campo que quieres agregar a `groupIds`
+        .filter((item) => item.userRoll ? item.userRoll === "Soporte" :null)
+        .map((item) => item.id);
 
-         const notification: Notification = {
+        console.log(groupIds);
+
+        var groupIdsFiltrados: any[] = [];
+        groupIdsFiltrados = groupIds.filter((item) => item !== user?.id); //EVITAR ENVIAR LA NOTIFICACION AL USUARIO ACTUAL
+        groupIdsFiltrados.push(valores.userId); //AÑADIR ASIGANDO EN LA LISTA 
+
+        console.log(groupIdsFiltrados);
+
+        const notification: Notification = {
           title: "Se ha generado un nuevo ticket con el folio #"+response.data.result.ticketId,
           message: 
           "<a href='/site/procesos/consultaTickets/mostrarArchivos/"
@@ -187,9 +200,8 @@ export const Formulario = () => {
           "<div  className='text-xs'><b>Asunto:</b> "+valores.titulo+" <br/>"+ 
           "<b>Descripción:</b> "+valores.descripcion+" </div>",
           type:"importante",
-          groupIds:groupIds,
-          userId: valores.userId,
-          notificationDisplay: false,
+          groupIds:groupIdsFiltrados,
+          userId: "",
           ticketId:response.data.result.ticketId,
           comentarioId:0,
           motivo:"ticket"
@@ -227,16 +239,21 @@ export const Formulario = () => {
     },
   });
   
-  const seleccionarCliente = (value: string) => {
-   
-    dispatch(createSlot({ ["clienteId"]: parseInt(value) }));
-    generalForm.setValue("clienteId", parseInt(value));
+  const seleccionarCliente = (value: string|number) => {
+   console.log(value);
+    dispatch(createSlot({ ["clienteId"]: parseInt(value.toString()) }));
+    //generalForm.setValue("clienteId", parseInt(value.toString()));
     dispatch(createSlot({"SERVICIOS": []}));
     
   };
 
   const seleccionarServicio = (value: string) => {
    
+    var servicio = servicios.find((x) => x.id === parseInt(value));
+    generalForm.setValue("titulo", servicio?.descripcion);
+    
+    generalForm.setValue("userId", undefined);
+    
     dispatch(createSlot({ ["servicioId"]: parseInt(value) }));
     generalForm.setValue("servicioId", parseInt(value));
 
@@ -252,7 +269,7 @@ export const Formulario = () => {
   const CargaServicios = async () => {
     try {
       const response = await axios.get(
-        `/api/servicios/getServiciosByCliente/${Cliente}`,
+        `/api/clientes/getServiciosByCliente/${Cliente}`,
         {
           headers: { "Content-Type": "application/text" },
         }
@@ -289,7 +306,7 @@ export const Formulario = () => {
 
   useEffect(() => {
     if (Cliente) {
-      console.log(Cliente.get)
+     
       generalForm.setValue("clienteId", parseInt(Cliente));
       CargaServicios();
     }
@@ -308,9 +325,6 @@ export const Formulario = () => {
     return usuarios.filter(user => user.userRoll !== "Cliente");
     }
   }, [usuarios]);
-
-
-  const [isDraggingFile, setIsDraggingFile] = useState(false);
 
   useEffect(() => {
     const handleDragEnter = (e: DragEvent) => {
@@ -339,64 +353,50 @@ export const Formulario = () => {
       window.removeEventListener('drop', handleDrop);
     };
   }, []);
+
+  const handleImageClick = (url: string) => {
+    
+    setImagenSeleccionada(url);
+    dispatch(createSlot({ openModal: true }));
+  };
   
     return (
       <>
-   
+      {isDraggingFile && (
+        <div className="flex absolute inset-0 justify-center items-center bg-gray-500 bg-opacity-30 pointer-events-none">
+        </div>
+      )}
 
-    {isDraggingFile && (
-      <div className="flex absolute inset-0 justify-center items-center bg-gray-500 bg-opacity-30 pointer-events-none">
-        {/* <span className="text-lg font-bold text-red-700">🚫 Aquí no se permite soltar archivos</span> */}
+      <Card className="h-full" >
+      <CardHeader>
+      <div className="flex justify-center items-center">
+        <h5 className="text-sm enter font-xbold sm:text-left">
+          Generación de Tickets
+        </h5>
       </div>
-    )}
-
-      <Card >
-    <CardHeader>
-    <div className="flex justify-center items-center">
-      <h5 className="text-sm enter font-xbold sm:text-left">
-        Generación de Tickets
-      </h5>
-    </div>
-    </CardHeader> 
-    <CardContent>
-    <Form {...generalForm}>
+      </CardHeader> 
+      <CardContent>
+       <Form {...generalForm}>
      <form onSubmit={generalForm.handleSubmit(onSubmit)}>
-     <div className="flex flex-col w-full h-full md:flex-row">
+     <div className="flex flex-col md:flex-row">
 
-      <div className="px-4 w-full h-full md:w-1/2">
+      <div className="px-4 w-full md:w-1/2">
           <div className="h-full min-h-[200px]">
             <div className="grid grid-cols-1 gap-4 p-1">
 
             {user?.userRoll != "Cliente" && 
-                  <div className="flex gap-4 items-center">
-                    {/* <ComboboxForm
-                      label="Cliente"
-                      tipo="CLIENTES"
-                      name="clienteId"
-                      form={generalForm}
-                      onSelect={seleccionarCliente}
-                    /> */}
-                    <FormLabel className="text-xs">Cliente</FormLabel>
-                    <Select name="clienteId" onValueChange={seleccionarCliente} key={generalForm.watch("clienteId")}>
-                     <SelectTrigger>
-                       <SelectValue
-                         placeholder={clientes && clientes.length > 0
-                           ? clientes.find((x) => x.id === generalForm.watch("clienteId"))
-                             ?.nombre || "Seleccione un cliente"
-                           : "Cargando..."} />
-                     </SelectTrigger>
-                     <SelectContent >
-                       {clientes && clientes.map((item: { id: number; nombre: string; }) => (
-                         <SelectItem key={item.id} value={item.id.toString()}>
-                           {item.nombre}
-                         </SelectItem>
-                       ))}
-                     </SelectContent>
-                   </Select>
-                 </div>
-               }
-               
-               <div className="flex gap-2 items-center">
+              (
+                  <ComboboxForm
+                  label="Cliente"
+                  tipo="CLIENTES"
+                  name="clienteId"
+                  form={generalForm}
+                  onSelect={seleccionarCliente}
+                  isDraggingFile={isDraggingFile}/>
+                
+              )}
+                 
+              <div className="flex gap-2 items-center">
                <FormLabel className="text-xs">Servicio: </FormLabel>
                <Select name="servicioId" onValueChange={seleccionarServicio}  key={generalForm.watch("servicioId")}>
                  <SelectTrigger>
@@ -414,67 +414,78 @@ export const Formulario = () => {
                    ))}
                  </SelectContent>
                </Select>
-             </div>
+              </div>
  
-             {user?.userRoll != "Cliente" && 
-                   <>
-                   <div className="flex gap-2 items-center">  
-                         <FormLabel className="text-xs whitespace-nowrap">Asignar a: </FormLabel>
-                         <Select name="userId" onValueChange={(value) => generalForm.setValue("userId", value)}>
-                           <SelectTrigger>
-                             <SelectValue
-                               placeholder={
-                                 usuariosFiltrados && usuariosFiltrados.length > 0
-                                   ? usuariosFiltrados.find((x) => x.id === generalForm.watch("userId"))?.fullName ||
-                                     "Selecciona un usuario"
-                                   : "Cargando..."
-                               }
-                             />
-                           </SelectTrigger>
-                           <SelectContent>
-                             {usuariosFiltrados &&
-                               usuariosFiltrados.map((item: { id: string; fullName: string }) => (
-                                 <SelectItem key={item.id} value={item.id.toString()}>
-                                   {item.fullName}
-                                 </SelectItem>
-                               ))}
-                           </SelectContent>
-                         </Select>
-                       
-                       {/* {usuariosResponsable && (
-                       <><FormLabel className="text-xs">Usuario responsable</FormLabel><UserAvatar
-                             withTooltip
-                             userId={usuariosResponsable}
-                             className="size-6"
-                             rounded="rounded-full" /></>)} */}
-                           
-                     </div></>
+              {user?.userRoll != "Cliente" && 
+                <>
+                <div className="flex gap-2 items-center">  
+                      <FormLabel className="text-xs whitespace-nowrap">Asignar a: </FormLabel>
+                      <Select name="userId" onValueChange={(value) => generalForm.setValue("userId", value)}>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              usuariosFiltrados && usuariosFiltrados.length > 0
+                                ? usuariosFiltrados.find((x) => x.id === generalForm.watch("userId"))?.fullName ||
+                                  "Selecciona un usuario"
+                                : "Cargando..."
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {usuariosFiltrados &&
+                            usuariosFiltrados.map((item: { id: string; fullName: string }) => (
+                              <SelectItem key={item.id} value={item.id.toString()}>
+                                {item.fullName}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    
+                    {/* {usuariosResponsable && (
+                    <><FormLabel className="text-xs">Usuario responsable</FormLabel><UserAvatar
+                          withTooltip
+                          userId={usuariosResponsable}
+                          className="size-6"
+                          rounded="rounded-full" /></>)} */}
+                        
+                  </div>
+                </>
                }
  
-               <FormInput
+                <FormInput
                  form={generalForm}
                  name="titulo"
                  label="Asunto :"
                  placeholder=""
                  required />
- 
+              
+
+                {/* <ComboboxForm
+                label="Asunto"
+                tipo="ASUNTOS"
+                name="titulo"
+                form={generalForm}
+                 /> */}
+
                <label className="block text-xs font-medium text-black dark:text-white">
                  Descripción del problema :
                </label>
+               
                <textarea
-                 {...generalForm.register("descripcion")}
-                 placeholder="Describa su problema aquí..."
-                 required
-                 className="p-1 mb-5 w-full h-48 text-sm text-black bg-white rounded-md border shadow resize-none border-muted focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-950 dark:text-white"
-               />
+                {...generalForm.register("descripcion")}
+                placeholder="Describa su problema aquí..."
+                required
+                className="p-1 mb-5 w-full h-20 text-sm text-black bg-white rounded-md border shadow xl:h-32 resize-non border-muted focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-950 dark:text-white"
+              />
+
  
  
              </div>
            </div>
        </div>
          
-         <div className="px-4 w-full h-full md:w-1/2"> 
-           <div className="mb-0 h-full min-h-[30px] mt-4 ">
+         <div className="px-4 w-full md:w-1/2"> 
+           <div className="mb-0 min-h-[30px] mt-4 ">
              
                <div className="relative rounded-md border shadow min-h-80">
                  {/* Carrusel de Audios */}
@@ -487,7 +498,7 @@ export const Formulario = () => {
                            <button onClick={() => eliminarAudio(audio.id)} className="absolute top-1 right-1 z-10 text-red-500">
                              <FaTimes size={16} />
                            </button>
-                           <Reproductor audioUrl={audio.url} style={{ width: "100%" }} />
+                           <Reproductor audioUrl={audio.url} style={{ width: "100%", height: "8vh" }} />
                          </SwiperSlide>
                        ))}
                      </Swiper>
@@ -506,7 +517,7 @@ export const Formulario = () => {
                            </button>
                            <div className="flex flex-col items-center">
                              <FaFileAlt size={30} />
-                             <p className="text-xs truncate max-w-[100px]">{archivo.nombre}</p>
+                             <p className="text-xs truncate max-w-[100px] h-10">{archivo.nombre}</p>
                            </div>
                          </SwiperSlide>
                        ))}
@@ -524,7 +535,7 @@ export const Formulario = () => {
                            <button onClick={() => eliminarImagen(croppedImage.url)} className="absolute top-1 right-1 text-red-500">
                              <FaTimes size={16} />
                            </button>
-                           <img src={croppedImage.url} alt="Imagen Adjunta" className="object-contain w-full h-24 rounded-md" />
+                           <img src={croppedImage.url} alt="Imagen Adjunta" className="object-contain w-full h-24 rounded-md cursor-pointer group-hover:opacity-90" onClick={() => handleImageClick(croppedImage.url)} />
                          </SwiperSlide>
                        ))}
                      </Swiper>
@@ -540,7 +551,6 @@ export const Formulario = () => {
  
                <div className={`flex z-10 flex-row gap-1 items-end mt-2 bg-white dark:bg-gray-950`}>
                 
-                 {/* <span  className={` ${isDraggingFile ? 'bg-white border-2 border-blue-500 shadow-lg' : ''}`}> */}
                <CropImage
                  form={generalForm}
                  name="pictureURL"
@@ -552,12 +562,8 @@ export const Formulario = () => {
                  width="100%"
                  isDraggingFile={isDraggingFile}
                /> 
-              {/* </span> */}
- 
-       
-     
-               
-               <div style={{marginTop:'-15% !important'}}  >
+              
+               <div style={{marginTop:'-15% !important', marginLeft:'-15%'}}  >
                <AudioRecorder
                    onRecordingComplete={addAudioElement}
                    audioTrackConstraints={{
@@ -594,7 +600,22 @@ export const Formulario = () => {
       </Form>
       </CardContent>  
       </Card>
-        
-    </>);
 
+       
+      {imagenSeleccionada && (
+        <ModalGenerico
+        titulo={"Imagen seleccionada"}
+        Content={() => (
+        <div className="flex justify-center items-center">
+        <img
+        src={imagenSeleccionada}
+        alt="Imagen seleccionada"
+        className="object-contain rounded-md"
+        />
+        </div>
+        )}
+        handleClose={() => setImagenSeleccionada(null)}
+        />
+      )}
+    </>);
 };

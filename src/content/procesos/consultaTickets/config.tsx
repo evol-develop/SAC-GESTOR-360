@@ -2,8 +2,6 @@
 import { useEffect ,useState} from "react";
 import { useAppSelector } from "@/hooks/storeHooks";
 import { RootState } from "@/store/store";
-import { motion } from "framer-motion"; // 🔹 Asegúrate de importar motion
-import { ticketComentariosInterface, ticketInterface, ticketMovimientoInterface } from "@/interfaces/procesos/ticketInterface";
 import { AudioRecorder } from 'react-audio-voice-recorder';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { FaFileAlt, FaFileExcel, FaFilePdf, FaFileWord } from "react-icons/fa";
@@ -26,15 +24,7 @@ import { ResponseInterface } from "@/interfaces/responseInterface";
 import { toast } from "sonner";
 import { Notification } from "@/contexts/Notifications";
 import { useNotifications } from "@/hooks/useNotifications";
-
-import { ColumnDef } from "@tanstack/react-table";
-import {Acciones,DeleteDialog,ResultsCatalogo,} from "@/config/catalogoGenerico";
-import { ENDPOINTDELETE, PAGE_SLOT,titulos } from "./constants";
-import { useItemManagement } from "@/hooks/useItemManagement";
-import { estatus } from "@/interfaces/procesos/estatus";
-import UserAvatar from "@/components/UserAvatar";
-import { getItemAtendidoLabel } from "@/config/catalogoGenerico/utils";
-import { DataTableColumnHeader } from "@/config/catalogoGenerico/data-table-column-header";
+import {ModalGenerico} from "@/components/ModalGenerico";
 import { usePage } from "@/hooks/usePage";
 import {createSlot,deleteSlot, setIsLoading,setIsOpenModal,setDataModal, setModalSize, addItemSlot,deleteItemSlot, updateItemSlot} from "@/store/slices/page";
 import { useNavigate } from 'react-router';
@@ -152,7 +142,8 @@ export const CargarArchivosByComentario = async (ticketInfo: any, dispatch: any,
       if(ticketInfo !== 0){
         dispatch(createSlot({ ticketId: ticketInfo.ticketId }));
         dispatch(createSlot({ clienteId: ticketInfo.ticket.clienteId }));
-        dispatch(createSlot({ movimientoId: ticketInfo.id }));
+        //dispatch(createSlot({ movimientoId: ticketInfo.id }));
+        dispatch(createSlot({ etapaActual: ticketInfo.id  }));
         dispatch(createSlot({ comentario: ticket.descripcion }));
       }else{
         dispatch(createSlot({ comentario: comentario }));
@@ -189,7 +180,7 @@ export const crearComentario = () => {
   const { idEmpresa } = useAuth();
   const clienteId = useAppSelector((state: RootState) => state.page.slots.clienteId as any);
   const ticketId = useAppSelector((state: RootState) => state.page.slots.ticketId as any);
-  const movimientoId = useAppSelector((state: RootState) => state.page.slots.movimientoId as number);
+  //const movimientoId = useAppSelector((state: RootState) => state.page.slots.movimientoId as number);
   const etapaActual = useAppSelector((state: RootState) => state.page.slots.etapaActual as any);
   const etapaSeleccionada = useAppSelector((state: RootState) => state.page.slots.etapaSeleccionada);
   const { sendNotification } = useNotifications();
@@ -199,7 +190,7 @@ export const crearComentario = () => {
   const tipoOperacion = useAppSelector((state:RootState) => state.page.slots.tipoOperacion);
   const comentario = useAppSelector((state:RootState) => state.page.slots.comentario);
   const comentarioId = useAppSelector((state:RootState) => state.page.slots.comentarioId);
-
+ const [imagenSeleccionada, setImagenSeleccionada] = useState<string | null>(null);
   const asignado = useAppSelector((state: RootState) => state.page.slots.asignado);
   const clienteAuth = useAppSelector((state: RootState) => state.page.slots.clienteAuth);
 
@@ -366,9 +357,11 @@ export const crearComentario = () => {
         
         generalForm.reset();
 
+        //console.log(response.data)
+
         if (response.data.isSuccess ) {
           
-          if(etapaActual===etapaSeleccionada+1){
+          if(etapaActual===etapaSeleccionada){
             
             const result = response.data.result;
 
@@ -380,6 +373,8 @@ export const crearComentario = () => {
               comentario: result.comentario,
               asunto: ""
             };
+
+            //console.log(dirigido_a)
 
             if(dirigido_a === "ASIGNADO"){
               dispatch(
@@ -394,23 +389,10 @@ export const crearComentario = () => {
           }
 
           
-        // console.log(user?.userRoll);
-        // //console.log(groupIds);
-        // console.log(asignado);
-        // console.log(clienteAuth);
-
-          var groupIds: any[] = [];
-
           var destinatario ="";
-
-          console.log(user?.userRoll)
 
           switch(user?.userRoll)
           {
-            // case "Cliente":
-            //   break;
-            // case "Desarrollo":
-            //   break;
             case "Soporte":
             case "Administrador":
               
@@ -420,9 +402,17 @@ export const crearComentario = () => {
           }
 
         
-          groupIds =  usuarios && usuarios
-        .filter((item) => item.departamento ? item.departamento.nombre === "Soporte":null)
-        .map((item) => item.id); // Asumí que `id` es el campo que quieres agregar a `groupIds`
+          const  groupIds =  usuarios && usuarios
+          .filter((item) => item.departamento ? item.departamento.nombre === "Soporte" :null)
+          .map((item) => item.id);
+  
+          var groupIdsFiltrados: any[] = [];
+          groupIdsFiltrados = groupIds.filter((item) => item !== user?.id); //EVITAR ENVIAR LA NOTIFICACION AL USUARIO ACTUAL
+        
+  
+          if(user?.id !== asignado && user?.id !== clienteAuth){ 
+            groupIdsFiltrados.push(destinatario); //AÑADIR ASIGANDO EN LA LISTA 
+          }
 
           const notification: Notification = {
             title: "Hay un nuevo mensaje en el Ticket #" + ticketId,
@@ -431,8 +421,8 @@ export const crearComentario = () => {
               "' style='text-decoration: underline; color: blue;'>Ver comentario</a><br/>" +
               "<div style='font-size: 12px;'><b>Comentario:</b> " + valores.descripcion + "</div>",
             type: "importante",
-            groupIds: groupIds, //avisar todo el departamento 
-            userId: destinatario? destinatario as string: undefined,
+            groupIds: groupIdsFiltrados, //avisar todo el departamento 
+            userId: user?.userRoll === 'Cliente' || user?.userRoll ==='Desarrollo' ? '': destinatario? destinatario as string: undefined,
             ticketId: ticketId,
             comentarioId:1,
              motivo:"ticket"
@@ -473,7 +463,7 @@ export const crearComentario = () => {
             titulo: valores.titulo,
             archivos: fileList,
             
-            ticketMovimientoId:movimientoId
+            ticketMovimientoId:etapaActual
           };
           
             const response = await axios.post<ResponseInterface>(
@@ -507,11 +497,14 @@ export const crearComentario = () => {
           ticketComentarioId: comentarioId,
           // ticketMovimientoId:movimientoId
         };
+
+        
         
         const response = await axios.post<ResponseInterface>(
           "/api/tickets/updateComentario",
           valoresForm
         );
+        
         
 
         
@@ -576,31 +569,81 @@ export const crearComentario = () => {
       generalForm.setValue("descripcion", comentario);
     }
   }, [comentario]); 
+
+    const [isDraggingFile, setIsDraggingFile] = useState(false);
+  
+    useEffect(() => {
+      const handleDragEnter = (e: DragEvent) => {
+        if (e.dataTransfer?.types.includes('Files')) {
+          setIsDraggingFile(true);
+        }
+      };
+  
+      const handleDragLeave = (e: DragEvent) => {
+        if (e.relatedTarget === null || e.clientY <= 0) {
+          setIsDraggingFile(false);
+        }
+      };
+  
+      const handleDrop = () => {
+        setIsDraggingFile(false);
+      };
+  
+      window.addEventListener('dragenter', handleDragEnter);
+      window.addEventListener('dragleave', handleDragLeave);
+      window.addEventListener('drop', handleDrop);
+  
+      return () => {
+        window.removeEventListener('dragenter', handleDragEnter);
+        window.removeEventListener('dragleave', handleDragLeave);
+        window.removeEventListener('drop', handleDrop);
+      };
+    }, []);
+
+    
+  const handleImageClick = (url: string) => {
+    
+    setImagenSeleccionada(url);
+    dispatch(createSlot({ openModal: true }));
+    dispatch(createSlot({ formulario: "imagen" }));
+  };
+
+  const eliminarSlots = () => {
+    dispatch(deleteSlot("formulario"));
+    setImagenSeleccionada(null);
+  };
+      
+  
   return (
+    <>
+    {isDraggingFile && (
+      <div className="flex absolute inset-0 justify-center items-center bg-gray-600 bg-opacity-30 pointer-events-none">
+        {/* <span className="text-lg font-bold text-red-700">🚫 Aquí no se permite soltar archivos</span> */}
+      </div>
+    )}
+    
     <Form {...generalForm}>
        <form onSubmit={generalForm.handleSubmit(onSubmit)} onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}>
 
-        <section className="relative h-[calc(100dvh-252px)] sm:h-[calc(100dvh-200px)] flex flex-col sm:flex-row gap-4">
-          <div className="flex flex-col gap-2 p-2 w-full h-full bg-background sm:w-1/2 max-h-1/2 sm:max-h-none">
-            {/* <FormInput
-              form={generalForm}
-              name="titulo"
-              label="Asunto "
-              placeholder=""
-              required /> */}
+       <section className="relative h-[calc(100dvh-252px)] sm:h-[calc(100dvh-200px)] flex flex-col sm:flex-row gap-4">
+      
+       <div
+        className={`flex flex-col gap-2 p-2 w-full h-full sm:w-1/2  bg-background bg-white dark:bg-gray-950 ${
+        isDraggingFile ? "bg-gray-300 bg-opacity-40":""}`}
+      >
 
-            <label className="block text-xs font-medium text-black">
-              Comentario
-            </label>
-            <textarea
-              {...generalForm.register("descripcion")}
-              placeholder="Escribe aquí..."
-              required
-              className="p-1 mb-5 w-full h-full text-sm rounded-md border shadow resize-none text-muted-foreground border-muted focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div className="flex overflow-y-auto flex-col w-full h-full sm:w-1/2 max-h-1/2 sm:max-h-none">
-            <div className="rounded-md border shadow min-h-80">
+        <label className="block text-xs font-medium text-black dark:text-white">Comentario</label>
+          <textarea
+            {...generalForm.register("descripcion")}
+            required
+            className={`p-1 mb-5 w-full h-full text-sm rounded-md border text-black shadow resize-none dark:bg-gray-950  border-muted focus:outline-none focus:ring-2 focus:ring-primary dark:text-white ${
+              isDraggingFile ? "bg-gray-300 bg-opacity-40":""}`}
+            
+          />
+        </div>
+          
+            <div className="flex flex-col w-full h-full sm:w-1/2">
+            <div className="overflow-y-auto flex-1 p-2 rounded-md border shadow">
 
               {audios && audios.length > 0 && (
                 <div>
@@ -637,7 +680,6 @@ export const crearComentario = () => {
                 </div>
               )}
 
-              
               {imagenes && imagenes.length > 0 && (
                 <div>
                   <h3 className="text-xs font-bold">{imagenes.length} Imágen(es) </h3>
@@ -647,7 +689,7 @@ export const crearComentario = () => {
                         <button type="button" onClick={() => eliminarImagen( croppedImage.id, croppedImage.url)} className="absolute top-1 right-1 text-red-500">
                           <FaTimes size={16} />
                         </button>
-                        <img src={croppedImage.url} alt="Imagen Adjunta" className="object-contain w-24 h-24 rounded-md" />
+                        <img src={croppedImage.url} alt="Imagen Adjunta" className="object-contain w-full h-24 rounded-md cursor-pointer group-hover:opacity-90" onClick={() => handleImageClick(croppedImage.url)}/>
                       </SwiperSlide>
                     ))}
                   </Swiper>
@@ -659,7 +701,7 @@ export const crearComentario = () => {
                 Sin archivos adjuntos</div>)}
             </div>
 
-            <div className="flex right-4 flex-col gap-2 items-end mt-2">
+            <div className="flex flex-col gap-2 items-end mt-2">
             <CropImage
                 form={generalForm}
                 name="pictureURL"
@@ -669,9 +711,10 @@ export const crearComentario = () => {
                 handleFile={handleFile}
                 height="65px"
                 width="90%"
+                isDraggingFile={isDraggingFile}
               />
             
-            <div style={{marginTop:'-8%'}}  >
+            <div className="mt-4" >
             <AudioRecorder
                 onRecordingComplete={addAudioElement}
                 audioTrackConstraints={{
@@ -684,8 +727,8 @@ export const crearComentario = () => {
             </div>
 
             </div>
-
-            <div className="flex flex-col items-end mt-10"  >
+            
+            <div className="flex justify-end mt-4">
               <CardFooter className="flex gap-2 justify-end">
                 <Button
                   type="submit"
@@ -693,7 +736,7 @@ export const crearComentario = () => {
                   disabled={generalForm.formState.isSubmitting}
                 >
                 {generalForm.formState.isSubmitting && (<LuLoaderCircle className="animate-spin" />)}
-                  Enviar 
+                  {tipoOperacion === "CrearComentario" ? "Enviar comentario" : tipoOperacion === "EditarComentario" ? "Editar comentario" : "Guardar cambios"}
                   
                 </Button>
               </CardFooter>
@@ -702,5 +745,23 @@ export const crearComentario = () => {
         </section>
       </form>
     </Form>
+
+    {imagenSeleccionada && (
+      <ModalGenerico
+      titulo={"Imagen seleccionada"}
+      Content={() => (
+      <div className="flex justify-center items-center">
+      <img
+      src={imagenSeleccionada}
+      alt="Imagen seleccionada"
+      className="object-contain rounded-md"
+      />
+      </div>
+      )}
+      handleClose={() => eliminarSlots()}
+      />
+    )}
+    
+    </>
   );
 };

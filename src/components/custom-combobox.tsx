@@ -3,11 +3,11 @@ import { LuChevronsUpDown, LuLoaderCircle } from "react-icons/lu";
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { priorities } from "@/contexts/Notifications/constants";
 import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+ FormControl,
+ FormField,
+ FormItem,
+ FormLabel,
+ FormMessage,
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import axios, { axiosIns2 } from "@/lib/utils/axios";
@@ -21,65 +21,71 @@ import { appConfig } from "@/appConfig";
 import axiosIns from "@/lib/utils/axios";
 
 type Props = {
-  tipo:
-    | "ROLESUSUARIO"
-    | "USUARIOS"
-    | "ROL"
-    | "ReporteEmpresa"
-    | "PRIORIDAD"
-    | "EMPRESAS"
-    | "FRECUENCIAS"
-    | "ANIO"
-    | "MES"
-    | "CLIENTES"
-    | "ALERTAS"
-    | "TIPOS_CLIENTES"
-    | "SERVICIOS"
-    | "CFDI"
-    | "METODOSPAGO"
-    | "FormasPago"
-    | "REGIMEN"
-    | "DEPARTAMENTOS"
-    | "EVENTOS"
-  label: string;
-  name: string;
-  form: UseFormReturn<any, any, undefined>;
-  placeholder?: string;
-  disabled?: boolean; 
-  onchange?: () => void;
+ tipo:
+   | "ROLESUSUARIO"
+   | "USUARIOS"
+   | "ROL"
+   | "ReporteEmpresa"
+   | "PRIORIDAD"
+   | "EMPRESAS"
+   | "FRECUENCIAS"
+   | "ANIO"
+   | "MES"
+   | "CLIENTES"
+   | "ALERTAS"
+   | "TIPOS_CLIENTES"
+   | "SERVICIOS"
+   | "CFDI"
+   | "METODOSPAGO"
+   | "FormasPago"
+   | "REGIMEN"
+   | "DEPARTAMENTOS"
+   | "EVENTOS"
+   | "ASUNTOS"
+ label: string;
+ name: string;
+ form: UseFormReturn<any, any, undefined>;
+ placeholder?: string;
+ disabled?: boolean; 
+ onSelect?: (value: string | number) => void;
+ isDraggingFile?: boolean;
+
 };
 
 type dataProps = {
-  label: string;
-  value: string| number;
-  disabled?: boolean;
+ label: string;
+ value: string| number;
+ disabled?: boolean;
+ isDraggingFile?: boolean;
 };
 
 export const ComboboxForm = ({
-  tipo,
-  label,
-  name,
-  form,
-  placeholder = "Selecciona una opción...",
-  disabled = false,
+ tipo,
+ label,
+ name,
+ form,
+ placeholder = "Selecciona una opción...",
+ disabled = false,
+ onSelect,
+ isDraggingFile= false
 }: Props) => {
-  const [data, setData] = useState<
-    {
-      disabled?: boolean;
-      label: string;
-      value: string | number;
-    }[]
-  >([]);
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const listRef = useRef<HTMLUListElement>(null);
+ const [data, setData] = useState<
+   {
+     disabled?: boolean;
+     label: string;
+     value: string | number;
+   }[]
+ >([]);
+ const [open, setOpen] = useState(false);
+ const [search, setSearch] = useState("");
+ const [loading, setLoading] = useState(false);
+ const inputRef = useRef<HTMLInputElement>(null);
+ const listRef = useRef<HTMLUListElement>(null);
 
-  useEffect(() => {
-    // if (disabled) return;
-    const getData = async () => {
-      switch (tipo) {
+ useEffect(() => {
+
+   const getData = async () => {
+     switch (tipo) {
         case "ROLESUSUARIO":
           try {
             const data: dataProps[] = [
@@ -230,7 +236,7 @@ export const ComboboxForm = ({
 
          setData(frecuencias);
          break;
-         case "MES":
+        case "MES":
           const meses: { label: string; value: number }[] = [
             { label: "Enero", value: 1 },
             { label: "Febrero", value: 2 },
@@ -262,26 +268,26 @@ export const ComboboxForm = ({
         setData(years);
         break;
         case "CLIENTES":
-          try {
-            setLoading(true);
-            const response = await axios.get<ResponseInterface>(
-              `/api/clientes/getclientes`
-            );
-            const data: dataProps[] = (
-              response.data.result as EmpresaInterface[]
-            ).map((item) => ({
-              label: `${item.nombre}`,
-              value: `${item.id}`,
-            }));
-            if (response.data.result.length > 0) {
-              setData(data);
-            }
-          } catch (err) {
-            console.error(err);
-          } finally {
-            setLoading(false);
-          }
-          break;
+         try {
+           setLoading(true);
+           const response = await axios.get<ResponseInterface>(
+             `/api/clientes/getclientes`
+           );
+           const data: dataProps[] = (
+             response.data.result as EmpresaInterface[]
+           ).map((item) => ({
+             label: `${item.nombre}`,
+             value: `${item.id}`,
+           }));
+           if (response.data.result.length > 0) {
+             setData(data);
+           }
+         } catch (err) {
+           console.error(err);
+         } finally {
+           setLoading(false);
+         }
+         break;
         case "ALERTAS":
           try {
             setLoading(true);
@@ -326,7 +332,6 @@ export const ComboboxForm = ({
             setLoading(false);
           }
           break;
-
         case "CFDI":
           try {
             setLoading(true);
@@ -348,7 +353,6 @@ export const ComboboxForm = ({
             setLoading(false);
           }
           break;
-
         case "SERVICIOS":
           try {
             setLoading(true);
@@ -369,8 +373,7 @@ export const ComboboxForm = ({
           } finally {
             setLoading(false);
           }
-          break;  
-          
+          break;        
         case "TIPOS_CLIENTES":
           try {
             setLoading(true);
@@ -413,8 +416,7 @@ export const ComboboxForm = ({
             setLoading(false);
           }
           break;
-
-          case "METODOSPAGO":
+        case "METODOSPAGO":
             try {
               setLoading(true);
               const response = await axiosIns2.get<ResponseInterface>(
@@ -434,92 +436,121 @@ export const ComboboxForm = ({
             } finally {
               setLoading(false);
             }
-            break;
-      }
-    };
-    getData();
-  }, [tipo]);
+        break;
+        case "ASUNTOS":
+          try {
+            const data: dataProps[] = [
+              { label: "MANTENIMIENTO WEB", value: "MANTENIMIENTO WEB" },
+              { label: "MANTENIMIENTO ESCRITORIO", value: "MANTENIMIENTO ESCRITORIO" },
+              { label: "PÓLIZA DE MANTENIMIENTO", value: "PÓLIZA DE MANTENIMIENTO" },
+              { label: "MEJORA DE SERVICIOS", value: "MEJORA DE SERVICIOS" },
+              { label: "MEJORA/MANTENIMIENTO", value: "MEJORA/MANTENIMIENTO" },
+              { label: "IMPLEMENTACIÓN/INSTALACIÓN", value: "IMPLEMENTACIÓN/INSTALACIÓN" },
+              { label: "ACTUALIZAR SAC", value: "ACTUALIZAR SAC" },
+              { label: "ACTUALIZAR DRIVERS", value: "ACTUALIZAR DRIVERS" },
+              { label: "MEJORA SISTEMA", value: "MEJORA SISTEMA" },
+              { label: "INSTALACIÓN IMPRESORAS", value: "INSTALACIÓN IMPRESORAS" },
+              
+            ];
 
-  const filteredOptions = useMemo(() => {
-    return data.filter((option) =>
-      option.label.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [data, search]);
+            setData(data.map(item => ({
+              label: item.label,
+              value: item.value.toString(),
+            })));
+          } catch (err) {
+            console.error(err);
+          }
 
-  const handleSelect = (selectedValue: any) => {
-    form.setValue(name, selectedValue);
-    setOpen(false);
-    setSearch("");
-  };
+          break;
+     }
+   };
+   getData();
+ }, [tipo]);
 
-  return (
-    <FormField
-      control={form.control}
-      name={name}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel >{label}</FormLabel>
-          <div className="relative w-full">
-            <FormControl>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(!open)}
-                className={cn(
-                  "w-full justify-between",
-                  !field.value && "text-muted-foreground"
-                )}
-                disabled={disabled}
-              >
-               <span className="truncate block max-w-[calc(100%-2rem)]">
-                  {field.value
-                    ? data.find(
-                        (option) =>
-                          option.value === field.value ||
-                          option.label === field.value
-                      )?.label
-                    : placeholder}
-                </span>
-                {!loading ? (
-                  <LuChevronsUpDown className="ml-2 w-4 h-4 opacity-50 shrink-0" />
-                ) : (
-                  <LuLoaderCircle className="ml-2 w-4 h-4 animate-spin shrink-0" />
-                )}
-              </Button>
-            </FormControl>
-            {open && (
-              <div className="absolute z-50 mt-1 w-full rounded border shadow-md bg-primary-foreground">
-                <Input
-                  ref={inputRef}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar..."
-                  disabled={disabled} 
-                />
-               <ul ref={listRef} className="overflow-y-auto max-h-60">
-                {filteredOptions.map((option) => (
-                  <li
-                  key={option.value}
-                  className={cn(
-                    "cursor-pointer px-2 py-1 hover:bg-primary/25",
-                    "truncate", // <- esto corta el texto con puntos suspensivos si es muy largo
-                    "max-w-full", // <- asegura que no se extienda más allá de su contenedor
-                    field.value === option.value && "bg-primary/50",
-                    option.disabled && "text-gray-400 cursor-not-allowed"
-                  )}
-                  onClick={() => !option.disabled && handleSelect(option.value)}
-                >
-                  {option.label}
-                </li>
-                ))}
-              </ul>
+ const filteredOptions = useMemo(() => {
+   return data.filter((option) =>
+     option.label.toLowerCase().includes(search.toLowerCase())
+   );
+ }, [data, search]);
 
-              </div>
-            )}
-          </div>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
+ const handleSelect = (selectedValue: any) => {
+   form.setValue(name, selectedValue);
+   setOpen(false);
+   setSearch("");
+
+   onSelect?.(selectedValue);
+ };
+
+ return (
+   <FormField
+     control={form.control}
+     name={name}
+     render={({ field }) => (<>
+
+       <FormItem>
+         <FormLabel >{label}</FormLabel>
+         <div className="relative w-full">
+           <FormControl>
+             <Button
+               type="button"
+               variant="outline"
+               onClick={() => setOpen(!open)}
+               className={cn(
+                "w-full justify-between",
+                !field.value && "text-muted-foreground",
+                isDraggingFile && "bg-gray-300 bg-opacity-30 " // <- estilos cuando se está arrastrando
+              )}
+               disabled={disabled}
+             >
+              <span className="truncate block max-w-[calc(100%-2rem)]">
+                 {field.value
+                   ? data.find(
+                       (option) =>
+                         option.value.toString() === field.value.toString() ||
+                         option.label === field.value
+                     )?.label
+                   : placeholder}
+               </span>
+               {!loading ? (
+                 <LuChevronsUpDown className="ml-2 w-4 h-4 opacity-50 shrink-0" />
+               ) : (
+                 <LuLoaderCircle className="ml-2 w-4 h-4 animate-spin shrink-0" />
+               )}
+             </Button>
+           </FormControl>
+           {open && (
+             <div className="absolute z-50 mt-1 w-full rounded border shadow-md bg-primary-foreground">
+               <Input
+                 ref={inputRef}
+                 value={search}
+                 onChange={(e) => setSearch(e.target.value)}
+                 placeholder="Buscar..."
+                 disabled={disabled} 
+               />
+              <ul ref={listRef} className="overflow-y-auto max-h-60">
+               {filteredOptions.map((option) => (
+                 <li
+                 key={option.value}
+                 className={cn(
+                   "cursor-pointer px-2 py-1 hover:bg-primary/25",
+                   "truncate", // <- esto corta el texto con puntos suspensivos si es muy largo
+                   "max-w-full", // <- asegura que no se extienda más allá de su contenedor
+                   field.value === option.value && "bg-primary/50",
+                   option.disabled && "text-gray-400 cursor-not-allowed"
+                 )}
+                 onClick={() => !option.disabled && handleSelect(option.value)}
+               >
+                 {option.label}
+               </li>
+               ))}
+             </ul>
+
+             </div>
+           )}
+         </div>
+         <FormMessage />
+       </FormItem>
+       </>)}
+   />
+ );
 };

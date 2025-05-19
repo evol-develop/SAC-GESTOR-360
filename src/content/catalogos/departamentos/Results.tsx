@@ -14,6 +14,7 @@ import { clienteInterface } from "@/interfaces/catalogos/clienteInterface";
 
 export const Results = () => {
   const data =useAppSelector((state: RootState) => state.page.slots.DEPARTAMENTOS) || [];
+  const usuarios =useAppSelector((state: RootState) => state.page.slots.USUARIOS as any[]) ;
 
   const {
     openConfirmDelete,
@@ -36,6 +37,7 @@ export const Results = () => {
       cell: ({ row }) => (
         <Acciones
           item={row.original}
+          editButton={usuarios && usuarios.length > 0 ? true:false}
           handleEditItem={handleEditItem}
           handleConfirmDelete={handleConfirmDelete}
         />
@@ -48,7 +50,7 @@ export const Results = () => {
         PAGE_SLOT={PAGE_SLOT}
         data={data}
         columns={columns}
-        filtro="cliente"
+        filtro="nombre"
       />
       <DeleteDialog
         openConfirmDelete={openConfirmDelete}

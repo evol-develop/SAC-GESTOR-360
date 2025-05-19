@@ -8,12 +8,21 @@ export const getItemActiveLabel = (active: boolean) => {
   );
 };
 
-export const getItemAtendidoLabel = (active: boolean) => {
-  return active ? (
-    <Badge variant="default">Atendido</Badge>
-  ) : (
-    <Badge variant="destructive">No atendido</Badge>
-  );
+export const getItemEstatusLabel = (estado: string) => {
+  //console.log(estado);
+  switch (estado) {
+    case "Generado":
+      return <Badge variant="default">Generado</Badge>;
+    case "Asignado":
+      return <Badge variant="info">Asignado</Badge>;
+
+    case "En revision":
+      return <Badge variant="warning">En revision</Badge>;
+    case "Hecho":
+      return <Badge variant="success">Hecho</Badge>;
+    default:
+      return <Badge variant="destructive">Cancelado</Badge>;
+  }
 };
 
 export const getDefaultLabel = (pred: boolean) => {

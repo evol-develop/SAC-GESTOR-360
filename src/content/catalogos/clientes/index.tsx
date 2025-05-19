@@ -23,6 +23,7 @@ const ManagementClientes = () => {
   useGetData({ ruta: "/api/getCatalogoSAT?code="+appConfig.TOKEN+"&Catalogo=RegimenFiscal", slot: "REGIMEN", facturacion: true });
   useGetData({ ruta: "/api/departamentos/getDepartamentos", slot: "DEPRATAMENTOS" });
   useGetData({ ruta: "/api/eventos/getEventos", slot: "EVENTOS" });
+  useGetData({ ruta: "/api/documentos/getDocumentos", slot: "DOCUMENTOS" });
 
   const SetSizeModal =() =>{
     dispatch(setModalSize("xl"));

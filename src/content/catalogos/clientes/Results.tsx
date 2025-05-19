@@ -11,8 +11,11 @@ import { ENDPOINTDELETE, PAGE_SLOT } from "./constants";
 import { useItemManagement } from "@/hooks/useItemManagement";
 import { getItemActiveLabel } from "@/config/catalogoGenerico/utils";
 import { clienteInterface } from "@/interfaces/catalogos/clienteInterface";
+import { createSlot,setModalSize } from "@/store/slices/page";
+import { useAppDispatch } from "@/hooks/storeHooks";
 
 export const Results = () => {
+  const dispatch = useAppDispatch();
   const data =
     useAppSelector((state: RootState) => state.page.slots.CLIENTES) || [];
 
@@ -23,6 +26,11 @@ export const Results = () => {
     closeConfirmDelete,
     handleEditItem,
   } = useItemManagement({ deleteEndpoint: ENDPOINTDELETE, PAGE_SLOT });
+
+  const handleEdit = (item: any) => {
+    dispatch(setModalSize("xl"));
+    handleEditItem(item);
+  };
 
   const columns: ColumnDef<clienteInterface>[] = [
     {
@@ -77,7 +85,7 @@ export const Results = () => {
       cell: ({ row }) => (
         <Acciones
           item={row.original}
-          handleEditItem={handleEditItem}
+          handleEditItem={handleEdit}
           handleConfirmDelete={handleConfirmDelete}
         />
       ),
@@ -89,7 +97,7 @@ export const Results = () => {
         PAGE_SLOT={PAGE_SLOT}
         data={data}
         columns={columns}
-        filtro="cliente"
+        filtro="nombre"
       />
       <DeleteDialog
         openConfirmDelete={openConfirmDelete}

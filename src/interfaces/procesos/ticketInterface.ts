@@ -8,9 +8,11 @@ export interface ticketInterface {
     pictureURL?: string | File | unknown;
     audioFile?: string | File | unknown;
     servicioId: number;
+    servicio: any;
     user: any;
     atendido: boolean;
     fechaCrea: Date  | null;
+    usuarioCrea: string;
   }
 
   export interface ticketMovimientoInterface {

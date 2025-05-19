@@ -25,68 +25,63 @@ export const unreadNotificationsCount = (
     authState ||
     (JSON.parse(localStorage.getItem("authState") || "{}") as AuthState);
 
-  const unreadNotifications = notifications.filter(
-    (notification) =>
-      (notification.userId === auth.user?.id && !notification.isRead) ||
-      (notification.userId === "all" &&
-        new Date(notification.createdAt || "") >
-          new Date(new Date().setHours(0, 0, 0, 0))) ||
-      (notification.groupIds?.includes(auth.user?.id || "") &&
-        new Date(notification.createdAt || "") >
-          new Date(new Date().setHours(0, 0, 0, 0)))
-  );
+  const userId = auth.user?.id;
+
+  const unreadNotifications = notifications.filter((notification) => {
+    const isForUser =
+      notification.userId === userId ||
+      notification.userId === "all" ||
+      notification.groupIds?.includes(userId || "");
+
+    const isUnread = !notification.isRead?.[userId ?? ""];
+
+    return isForUser && isUnread;
+  });
 
   return unreadNotifications.length;
 };
+
 
 export const unreadNotificationsCount2 = (
   notifications: Notification[],
   authState?: AuthState
 ) => {
   const { markAsNotified } = useNotifications();
-  const auth =authState || (JSON.parse(localStorage.getItem("authState") || "{}") as AuthState);
+  const auth = authState || (JSON.parse(localStorage.getItem("authState") || "{}") as AuthState);
+  const userId = auth.user?.id;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  if (!userId) {
+    return { unreadNotifications: [] }; // o maneja el caso de no tener userId
+  }
 
   const unreadNotifications = notifications.filter((notification) => {
-    const isUndisplayedUser =
-      notification.userId === auth.user?.id && notification.motivo ==="ticket" &&
-      notification.notificationDisplay === false;
+   
 
-    // const isUndisplayedAll =
-    //   notification.userId === "all" &&  notification.motivo ==="ticket" &&
-    //   notification.notificationDisplay === false;
+    const isUserUndisplayed =
+      (notification.userId === userId || notification.groupIds?.includes(userId ?? "")) &&
+      notification.motivo === "ticket" &&
+      (!notification.notificationDisplay || notification.notificationDisplay[userId.toString() as string] === false);
 
-      const isUndisplayedFind =
-      (notification.groupIds?.includes(auth.user?.id || "")) &&  notification.motivo ==="ticket" &&
-      notification.notificationDisplay === false;
-
-      //console.log("all"+isUndisplayedAll)
-      // console.log("user:"+isUndisplayedUser)
-      // console.log("find:"+isUndisplayedFind)
-
-    return isUndisplayedUser  ||isUndisplayedFind; //|| isUndisplayedAll;
+    return isUserUndisplayed;
   });
 
-  unreadNotifications.forEach( async (notification) => {
-
-    console.log(notification)
+  unreadNotifications.forEach(async (notification) => {
     if (notification?.id) {
       if (markAsNotified) {
-        await markAsNotified(notification?.id as string);
+        await markAsNotified(notification?.id as string, userId as string);
       }
     }
   });
 
   return {
-     unreadNotifications,
+    unreadNotifications,
   };
-
 };
 
 
-export const notificationsAndTasksCount = (
+
+
+export const notificationsAndTasksCount = ( 
   notifications: Notification[],
   tasks: Task[],
   authState?: AuthState
@@ -95,23 +90,26 @@ export const notificationsAndTasksCount = (
     authState ||
     (JSON.parse(localStorage.getItem("authState") || "{}") as AuthState);
 
-  const unreadNotifications = notifications.filter(
-    (notification) =>
-      (notification.userId === auth.user?.id && !notification.isRead) ||
-      (notification.userId === "all" &&
-        new Date(notification.createdAt || "") >
-          new Date(new Date().setHours(0, 0, 0, 0))) ||
-      (notification.groupIds?.includes(auth.user?.id || "") &&
-        new Date(notification.createdAt || "") >
-          new Date(new Date().setHours(0, 0, 0, 0)))
-  );
+  const userId = auth.user?.id;
+
+  const unreadNotifications = notifications.filter((notification) => {
+    const isForUser =
+      notification.userId === userId ||
+      notification.userId === "all" ||
+      notification.groupIds?.includes(userId || "");
+
+    const isUnread = !notification.isRead?.[userId ?? ""];
+
+    return isForUser && isUnread;
+  });
 
   const uncompletedTasks = tasks.filter(
-    (task) => task.userId === auth.user?.id && !task.isCompleted
+    (task) => task.userId === userId && !task.isCompleted
   );
 
   return unreadNotifications.length + uncompletedTasks.length;
 };
+
 
 export const uncompletedTasksCount = (tasks: Task[], authState?: AuthState) => {
   const auth =
@@ -128,19 +126,19 @@ export const uncompletedTasksCount = (tasks: Task[], authState?: AuthState) => {
 export const isNotificationRead = (
   notification: Notification,
   userId: string
-) => {
-  const isGroupNotification =
-    notification.groupIds &&
-    notification.groupIds?.includes(userId) &&
-    new Date(notification.createdAt || "") >
-      new Date(new Date().setHours(0, 0, 0, 0));
-  const isGlobalToday =
-    notification.userId === "all" &&
-    new Date(notification.createdAt || "") >
-      new Date(new Date().setHours(0, 0, 0, 0));
+): boolean => {
+  // Si la notificación es para todos o en grupo, verifica por userId
+  const isForUser =
+    notification.userId === userId ||
+    notification.userId === "all" ||
+    (notification.groupIds?.includes(userId) ?? false);
 
-  return isGlobalToday || isGroupNotification ? false : notification.isRead;
+  if (!isForUser) return true; // No aplica para este usuario
+
+  // Devuelve true o false según el registro en isRead
+  return notification.isRead?.[userId] === true;
 };
+
 
 export function getBadgeVariantFromLabel(
   label: string

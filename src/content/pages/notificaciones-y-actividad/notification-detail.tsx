@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import UserAvatar from "@/components/UserAvatar";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/hooks/useAuth";
 
 // Función para detectar etiquetas HTML
 const containsHtmlTags = (text: string) => /<\/?[a-z][\s\S]*>/i.test(text);
@@ -22,7 +23,9 @@ const containsHtmlTags = (text: string) => /<\/?[a-z][\s\S]*>/i.test(text);
 const NotificationDetail = ({ notificationId }: { notificationId: string }) => {
   const { notifications, markAsRead } = useNotifications();
   const notification = notifications.find((n) => n.id === notificationId);
-
+  const { user } = useAuth();
+  const userId = user?.id;
+  
   if (!notification) {
     return <p>Notificación no encontrada.</p>;
   }
@@ -33,7 +36,7 @@ const NotificationDetail = ({ notificationId }: { notificationId: string }) => {
     <div className="flex flex-col flex-1">
       <Separator />
       <div className="flex flex-col p-4 sm:flex-row sm:items-center">
-        <div className="flex items-start gap-4 text-sm">
+        <div className="flex gap-4 items-start text-sm">
           <UserAvatar
             userId={notification.senderId}
             rounded="rounded-full"
@@ -62,7 +65,7 @@ const NotificationDetail = ({ notificationId }: { notificationId: string }) => {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 mt-1 ml-12 sm:ml-auto sm:mt-0">
+        <div className="flex gap-2 items-center mt-1 ml-12 sm:ml-auto sm:mt-0">
           <span className="text-xs text-muted-foreground">
             {formatDistanceToNow(new Date(notification.createdAt as string), {
               addSuffix: true,
@@ -70,20 +73,20 @@ const NotificationDetail = ({ notificationId }: { notificationId: string }) => {
             {" - "}
             {format(new Date(notification.createdAt as string), "PPPP")}
           </span>
-          {!notification.isRead && (
+           {!notification.isRead?.[userId ?? ""] && ( 
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => markAsRead(notification.id as string)}
+                  onClick={() => markAsRead(notification.id as string, user?.id as string)}
                 >
                   <LuCircleCheck />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Marcar como leído</TooltipContent>
             </Tooltip>
-          )}
+           )} 
         </div>
       </div>
       <Separator />

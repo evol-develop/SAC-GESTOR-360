@@ -33,11 +33,11 @@ type GetDataProps = {
 
 export const useGetData = ({ ruta, slot, facturacion = false}: GetDataProps) => {
   const { init, dispatch } = usePage(slot);
-
+//console.log(ruta,slot)
   useEffect(() => {
     const controller = new AbortController(); // Reemplaza CancelToken por AbortController
     const getData = async () => {
-    //dispatch(setIsLoading(true));
+    dispatch(setIsLoading(true));
       try {
         if (facturacion) {
           const response = await axiosIns2.get(ruta, {
@@ -54,10 +54,10 @@ export const useGetData = ({ ruta, slot, facturacion = false}: GetDataProps) => 
           dispatch(createSlot({ [slot]: response.data.result }));
         }
 
-        //dispatch(setIsLoading(false));
+        dispatch(setIsLoading(false));
 
       } catch (err) {
-        //dispatch(setIsLoading(false));
+        dispatch(setIsLoading(false));
         if (axios.isCancel(err) || (err as Error).name === "CanceledError") {
           console.error("Error Request:", (err as Error).message);
         } else {

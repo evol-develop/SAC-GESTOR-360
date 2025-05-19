@@ -7,7 +7,7 @@ import { useItemManagement } from "@/hooks/useItemManagement";
 import { estatus } from "@/interfaces/procesos/estatus";
 import { ticketMovimientoInterface } from "@/interfaces/procesos/ticketInterface";
 import UserAvatar from "@/components/UserAvatar";
-import { getItemAtendidoLabel } from "@/config/catalogoGenerico/utils";
+import { getItemEstatusLabel } from "@/config/catalogoGenerico/utils";
 import { DataTableColumnHeader } from "@/config/catalogoGenerico/data-table-column-header";
 import { usePage } from "@/hooks/usePage";
 import {createSlot,deleteSlot, setIsLoading,setIsOpenModal,setDataModal, setModalSize, addItemSlot} from "@/store/slices/page";
@@ -15,6 +15,10 @@ import { useNavigate } from 'react-router';
 import { useAuth } from "@/hooks/useAuth";
 import axios from "@/lib/utils/axios";
 import {CargarArchivosByComentario} from "./config"
+import { Autorizar } from "@/components/Autorizar";
+import { toast } from "sonner";
+import {deleteItemSlot} from "@/store/slices/page";
+import { TiposAutorizacion } from "@/interfaces/autorizar";
 
 export const getEtapaLabel = (etapa: number): string => {return estatus[etapa] || "Desconocido"; };
 
@@ -45,16 +49,51 @@ export const Results = () => {
     navigate(url);
   }
 
+  const handleConfirmDelete = (e: any) => {
+
+    Autorizar(
+      () => EliminarTicket(e),
+      TiposAutorizacion.EliminarTicket
+    );
+  };
+
+  const EliminarTicket = async (e: any) => {
+    
+      try {
+      const response = await axios.get(
+        `/api/tickets/deleteTicket/${e.ticketId}`,
+        {
+          headers: { "Content-Type": "application/text" },
+        }
+      );
+  
+      if(response.data.isSuccess){
+        dispatch(
+          deleteItemSlot({ state: "TICKETS", data: e.id })
+        );
+      }
+      
+      toast.success(response.data.result);
+  
+      return response.data.result;
+  
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   const columns: ColumnDef<ticketMovimientoInterface>[] = [
     {
       id: "ticket.id",
       accessorKey: "ticket.id",
       header: "Folio #",
+      size: 40,
     },
     {
       id: "cliente.nombre",
       accessorKey: "cliente.nombre",
       header: "Cliente",
+      size: 50,
       cell: ({ row }) => {
        
         const { ticket} = row.original;
@@ -63,7 +102,7 @@ export const Results = () => {
           <UserAvatar
             withTooltip
             userId={ticket.clienteId.toString()}
-            className="size-6"
+            className="size-8"
             rounded="rounded-full"
             catalogo="clientes"
             />
@@ -74,6 +113,7 @@ export const Results = () => {
       id: "ticket.fechaCrea",
       accessorKey: "ticket.fechaCrea",
       header: "Fecha solicitud",
+      size:80,
       cell: ({ row }) =>
         row.original.ticket.fechaCrea
           ? new Date(row.original.ticket.fechaCrea).toLocaleDateString("es-MX", {
@@ -87,30 +127,44 @@ export const Results = () => {
       id: "ticket.titulo",
       accessorKey: "ticket.titulo",
       header: "Título",
+      size: 100,
     },
     {
       id: "ticketEstatus.nombre",
       accessorKey: "ticketEstatus.nombre",
       header: "Estatus",
+      size: 80,
+      cell: ({ row }) => {
+        const { ticketEstatus } = row.original;
+        return ticketEstatus? getItemEstatusLabel(ticketEstatus.nombre) : "";
+      },
     },    
     {
       id: "ticket.servicio.descripcion",
       accessorKey: "ticket.servicio.descripcion",
       header: "Servicio",
+      size: 400,
     },
     {
       id: "ticket.servicio.departamento.nombre",
       accessorKey: "ticket.servicio.departamento.nombre",
       header: "Departamento",
+      size: 100,
+      cell: ({ row }) => {
+        const { ticket } = row.original;
+        return ticket.servicio.departamento? ticket.servicio.departamento.nombre : "";
+      },
     },
-    {
-      id: "ticket.atendido",
-      accessorKey: "ticket.atendido",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Atendido" />
-      ),
-      cell: ({ row }) => getItemAtendidoLabel(row.original.ticket.atendido),
-    },
+    // {
+    //   id: "ticket.atendido",
+    //   accessorKey: "ticket.atendido",
+    //   header: "Atendido",
+    //   // header: ({ column }) => (
+    //   //   <DataTableColumnHeader column={column} title="Atendido" />
+    //   // ),
+    //   cell: ({ row }) => getItemAtendidoLabel(row.original.ticket.atendido),
+    //   size: 80,
+    // },
     {
       id: "ticket.user.fullName",
       accessorKey: "ticket.user.fullName",
@@ -119,13 +173,38 @@ export const Results = () => {
        
         const { ticket} = row.original;
 
+        //console.log(ticket);
+
+        if (ticket?.user != null) {
+          return (
+            <UserAvatar
+              withTooltip
+              userId={ticket.user.id}
+              className="size-8"
+              rounded="rounded-full"
+            />
+          );
+        } else {
+          return (<>N/A</>);
+        }
+      },
+    },
+    { 
+      id:"ticket",
+      accessorKey: "ticket",
+      header: "Registrado por ",
+      size: 80,
+      cell: ({ row }) => {
+        const ticket = row.original;
+    
+      
         return  (
-          <UserAvatar
-            withTooltip
-            userId={ticket.user.id}
-            className="size-6"
-            rounded="rounded-full" />
-        );
+        <UserAvatar
+          withTooltip
+          userId={ticket.ticket.usuarioCrea}
+          className="size-8"
+          rounded="rounded-full" />);
+
       },
     },
     {
@@ -143,6 +222,8 @@ export const Results = () => {
             handleConfirmView={(e) => mostrarComentarios(e)}
             viewEtapas={true}
             handleConfirmEtapas={(e) => mostrarMovimientos(e)}
+            deleteButton={user?.userRoll !== "Cliente" && user?.userRoll !== "Desarrollo"}
+            handleConfirmDelete={(e) => handleConfirmDelete(e)}
           />
         );
       },
@@ -160,6 +241,7 @@ export const Results = () => {
           col.id !== "ticket.user.fullName"
       );
 
+      //console.log(data[0]?.ticket?.usuarioCrea);
 
   return (
     <ResultsCatalogo

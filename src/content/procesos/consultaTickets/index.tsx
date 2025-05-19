@@ -10,13 +10,14 @@ import {OperacionesFormulario} from "./config";
 import {crearComentario} from "./config";
 import { usePage } from "@/hooks/usePage";
 import {deleteSlot} from "@/store/slices/page";
-const ManagementTickets = () => {
+const ConsultaTickets = () => {
 
-  const {   user } = useAuth();
-  //console.log(user?.userRoll);
-  useGetData({ ruta: `/api/tickets/getTicketsByUsuario/${user?.userRoll != "Cliente" ? 0:user?.clienteId}`, slot: "TICKETS" });
+  const {user} = useAuth();
   const { createItemCatalogo, updateItemCatalogo } = OperacionesFormulario();
-   const { dispatch } = usePage();
+  const { dispatch } = usePage();
+
+  useGetData({ ruta: `/api/tickets/getTicketsByUsuario/${user?.userRoll != "Cliente" ? 0:user?.clienteId}`, slot: "TICKETS" });
+
 
   const eliminarSlots =()=>{
     dispatch(deleteSlot("audios"))
@@ -24,7 +25,6 @@ const ManagementTickets = () => {
     dispatch(deleteSlot("archivos"))
     dispatch(deleteSlot("comentario"));
     dispatch(deleteSlot("tipoOperacion"))
-
     dispatch(deleteSlot("ticketId"))
     dispatch(deleteSlot("movimientoId"))
     dispatch(deleteSlot("clienteId"))
@@ -36,20 +36,20 @@ const ManagementTickets = () => {
         <title>{appConfig.NOMBRE} - Tickets</title>
       </Helmet>
 
-    <CatalogoHeader
-      PAGE_SLOT={PAGE_SLOT}
-      createItemCatalogo={createItemCatalogo}
-      UpdateItemCatalogo={updateItemCatalogo}
-      titulos={titulos}
-      Formulario={ crearComentario}
-      showCreateButton={false}
-      handleClose={eliminarSlots}
-      showEncabezado={false}
-    />
+      <CatalogoHeader
+        PAGE_SLOT={PAGE_SLOT}
+        createItemCatalogo={createItemCatalogo}
+        UpdateItemCatalogo={updateItemCatalogo}
+        titulos={titulos}
+        Formulario={ crearComentario}
+        showCreateButton={false}
+        handleClose={eliminarSlots}
+        showEncabezado={false}
+      />
 
       <Results/>
     </>
   );
 };
 
-export default ManagementTickets;
+export default ConsultaTickets;

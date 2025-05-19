@@ -7,8 +7,6 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import {
   CountNotifications2,
-  CountNotificationsAndTasks,
-  NotificationAndTaskList,
 } from "@/contexts/Notifications";
 
 export default function Layout() {

@@ -9,7 +9,7 @@ import { alertasInterface } from "@/interfaces/catalogos/alertasInterface";
 
 export const Results = () => {
   const data =
-    useAppSelector((state: RootState) => state.page.slots.ALERTAS) || [];
+    useAppSelector((state: RootState) => state.page.slots.DOCUMENTOS) || [];
 
   const {
     openConfirmDelete,
@@ -53,7 +53,7 @@ export const Results = () => {
         PAGE_SLOT={PAGE_SLOT}
         data={data}
         columns={columns}
-        filtro="alerta"
+        filtro="documento"
       />
       <DeleteDialog
         openConfirmDelete={openConfirmDelete}

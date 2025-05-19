@@ -96,16 +96,19 @@ export const GridCatalogo = ({
               >
                 {row.getVisibleCells().map((cell) => (
                   <div
-                    key={cell.id}
-                    className="flex items-center text-left [&[align=center]]:text-center [&[align=right]]:text-right text-sm"
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </div>
+                  key={cell.id}
+                  className="flex overflow-hidden items-center text-sm text-left break-words break-all text-ellipsis"
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </div>
+                
+                
                 ))}
               </div>
             ))
             ) : (
-              <div className="p-4 text-center">Sin resultados.</div>
+              //isLoading ? (<Loading />):(<>Sin resultados.</>)
+              <Loading />
             )}
           </div>
         </div>

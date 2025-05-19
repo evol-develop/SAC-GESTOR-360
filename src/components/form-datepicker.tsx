@@ -63,13 +63,13 @@ const FormDatepicker = ({ form, name, label }: FormDatepickerProps) => {
                 <div className="absolute left-0 z-50 bg-white rounded-md shadow-lg">
                   <Calendar
                     mode="single"
-                    className=""
+                    className="dark:bg-gray-800"
                     selected={selectedDate || today}
                     onSelect={(date) => {
                       field.onChange(date ? date.toISOString() : null); // Guardar en formato ISO
                       setIsOpen(false);
                     }}
-                    disabled={(date) => date < new Date()}
+                    // disabled={(date) => date < new Date()}
                     initialFocus
                   />
                 </div>

@@ -22,8 +22,10 @@ import FormDatepicker from "@/components/form-datepicker";
 import { ComboboxForm } from "@/components/custom-combobox";
 import { useNotifications } from "@/hooks/useNotifications";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useState } from "react";
 
 const CreateTask = () => {
+  const [open, setOpen] = useState(false);
   const { createTask } = useNotifications();
   const form = useForm<z.infer<typeof taskSchema>>({
     resolver: zodResolver(taskSchema),
@@ -57,14 +59,15 @@ const CreateTask = () => {
     } finally {
       form.reset();
     }
+    setOpen(false);
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
           variant="default"
-          className="w-full h-8 px-2 ml-auto lg:px-3 sm:w-auto"
+          className="px-2 ml-auto w-full h-8 lg:px-3 sm:w-auto"
         >
           <LuPlus />
           Asignar tarea

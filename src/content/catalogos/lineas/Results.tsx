@@ -53,7 +53,7 @@ export const Results = () => {
         PAGE_SLOT={PAGE_SLOT}
         data={data}
         columns={columns}
-        filtro="linea"
+        filtro="descripcion"
       />
       <DeleteDialog
         openConfirmDelete={openConfirmDelete}

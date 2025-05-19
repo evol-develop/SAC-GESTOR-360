@@ -30,6 +30,7 @@ import { firebaseDB as db } from "@/firebase/firebase-config";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import React from "react";
 import { time } from "console";
+import { useNavigate } from "react-router";
 
 export type Notification = {
   id?: string;
@@ -38,11 +39,15 @@ export type Notification = {
   title: string;
   message: string;
   type: string;
-  isRead?: boolean;
+  isRead?: {
+    [userId: string]: boolean;
+  };
   senderId?: string;
   createdAt?: string;
   empresaId?: number | string;
-  notificationDisplay?: boolean;
+  notificationDisplay?: {
+    [userId: string]: boolean;
+  }
   ticketId?: number;
   comentarioId?:number;
   motivo:string;
@@ -84,11 +89,11 @@ const NotificationContext = createContext<{
   notifications: Notification[];
   tasks: Task[];
   myTasks: Task[];
-  markAsRead: (id: string) => void;
+  markAsRead: (id: string, userId: string) => void;
   sendNotification: (notification: Notification) => void;
   completeTask: (id: string) => void;
   createTask: (task: Task) => void;
-  markAsNotified?: (id: string) => void;
+  markAsNotified?: (id: string,userId: string) => void;
 }>({
   notifications: [],
   tasks: [],
@@ -167,41 +172,61 @@ export const NotificationProvider = ({
     }
   }, [idEmpresa, user]);
 
-  const markAsRead = async (id: string) => {
-    if (!id) return;
+  const markAsRead = async (id: string, userId: string) => {
+    if (!id || !userId) return;
+  
     const notificationRef = doc(db, "notifications", id);
-    console.log(notificationRef)
-    await updateDoc(notificationRef, { isRead: true });
+  
+    await updateDoc(notificationRef, {
+      [`isRead.${userId}`]: true, // actualiza solo el campo del usuario
+    });
   };
+  
 
-  const markAsNotified = async (id: string) => {
-    if (!id) return;
-    const notificationRef = doc(db, "notifications", id);
-    console.log(notificationRef)
-    await updateDoc(notificationRef, { notificationDisplay: true });
-
-    console.log("actualizada")
+   const markAsNotified = async (notificationId: string, userId: string) => {
+    const docRef = doc(db, "notifications", notificationId);
+    await updateDoc(docRef, {
+      [`notificationDisplay.${userId}`]: true,
+    });
   };
+  
 
   
   const sendNotification = async ({
     userId = "all",
     groupIds = [],
     empresaId = idEmpresa,
-    notificationDisplay = false,
     ...notification
   }: Notification) => {
+    // Construir isRead por cada usuario
+    let isRead: Record<string, boolean> = {};
+    let notificationDisplay: Record<string, boolean> = {};
+  
+    if (userId === "all") {
+      isRead = { all: false }; 
+      notificationDisplay = { all: false };
+    } else if (groupIds.length > 0) {
+      groupIds.forEach(id => {
+        isRead[id] = false;
+        notificationDisplay[id] = false;
+      });
+    } else if (userId) {
+      isRead[userId] = false;
+      notificationDisplay[userId] = false;
+    }
+  
     await addDoc(collection(db, "notifications"), {
       ...notification,
       userId,
       groupIds,
       empresaId,
       senderId: user?.id,
-      isRead: userId === "all" ? true : groupIds.length > 0 ? true : false,
+      isRead,
       createdAt: new Date().toISOString(),
       notificationDisplay,
     });
   };
+  
 
   const completeTask = async (id: string) => {
     if (!id) return;
@@ -321,41 +346,36 @@ const NotificationItem = ({
   notification: Notification;
   className?: string;
 }) => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const { id, title, createdAt, senderId, message } = notification;
   const read = isNotificationRead(notification, user?.id || "");
   const isActive = Boolean(searchParams.get("notification") === id);
 
-  // Función para detectar si hay etiquetas HTML
-  const containsHTML = (str: string) => /<\/?[a-z][\s\S]*>/i.test(str);
+  const parser = new DOMParser();
+  const parsedDoc = parser.parseFromString(message, "text/html");
+  const anchor = parsedDoc.querySelector("a");
+  const hasAnchor = Boolean(anchor);
 
-  const content = containsHTML(message) ? (
-    <div
-      className={cn(
-        "rich-text-content",
-        "text-xs line-clamp-1 text-muted-foreground"
-      )}
-      dangerouslySetInnerHTML={{ __html: message }}
-    />
-  ) : (
-    <Link
-      className={cn(
-        "text-xs underline line-clamp-1 text-muted-foreground hover:text-primary"
-      )}
-      to={`/site/notificaciones-y-actividad?type=msj&notification=${id}`}
-    >
-      {message}
-    </Link>
-  );
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    const isInsideAnchor = target.closest("a");
+
+    if (isInsideAnchor) return;
+
+    navigate(`/site/notificaciones-y-actividad?type=msj&notification=${id}`);
+  };
 
   return (
     <div
       className={cn(
         "flex flex-col items-start gap-2 w-full rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent",
+        !hasAnchor && "cursor-pointer", // ✅ solo tiene cursor si NO hay <a>
         isActive && "bg-muted",
         className
       )}
+      onClick={handleClick}
     >
       <div className="flex flex-col gap-1 w-full">
         <div className="flex items-center">
@@ -378,7 +398,15 @@ const NotificationItem = ({
         </div>
         <div className="text-xs font-medium">{title}</div>
       </div>
-      {content}
+
+      <div
+        className={cn(
+          "rich-text-content",
+          "text-xs line-clamp-1 text-muted-foreground",
+          hasAnchor && "cursor-auto" // ✅ evita cursor en mensaje si hay <a>
+        )}
+        dangerouslySetInnerHTML={{ __html: message }}
+      />
     </div>
   );
 };
@@ -514,7 +542,7 @@ export const CountNotifications2 = () => {
   var notificationCount = unreadNotificationsCount2(filteredMessages, authState);
 
   var notif = notificationCount.unreadNotifications[0];
-  console.log("alertasPorEnviar", notificationCount.unreadNotifications.length);
+  //console.log("Enviar", notificationCount.unreadNotifications.length);
 
   if(notificationCount.unreadNotifications.length > 0) {
     mostrarNotificacion({

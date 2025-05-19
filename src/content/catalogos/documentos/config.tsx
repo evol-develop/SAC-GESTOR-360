@@ -49,7 +49,7 @@ export const OperacionesFormulario = () => {
     } catch (err) {
      
       console.error(err);
-      throw new Error("Error al actualizar la informacion del usuario");
+      throw new Error("Error al crear el documento");
     }
   };
 
@@ -75,7 +75,7 @@ export const OperacionesFormulario = () => {
       return response.data;
     } catch (error) {
       console.error(error);
-      throw `Error al actualizar la alerta`;
+      throw `Error al actualizar el documento`;
     }
   };
 

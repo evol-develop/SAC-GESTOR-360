@@ -147,7 +147,7 @@ export const CatalogoHeader = ({
   };
 
   return (
-    <div className="container flex flex-col items-center justify-between mx-auto mb-4 sm:flex-row">
+    <div className="container flex flex-col justify-between items-center mx-auto mb-4 sm:flex-row">
       <div>
         <h2 className="text-2xl font-bold tracking-tight">{titulos.titulo}</h2>
         <p className="text-muted-foreground">{titulos.descripcion}</p>
@@ -156,6 +156,7 @@ export const CatalogoHeader = ({
         <Dialog
           open={open}
           onOpenChange={(open) => !open && handleCreateItemClose()}
+          // modal={false}
         >
           <DialogTrigger asChild>
             {showCreateButton && (
@@ -170,7 +171,7 @@ export const CatalogoHeader = ({
               </Button>
             )}
           </DialogTrigger>
-          <DialogContent className={` ${modalSizeClass}`}>
+          <DialogContent className={`${modalSizeClass}`}>
             <DialogHeader>
               {showEncabezado && (
               <><DialogTitle>

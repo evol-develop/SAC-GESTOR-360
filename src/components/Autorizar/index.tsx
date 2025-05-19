@@ -5,6 +5,7 @@ import axios from "@/lib/utils/axios";
 import { AutorizarInterface } from "@/interfaces/autorizar";
 import { buttonVariants } from "../ui/button";
 import { TiposAutorizacion } from "@/interfaces/autorizar";
+import { ResponseInterface } from "@/interfaces/responseInterface";
 
 const MENSAJES = {
   TITULO_CONFIRMAR: "Confirmar Autorización",
@@ -17,6 +18,7 @@ const MENSAJES = {
 
 const BOTONES = {
   CONFIRMAR: "Autorizar",
+  CONFIRMAR2: "Confirmar",
   CANCELAR: "Cancelar",
   OK: "Ok",
 };
@@ -31,7 +33,7 @@ const ESTILOS_SWAL = {
       "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
     confirmButton: buttonVariants({ variant: "default", size: "default" }),
     cancelButton: buttonVariants({
-      variant: "outline",
+      variant: "default",
       size: "default",
       className: "ml-4",
     }),
@@ -40,6 +42,42 @@ const ESTILOS_SWAL = {
   background: "hsl(var(--background))",
   color: "hsl(var(--foreground))",
 };
+
+export async function mostrarModalConfirmacion(
+  p0: string,
+  p1: string,
+  p2: () => Promise<ResponseInterface>,
+  p3: () => void,
+  p4: string
+): Promise<boolean> {
+  const result = await Swal.fire({
+    title: p0,
+    text: p1,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: BOTONES.CONFIRMAR2,
+    cancelButtonText: BOTONES.CANCELAR,
+    ...ESTILOS_SWAL,
+    customClass: {
+      ...ESTILOS_SWAL.customClass,
+      popup: `${ESTILOS_SWAL.customClass.popup} z-[9999]`, // agrega la clase sin eliminar las anteriores
+    },
+    allowOutsideClick: false, // ✅ evita que el usuario cierre el modal haciendo clic fuera
+    allowEscapeKey: true,     // ✅ permite cerrar con ESC
+    allowEnterKey: true,      // ✅ permite confirmar con Enter
+    focusConfirm: true,       // ✅ enfoca el botón de confirmar
+  });
+  
+
+  if (result.isConfirmed) {
+    await p2(); // ejecutar función si se confirmó
+    return true;
+  } else {
+    p3(); // ejecutar función si se canceló
+    return false;
+  }
+}
+
 
 async function mostrarDialogoPassword(): Promise<string | null> {
   const result = await Swal.fire({
@@ -93,6 +131,7 @@ export function useAutorizacionesSecuenciales() {
     fiscales: false,
     documentos: false,
     movimientos: false,
+    facturacion: false,
   });
 
   useEffect(() => {
@@ -132,6 +171,10 @@ export function useAutorizacionesSecuenciales() {
       const result6 = await verificarAutorizacion(TiposAutorizacion.VerMovimientos);
       if (result6 === "go" || result6 === "true" || result6 === true) {
         nuevoEstado.movimientos = true;
+      }
+      const result7 = await verificarAutorizacion(TiposAutorizacion.AñadirDatosFacturacion);
+      if (result7 === "go" || result7 === "true" || result7 === true) {
+        nuevoEstado.facturacion = true;
       }
 
       setAutorizaciones(nuevoEstado);

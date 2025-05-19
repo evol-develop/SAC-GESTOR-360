@@ -11,7 +11,7 @@ const addAudioElement = (blob:any) => {
 };
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
+  // <React.StrictMode>
     <AudioRecorder 
       onRecordingComplete={addAudioElement}
       audioTrackConstraints={{
@@ -21,5 +21,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       downloadOnSavePress={true}
       downloadFileExtension="webm"
     />
-  </React.StrictMode>
+  //</React.StrictMode>
 );

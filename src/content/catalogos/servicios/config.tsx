@@ -25,28 +25,70 @@ import { datosSATInterface } from "@/interfaces/catalogos/datosSATInterface";
 import { useEffect, useState } from "react";
 import { departamentoInterface } from "@/interfaces/catalogos/departamentoInterface";
 import { Controller } from "react-hook-form";
-
+import { useAutorizacionesSecuenciales } from "@/components/Autorizar";
 import { useMemo } from "react";
 
 const validationSchema = z.object({
-  precio: z.preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().min(0.01, "El precio es obligatorio")),
-  descripcion: z.string().max(120).min(1, "La descripción es un dato requerido"),
-  frecuencia: z.string().min(1, "La frecuencia es obligatoria"), // Elimina .optional()
-  capturar_cantidad: z.boolean().optional(),
-  lineaId: z.number().min(1, "La línea es obligatoria"),
-  sublineaId: z.number().min(1, "La sublínea es obligatoria"),
-  id_unidad: z.number().min(1, "La unidad es obligatoria"),
-  tasa_iva: z.string().min(1, "La tasa de IVA es obligatoria"),
-  aplica_iva: z.boolean().nullable().optional(),
-  clave_sat: z.string().min(1, "La clave SAT es obligatoria"),
-  aplica_ieps: z.boolean().optional(),
-  obj_imp: z.string().min(1, "El objeto de impuesto es obligatorio").optional(),
-  tasa_ieps: z.preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
-  porcentaje_retencion_isr: z.preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
-  porcentaje_retencion_iva: z.preprocess((val) => (typeof val === "string" ? parseFloat(val) : val), z.number().optional()),
-  activo: z.boolean().optional(),
-  departamentoId: z.number().min(1, "El departamento es obligatorio"),
-  userId: z.string().min(1, "El usuario es obligatorio"),
+  precio: z.preprocess(
+    (val) => (typeof val === "string" ? parseFloat(val) : val),
+    z.number().min(0.01, "El precio es obligatorio")
+  ).optional(),
+
+  descripcion: z.string().max(120).min(1, "La descripción es un dato requerido").optional().nullable(),
+  frecuencia: z.string().min(1, "La frecuencia es obligatoria").optional().nullable(),
+
+  capturar_cantidad: z.preprocess(
+    (val) => val === undefined ? false : val,
+    z.boolean()
+  ),
+
+  lineaId: z.number().min(1, "La línea es obligatoria").optional().nullable(),
+  sublineaId: z.number().min(1, "La sublínea es obligatoria").optional().nullable(),
+  id_unidad: z.number().min(1, "La unidad es obligatoria").optional().nullable(),
+  tasa_iva: z.preprocess((val) => {
+    if (val === null || val === undefined || val === "" || val === "undefined") {
+      return "3";
+    }
+    return val;
+  }, z.string().min(1, "La tasa de IVA es obligatoria")).optional().nullable(),
+  
+  aplica_iva: z.preprocess(
+    (val) => val === undefined ? false : val,
+    z.boolean()
+  ).nullable(),
+
+ // clave_sat: z.string().min(1, "La clave SAT es obligatoria").optional().nullable(),
+  clave_sat: z.string().optional().transform(val => val ?? null),
+
+  aplica_ieps: z.preprocess(
+    (val) => val === undefined ? false : val,
+    z.boolean()
+  ),
+
+  obj_imp: z.string().min(1, "El objeto de impuesto es obligatorio").optional().nullable(),
+
+  tasa_ieps: z.preprocess(
+    (val) => (typeof val === "string" ? parseFloat(val) : val),
+    z.number().optional().nullable()
+  ),
+
+  porcentaje_retencion_isr: z.preprocess(
+    (val) => (typeof val === "string" ? parseFloat(val) : val),
+    z.number().optional().nullable()
+  ),
+
+  porcentaje_retencion_iva: z.preprocess(
+    (val) => (typeof val === "string" ? parseFloat(val) : val),
+    z.number().optional().nullable()
+  ),
+
+  activo: z.preprocess(
+    (val) => val === undefined ? false : val,
+    z.boolean()
+  ),
+
+  departamentoId: z.number().min(1, "El departamento es obligatorio").optional().nullable(),
+  userId: z.string().min(1, "El usuario es obligatorio").optional().nullable(),
 });
 
 export const OperacionesFormulario = () => {
@@ -170,12 +212,10 @@ export const Formulario = ({
   const departamentos =useAppSelector((state: RootState) => state.page.slots.DEPARTAMENTOS as departamentoInterface[] );
   const usuarios =useAppSelector((state: RootState) => state.page.slots.USUARIOS as any[] );
   
-  
   const tasaIvaTransformada = dataModal.tasa_iva === 16 ? "2" 
   : dataModal.tasa_iva === 0 ? "1"
   : String(dataModal.tasa_iva);
 
-  
   const generalForm = useForm<z.infer<typeof validationSchema>>({
     resolver: zodResolver(validationSchema),
     defaultValues: {
@@ -206,7 +246,6 @@ export const Formulario = ({
     { clave: "U", descripcion: "UNICA" },
   ];
 
-  
   const tasaIvaOptions = [
     { clave: 1, descripcion: '0.00 %' },
     { clave: 2, descripcion: '16.00 %'},
@@ -254,7 +293,9 @@ export const Formulario = ({
 
   }, [usuarios]);
   
-  //console.log(usuariosFiltrados);
+  const {
+    facturacion: autorizadoFacturacion,
+  } = useAutorizacionesSecuenciales();
   
   return (
     <Tabs defaultValue="general" className="w-full">
@@ -264,16 +305,43 @@ export const Formulario = ({
           <form onSubmit={generalForm.handleSubmit(onSubmit)}>
             <Card className="h-[560px] w-full overflow-y-auto">
              
-            <Tabs defaultValue="general" className="w-full gap-3">
-            <TabsList className="grid w-full grid-cols-2">
+            <Tabs defaultValue="general" className="gap-3 w-full">
+            <TabsList className="flex flex-wrap w-full h-full">
               <TabsTrigger value="general">Generales</TabsTrigger>
+             
+
+              {autorizadoFacturacion && <TabsTrigger value="facturacion">Facturación</TabsTrigger>}
+              
               <TabsTrigger value="departamento">Departamento y usuarios</TabsTrigger>
           
             </TabsList>
 
+            <div className="flex-1">
             <TabsContent value="general">
             
-              <CardContent className="relative grid grid-cols-4 gap-2 py-3">
+               
+              <CardContent className="grid relative grid-cols-1 gap-3 py-3 sm:grid-cols-2">
+              
+
+              <FormInput
+                form={generalForm}
+                name="descripcion"
+                label="Descripción"
+                placeholder=""
+                required
+                className="w-96"
+              />
+
+ 
+              </CardContent>
+
+            
+
+              </TabsContent>
+              
+            <TabsContent value="facturacion">
+            
+              <CardContent className="grid relative grid-cols-1 gap-3 py-3 sm:grid-cols-2">
 
                  {dataModal.id !== undefined && ( 
                 <FormField
@@ -341,30 +409,15 @@ export const Formulario = ({
                     label="Tasa IEPS(%)"
                     placeholder=""
                     type="number"
-                    required
                     disabled={generalForm.watch("aplica_ieps") ? false : true}
                   />
                 
                   </div>
 
                 </CardContent>
-               
-              <CardContent className="relative grid grid-cols-2 gap-2 py-1">
-              
+             
 
-              <FormInput
-                form={generalForm}
-                name="descripcion"
-                label="Descripción"
-                placeholder=""
-                required
-                className="w-96"
-              />
-
- 
-              </CardContent>
-
-              <CardContent className="relative grid grid-cols-3 gap-2">
+              <CardContent className="grid relative grid-cols-1 gap-3 py-3 sm:grid-cols-3">
 
               <FormInput
                 form={generalForm}
@@ -372,7 +425,6 @@ export const Formulario = ({
                 label="Precio"
                 placeholder=""
                 type="number"
-                required
               />
               
                 <FormInput
@@ -381,7 +433,6 @@ export const Formulario = ({
                   label="Porcentaje retencion isr (%)"
                   placeholder=""
                   type="number"
-                  required
                 />
 
                 <FormInput
@@ -390,11 +441,10 @@ export const Formulario = ({
                   label="Porcentaje retencion iva (%)"
                   placeholder=""
                   type="number"
-                  required
                 />
               </CardContent>
 
-              <CardContent className="relative grid grid-cols-2 gap-5 py-2">
+              <CardContent className="grid relative grid-cols-1 gap-3 py-3 sm:grid-cols-2">
 
               <div>
                 <FormLabel className="text-xs">Tasa Iva(%) </FormLabel>
@@ -597,7 +647,7 @@ export const Formulario = ({
 
               <TabsContent value="departamento">
 
-              <CardContent className="relative grid grid-cols-1 gap-1 py-1">
+              <CardContent className="grid relative grid-cols-1 gap-1 py-1">
                 <div>
                 <FormLabel className="text-xs">Departamento al que pertenece</FormLabel>
                 <Controller
@@ -675,18 +725,20 @@ export const Formulario = ({
                 
               </CardContent>
 
-              <div className="absolute bottom-4 right-4">
+             
+              
+             
+              </TabsContent>
+
+              </div>
+              
+              <div className="absolute right-4 bottom-4">
               <FormFooter
                 handleCreateItemClose={handleCreateItemClose}
                 form={generalForm}
                 dataModal={dataModal}
               />
             </div>
-              
-             
-              </TabsContent>
-              
-
 
               </Tabs>
             </Card>

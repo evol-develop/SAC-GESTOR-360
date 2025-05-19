@@ -56,13 +56,13 @@ const MostrarEtapas = () => {
               duracionTexto = partesDuracion.join(", ");
               
             }
-          
+          console.log( item.usuarioActual);
             return {
               id: item.id,
               title: item.ticketEstatus ? item.ticketEstatus.nombre : "Asignación de usuario",
               description: item.tipoMovimiento !== "Cambiar etapa"
-                ? `<b>Se cambió al usuario:</b> ${item.usuarioAnterior.fullName} <br/> 
-                   <b>por el usuario:</b> ${item.usuarioActual.fullName} <br/> 
+                ? `<b>Se cambió al usuario:</b> ${item.usuarioAnterior === null ? "" : item.usuarioAnterior.fullName} <br/> 
+                   <b>por el usuario:</b> ${ item.usuarioActual === null ? "" : item.usuarioActual.fullName} <br/> 
                    <b>Duración:</b> ${duracionTexto}`
                 : `${item.etapaAnterior ? '<b>Etapa anterior:</b> ' + item.etapaAnterior + '<br/>' : ""} 
                    <b>Duración:</b> ${duracionTexto}`,
@@ -75,9 +75,6 @@ const MostrarEtapas = () => {
           setTimelineData(movimientos);
           
           
-          setTimelineData(movimientos);
-          
-          setTimelineData(movimientos);
         }
   
       } catch (err) {

@@ -56,6 +56,7 @@ import React from "react";
 import { uploadImage } from "@/api/storageApi";
 import {createSlot,deleteSlot, deleteItemSlot, setIsLoading,setIsOpenModal,setDataModal,addItemSlot, updateItemSlot, setIsEditing, setModalSize} from "@/store/slices/page";
 import { crearComentario } from "./config";
+import UserAvatar from "@/components/UserAvatar";
 
  const MostrarComentarios = () => {
   const { idEmpresa } = useAuth();
@@ -63,17 +64,18 @@ import { crearComentario } from "./config";
    const { createItemCatalogo, updateItemCatalogo } = OperacionesFormulario();
   const movimientos = useAppSelector((state: RootState) => state.page.slots.MOVIMIENTOS as any);
   const showArchivos = useAppSelector((state: RootState) => state.page.slots.SHOWARCHIVOS as boolean);
-  const [etapas, setEtapas] = useState<any[]>([{ title: "", description: "", id:0, fecha:"", fechaTermina:"" }]);
+  const [etapas, setEtapas] = useState<any[]>([{ title: "", description: "", id:0, fecha:"", fechaTermina:"", ticketEstatusId:0 }]);
   const usuarios =useAppSelector((state: RootState) => state.page.slots.USUARIOS as UsersInterface[] );
   const { authState: { user },logout,} = useAuth();
   const navigate = useNavigate();
-
+  const clienteAuth = useAppSelector((state: RootState) => state.page.slots.clienteAuth as any);
   const usuarioAsignado =useAppSelector((state: RootState) => state.page.slots.usuarioAsignado as string );
   const etapaActual =useAppSelector((state: RootState) => state.page.slots.etapaActual as number );
   const clienteId =useAppSelector((state: RootState) => state.page.slots.clienteId as number );
+  const clienteNombre =useAppSelector((state: RootState) => state.page.slots.clienteNombre as string );
   const { ticketId} = useParams(); //etapaActual, userId,
-
   const ticketIdNumber = parseInt(ticketId as string);
+  const [ticketEliminado, setTicketEliminado] = useState(false);
   
   function BuscarEtapa(id: number) {
     return Object.keys(estatus).find(key => estatus[key as keyof typeof estatus] === id);
@@ -92,25 +94,34 @@ import { crearComentario } from "./config";
           fecha: item.fechaCrea,
           estado: item.ticketEstatus.nombre,
           id: item.id,
-          
+          ticketEstatusId: item.ticketEstatusId
         }));
 
-        //console.log(response.data.result)
+        console.log(response.data.result)
 
         var usuarioAsignado = response.data.result[0].ticket.userId;
         var etapaActual = response.data.result[movimientos.length - 1].ticketEstatusId;
         var clienteAuth = response.data.result[0].clienteAuth;
         var clienteId = response.data.result[0].ticket.clienteId;
+        var clienteNombre = response.data.result[0].ticket.cliente.email;
 
         dispatch(createSlot({ usuarioAsignado: usuarioAsignado }));
-        dispatch(createSlot({ etapaActual: etapaActual }));
+       
         dispatch(createSlot({ clienteAuth: clienteAuth }));
         dispatch(createSlot({ clienteId: clienteId }));
+        dispatch(createSlot({ clienteNombre: clienteNombre }));
         
         const ultimoMovimiento = movimientos.length - 1;
-        dispatch(createSlot({ movimientoId: movimientos[ultimoMovimiento].id }));
+        // dispatch(createSlot({ movimientoId: movimientos[ultimoMovimiento].id }));
         dispatch(createSlot({ MOVIMIENTOS: movimientos }));
-        dispatch(createSlot({ etapaSeleccionada: ultimoMovimiento }));
+        dispatch(createSlot({ etapaSeleccionada: movimientos[ultimoMovimiento].id }));
+        dispatch(createSlot({ etapaActual: movimientos[ultimoMovimiento].id }));
+       // console.log(response.data.result[0].ticket.eliminado)
+
+        if(response.data.result[0].ticket.eliminado){
+          setTicketEliminado(true);
+          //OpenModalTicketEliminado();
+        }
       }
 
     } catch (err) {
@@ -125,9 +136,21 @@ import { crearComentario } from "./config";
   }, [ticketId]);
 
 
-  function OpenModalAsignarUsuario(item : any){
+  function OpenModalAsignarUsuario(){
     dispatch(createSlot({ openModal: true }));
+     dispatch(createSlot({ formulario: "asignacion" }));
   }
+
+  function OpenModalCambiarEtapa(){
+    dispatch(createSlot({ openModal: true }));
+     dispatch(createSlot({ formulario: "etapa" }));
+  }
+
+  
+  // function OpenModalTicketEliminado(){
+  //   dispatch(createSlot({ openModal: true }));
+  //    dispatch(createSlot({ formulario: "eliminado" }));
+  // }
 
   useEffect(() => {
     if (movimientos && movimientos.length > 0) {
@@ -136,7 +159,8 @@ import { crearComentario } from "./config";
         description: movimiento.estado, 
         id: movimiento.id,
         fecha: movimiento.fecha,
-        fechaTermina: movimiento.fechaTermina
+        fechaTermina: movimiento.fechaTermina,
+        ticketEstatusId: movimiento.ticketEstatusId
       }));
 
       setEtapas(updatedEtapas);
@@ -149,80 +173,15 @@ import { crearComentario } from "./config";
   }
 
   function ocultarComentarios(){
-
-    
-  
     let url =`/site/procesos/consultaTickets`;
     navigate(url);
   }
-
-  function cambiarEstatus(){
-    
-      Autorizar(
-        () => handleClick(),
-        TiposAutorizacion.CambiarEtapa
-      );
-  }
-
-  const handleClick = async () => {
-    
-    try {       
-         
-        const valoresForm = {
-          id : ticketId,
-          clienteId: clienteId,
-          empresaId: idEmpresa
-        };
-
-        const response = await axios.post<ResponseInterface>(
-          "/api/tickets/registrarMovimiento",
-          valoresForm
-        );
-
-        if(response.data.isSuccess){
-        console.log(response.data.result)
-
-        var movimiento = response.data.result as ticketMovimientoInterface;
-        
-        console.log(movimiento)
-        
-        var newMovimiento ={
-          fechaTermina: new Date(),
-          fecha : movimiento.fechaCrea,
-          estado: movimiento.ticketEstatus.nombre,
-          id: movimiento.id
-        }
-
-         dispatch(
-          addItemSlot({ state: "MOVIMIENTOS", data: newMovimiento })
-        );      
-        
-        dispatch(deleteSlot("COMENTARIOS_ASIGNADO"))
-        dispatch(deleteSlot("COMENTARIOS_CLIENTE"))
-        
-
-         dispatch(createSlot({ etapaActual: movimiento.ticketEstatusId }));
-         dispatch(createSlot({ etapaSeleccionada: movimiento.ticketEstatusId-1 }));
-        
-        toast.success(response.data.message);
-        }else{
-          toast.error(response.data.message);
-        }
-
-      return response.data;
-
-    } catch (err) {
-      console.error(err);
-      throw new Error("Error al actualizar al cambair de etapa");
-      toast.error("Error al actualizar al cambair de etapa");
-    }
-  };
-  
 
   useEffect(() => {
 
     dispatch(createSlot({ "ticketId": ticketIdNumber }));
     getUsuarios();
+    getEtapas();
   }, []);
 
 
@@ -235,6 +194,23 @@ import { crearComentario } from "./config";
       if (response.data.isSuccess && Array.isArray(response.data.result)) {
         
         dispatch(createSlot({ "USUARIOS": response.data.result  }));
+    
+      }
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const getEtapas = async () => {
+    try {
+      const response = await axios.get(
+        `/api/tickets/getEtapas`,{headers: { "Content-Type": "application/text" },}
+      );
+
+      if (response.data.isSuccess && Array.isArray(response.data.result)) {
+        
+        dispatch(createSlot({ "ETAPAS": response.data.result  }));
     
       }
 
@@ -258,7 +234,7 @@ import { crearComentario } from "./config";
 
   return (<>
   
-  {/* style={{maxHeight: 'calc(80vh - 50px)',minHeight: 'calc(200vh - 50px)' }} */}
+  {!ticketEliminado ? (<>
     <Card >
       <CardHeader className="flex flex-col justify-between items-center w-full sm:flex-row">
         <div className="flex flex-col gap-1 w-full sm:flex-row sm:w-auto">
@@ -273,27 +249,29 @@ import { crearComentario } from "./config";
 
           {!showArchivos && (
             <>
-              {user?.userRoll !== "Cliente" && (
+              {user?.userRoll !== "Cliente"  && (
                 <>
                   <Button
                     size="sm"
                     className="text-xs"
-                    onClick={(e) => cambiarEstatus()}
-                    disabled={(etapaActual - 1) === estatus.CERRADO}
+                    onClick={(e) => OpenModalCambiarEtapa()}
+                    disabled={(etapaActual) === estatus.CANCELADO}
                   >
-                    <GrLinkNext />
-                    Siguiente etapa
+                    {/* <GrLinkNext /> */}
+                    Cambiar de etapa
                   </Button>
 
+                  {user?.userRoll !== "Desarrollo" && (
                   <Button
                     size="sm"
                     className="text-xs"
-                    onClick={(e) => OpenModalAsignarUsuario(e)}
-                    disabled={(etapaActual - 1) === estatus.CERRADO}
+                    onClick={(e) => OpenModalAsignarUsuario()}
+                    disabled={(etapaActual) === estatus.CANCELADO}
                   >
                     <FaUserCheck />
                     Asignar Usuario
                   </Button>
+                  )}
                 </>
               )}
 
@@ -303,25 +281,45 @@ import { crearComentario } from "./config";
         </div>
 
         {!showArchivos && (
-             <div className="flex gap-2 justify-center items-center w-full sm:w-auto">
-              {user?.userRoll !== "Cliente" && (
-                <><div className="p-1 text-xs font-bold text-black rounded-md border">
-                    Usuario asignado :
-                  </div>
-                  <div className="p-1 text-xs text-black rounded-md border">
-                      {usuarios && usuarios.find((user) => user.id === usuarioAsignado)?.fullName}
-                    </div>
-                </>
-              )}
-              <div className="flex flex-row p-1 text-xs font-bold text-black rounded-md border">Folio :</div>
-                <div className="flex flex-row p-1 text-xs text-black rounded-md border"> # {ticketId}</div>
-                <div className="p-1 text-xs font-bold text-black rounded-md border">
-                  Estatus :
-                </div>
-                <div className="p-1 text-xs text-black rounded-md border">
-                  {etapaActual && (<>{BuscarEtapa(etapaActual -1)}</>)}
-                </div>
+          <div className="flex gap-2 justify-center items-center w-full sm:w-auto dark:text-white">
+          
+            <><div className="p-1 text-xs font-bold text-black dark:text-white">
+                Cliente :
               </div>
+              
+                <UserAvatar
+              withTooltip
+              userId={clienteId ? clienteId.toString():""}
+              className="size-8"
+              rounded="rounded-full"
+              catalogo="clientes"
+              />
+          
+            </>
+          
+          {user?.userRoll !== "Cliente" && (
+            <><div className="p-1 text-xs font-bold text-black dark:text-white">
+                Usuario asignado :
+              </div>
+          
+                <UserAvatar
+                withTooltip
+                userId={usuarioAsignado}
+                className="size-8"
+                rounded="rounded-full"
+                />
+                
+            </>
+          )}
+          <div className="flex flex-row p-1 text-xs font-bold text-black dark:text-white">Folio :</div>
+            <div className="flex flex-row p-1 text-xs text-black dark:text-white"> # {ticketId}</div>
+            <div className="p-1 text-xs font-bold text-black dark:text-white">
+              Estatus :
+            </div>
+            <div className="p-1 text-xs text-black dark:text-white">
+              {etapaActual && (<>{BuscarEtapa(etapaActual)}</>)}
+            </div>
+          </div>
         )}
       </CardHeader>
       <CardContent >
@@ -331,8 +329,6 @@ import { crearComentario } from "./config";
      </CardContent>  
     </Card> 
   
-  
-
     <CatalogoHeader
       PAGE_SLOT={PAGE_SLOT}
       createItemCatalogo={createItemCatalogo}
@@ -343,15 +339,12 @@ import { crearComentario } from "./config";
       handleClose={eliminarSlots}
       showEncabezado={false}
     />
+      </>):(
+        <TicketEliminado/>
+      )}
     
-    <ModalGenerico
-    titulo="Asignar Usuario"
-    Content={asignarUsuario}
-    // handleClose={eliminarSlots}
-    />
-
+    <ReturnModal/>
     
-        
     </>
   );
 };
@@ -363,8 +356,9 @@ export const asignarUsuario = () => {
   const { authState: { user },logout,} = useAuth();
   const ticketId = useAppSelector((state: RootState) => state.page.slots.ticketId as any);
   const clienteId = useAppSelector((state: RootState) => state.page.slots.clienteId as any);
-  const etapaActual = useAppSelector((state: RootState) => state.page.slots.etapaActual as any);
+  //const etapaActual = useAppSelector((state: RootState) => state.page.slots.etapaActual as any);
   //const userId = useAppSelector((state: RootState) => state.page.slots.userId);
+  const asignado = useAppSelector((state: RootState) => state.page.slots.usuarioAsignado as string);
   const { sendNotification } = useNotifications();
   
   const validationSchema = z
@@ -388,7 +382,7 @@ export const asignarUsuario = () => {
         clienteId: clienteId
       };
 
-      console.log(valoresForm)
+      //console.log(valoresForm)
 
         const response = await axios.post<ResponseInterface>(
           "/api/tickets/asignarUsuario",
@@ -455,16 +449,16 @@ export const asignarUsuario = () => {
   };
 
     const usuariosFiltrados = useMemo(() => {
-      return usuarios && usuarios.filter(user => user.userRoll !== "Cliente");
+      return usuarios && usuarios.filter(user => user.userRoll !== "Cliente" && user.id !== asignado );
     }, [usuarios]);
   
     return (
     <Form {...generalForm}>
       <form onSubmit={generalForm.handleSubmit(onSubmit)} className="flex flex-col h-full">
-        <Card className="h-[300px] w-full overflow-y-auto flex flex-col">
-          <CardContent className="grid flex-grow grid-cols-4 gap-2 py-3">
+        <Card className="h-[200px] w-full overflow-y-auto flex flex-col">
+          <CardContent className="grid flex-grow grid-cols-1 gap-2 justify-center items-center py-3">
             <div>
-              <FormLabel className="text-xs">Usuario encargado </FormLabel>
+              {/* <FormLabel className="text-xs">Usuario asignado </FormLabel> */}
               <Select name="userId" onValueChange={(value) => generalForm.setValue("userId", value)}>
                 <SelectTrigger className="w-72">
                   <SelectValue
@@ -497,7 +491,7 @@ export const asignarUsuario = () => {
                   >
                   {generalForm.formState.isSubmitting && (<LuLoaderCircle className="animate-spin" />)}
                   
-                    Asignar usuarios
+                    Guardar cambios
                   </Button>
                 </CardFooter>
               </div>
@@ -510,6 +504,211 @@ export const asignarUsuario = () => {
 };
 
 
+export const cambiarEstapa = () => {
+  const { dispatch } = usePage(); 
+  const dataModal = useAppSelector((state: RootState) => state.page.dataModal);
+  const usuarios =useAppSelector((state: RootState) => state.page.slots.USUARIOS as any[] );
+  const { authState: { user },logout,} = useAuth();
+  const ticketId = useAppSelector((state: RootState) => state.page.slots.ticketId as any);
+  const clienteId = useAppSelector((state: RootState) => state.page.slots.clienteId as any);
+  const etapas = useAppSelector((state: RootState) => state.page.slots.ETAPAS as any[] );
+  const etapaActual = useAppSelector((state: RootState) => state.page.slots.etapaActual as any);
+  //const userId = useAppSelector((state: RootState) => state.page.slots.userId);
+  const { sendNotification } = useNotifications();
+  const { idEmpresa } = useAuth();
+  
+  const validationSchema = z
+    .object({
+       etapaId: z.number()//.optional(),
+    })
+    
+  const generalForm = useForm<z.infer<typeof validationSchema>>({
+    resolver: zodResolver(validationSchema),
+    defaultValues: {
+      etapaId: dataModal.etapaId,
+    },
+  });
+
+    const onSubmit: SubmitHandler<any> = async (valores) => {
+    
+  try {       
+       
+      const valoresForm = {
+        id : ticketId,
+        clienteId: clienteId,
+        empresaId: idEmpresa,
+        etapaId: valores.etapaId,
+      };
+
+      const response = await axios.post<ResponseInterface>(
+        "/api/tickets/cambiarEtapa",
+        valoresForm
+      );
+      console.log(response.data)
+
+      if(response.data.isSuccess){
+
+      var movimiento = response.data.result as ticketMovimientoInterface;
+
+      var newMovimiento ={
+        fechaTermina: new Date().toISOString(),
+        fecha : movimiento.fechaCrea,
+        estado: movimiento.ticketEstatus.nombre,
+        id: movimiento.id,
+        ticketEstatusId: movimiento.ticketEstatusId
+      }
+
+       dispatch(
+        addItemSlot({ state: "MOVIMIENTOS", data: newMovimiento })
+      );      
+      
+      dispatch(deleteSlot("COMENTARIOS_ASIGNADO"))
+      dispatch(deleteSlot("COMENTARIOS_CLIENTE"))
+
+      dispatch(deleteSlot("openModal"))
+      
+
+       dispatch(createSlot({ etapaActual: movimiento.ticketEstatusId }));
+       dispatch(createSlot({ etapaSeleccionada: movimiento.ticketEstatusId }));
+      
+      toast.success(response.data.message);
+      }else{
+        toast.error(response.data.message);
+      }
+
+    return response.data;
+
+  } catch (err) {
+    console.error(err);
+    throw new Error("Error al actualizar al cambair de etapa");
+    toast.error("Error al actualizar al cambair de etapa");
+  }
+      
+    };
+
+    
+  function onSubmit1(valores: any) {
+    console.log("hello!", valores);
+  }
+  
+  const onError = (valores: any) => {
+    console.log(valores);
+  };
+
+
+    const etapasFiltradas = useMemo(() => {
+      return etapas && etapas.filter(etapa => etapa.id !== etapaActual && etapa.id > etapaActual && etapa.nombre !== "Asignado" );
+    }, [etapas]);
+  
+    return (
+    <Form {...generalForm}>
+      <form onSubmit={generalForm.handleSubmit(onSubmit)} className="flex flex-col h-full">
+        <Card className="h-[200px] w-full overflow-y-auto flex flex-col">
+          <CardContent className="grid flex-grow grid-cols-1 gap-2 justify-center items-center py-3">
+            <div>
+              {/* <FormLabel className="text-xs">Usuario asignado </FormLabel> */}
+              <Select name="userId" onValueChange={(value) => generalForm.setValue("etapaId", parseInt(value))}>
+                <SelectTrigger className="w-72">
+                  <SelectValue
+                    placeholder={
+                      etapasFiltradas && etapasFiltradas.length > 0
+                        ? etapasFiltradas.find((x) => x.id === generalForm.watch("etapaId"))?.nombre ||
+                          "Seleccione una etapa"
+                        : "Cargando..."
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {etapasFiltradas &&
+                    etapasFiltradas.map((item: { id: string; nombre: string }) => (
+                      <SelectItem key={item.id} value={item.id.toString()}>
+                        {item.nombre}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+
+          <div className="flex flex-col items-end"  >
+                <CardFooter className="flex gap-2 justify-end">
+                  <Button
+                    type="submit"
+                    className="text-xs"
+                    disabled={generalForm.formState.isSubmitting}
+                  >
+                  {generalForm.formState.isSubmitting && (<LuLoaderCircle className="animate-spin" />)}
+                  
+                    Guardar cambios
+                  </Button>
+                </CardFooter>
+              </div>
+              
+        </Card>
+      </form>
+    </Form>
+
+    );
+};
+
+
+export const TicketEliminado = () => {
+ 
+  
+  const navigate = useNavigate();
+  
+  function volver(){
+    let url =`/site/procesos/consultaTickets`;
+    navigate(url);
+  }
+  
+    return (
+    <div className="flex flex-col justify-center items-center m-48">
+      <div className="flex justify-center items-center w-20 h-20 rounded-lg aspect-square">
+          <img
+            className="object-contain w-full h-full"
+            alt="logo-evolsoft"
+            src="/logo/delete.gif"
+          />
+      </div>
+      
+      <div>Este ticket ha sido eliminado</div>
+      <Button
+      size="sm"
+      variant="default"
+      onClick={() =>  volver()}
+    >
+      <span className="hidden lg:inline-block">Ver tickets</span>
+      
+    </Button>
+    </div>
+
+    );
+};
+
+export const ReturnModal = () => {
+  const formulario = useAppSelector((state: RootState) => state.page.slots.formulario as string);
+  const { dispatch } = usePage(PAGE_SLOT);
+
+  const eliminarSlots = () => {
+    dispatch(deleteSlot("formulario"));
+    dispatch(deleteSlot("openModal"));
+  };
+
+  const ContentComponent = formulario === "etapa" ? cambiarEstapa : formulario === "asignacion" ? asignarUsuario : TicketEliminado;
+
+  return (
+    <>
+    {/* {(formulario === "etapa" || formulario === "asignacion") && ( */}
+    <ModalGenerico
+      titulo={formulario === "etapa" ? "Cambiar de etapa" : formulario === "asignacion" ? "Asignar usuario" : ""}
+      Content={ContentComponent}
+      handleClose={eliminarSlots}
+    />
+  
+    </>
+  );
+};
 
 
 export default MostrarComentarios;

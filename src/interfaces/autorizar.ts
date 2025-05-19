@@ -26,4 +26,6 @@ export enum TiposAutorizacion {
     'AñadirDatosFiscales'='Añadir DatosFiscales',
     'VerDocumentos'='Ver Documentos',
     'VerMovimientos'='Ver Movimientos',
+    'AñadirDatosFacturacion'='Añadir DatosFacturacion',
+    'EliminarTicket'='Eliminar Ticket',
 }

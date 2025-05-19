@@ -43,8 +43,10 @@ import { id } from "date-fns/locale";
 import { PAGE_SLOT, titulos } from "./constants";
 import UserAvatar from "@/components/UserAvatar";
 import { useAutorizacionesSecuenciales } from "@/components/Autorizar";
-import { TiposAutorizacion } from "@/interfaces/autorizar";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import {ConfirmationModal} from "@/components/Autorizar/dialogConfirm";
+import { Loading } from "@/components/Loading";
+import { Input } from "@/components/ui/input";
 
 const phoneRegExp = /^\d{10}$/;
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
@@ -53,12 +55,35 @@ const validationSchema = z
   .object({
     Eventos: z.array(z.object({ id: z.number(), descripcion: z.string() })).optional(),
     Servicios: z.array(z.object({ id: z.number(), descripcion: z.string() })).optional(),
+    documentos: z.array(z.object({ id: z.number(), descripcion: z.string() })).optional(),
     nombre: z.string().min(1, "El nombre es un dato requerido").max(200),
-    rfc: z.string().min(12, "El RFC debe tener 12 caracteres en personas morales").max(13, "El RFC debe tener 13 caracteres en personas fisicas").optional().nullable(),
+    rfc: z
+  .preprocess((val) => val === "" ? undefined : val, z
+    .string()
+    .min(12, "El RFC debe tener 12 caracteres en personas morales")
+    .max(13, "El RFC debe tener 13 caracteres en personas fisicas")
+    .optional()
+    .nullable()
+  ),
     cp: z.string().min(5, "El código postal debe tener 5 dígitos").max(6, "El código postal debe tener 5 dígitos").optional().nullable(),
-    telefono: z.string().min(10, "El teléfono debe ser de 10 dígitos").max(10).regex(phoneRegExp, "El teléfono debe ser de 10 dígitos").optional().nullable(),
+    telefono: z
+  .preprocess((val) => val === "" ? undefined : val, z
+    .string()
+    .min(10, "El teléfono debe ser de 10 dígitos")
+    .max(10)
+    .regex(phoneRegExp, "El teléfono debe ser de 10 dígitos")
+    .optional()
+    .nullable()
+  ),
+
     email: z.string().min(1, "El correo es un dato requerido").max(120).email("El correo no es válido").optional().nullable(),
-    curp: z.string().length(18, "El CURP debe tener 18 caracteres").optional().nullable().optional(),
+    curp: z
+  .preprocess((val) => val === "" ? undefined : val, z
+    .string()
+    .length(18, "El CURP debe tener 18 caracteres")
+    .optional()
+    .nullable()
+  ),
     tiposClienteId: z.number().optional().nullable(),
     activo: z.boolean().optional(),
     domicilio: z.string().optional().nullable(),
@@ -108,6 +133,8 @@ const validationSchema = z
   // });
 
 export const OperacionesFormulario = () => {
+  const { dispatch } = usePage(); 
+  //const correo = useAppSelector((state: RootState) => state.page.slots.correo_inicial);
   
   const createItemCatalogo = async (
     values: any,
@@ -161,7 +188,7 @@ export const OperacionesFormulario = () => {
 
       if (response.data.isSuccess && valores.email != null) 
       {
-        console.log("Creando usuario en firebase");
+
         await createUser(valores.email);
       }
 
@@ -224,10 +251,21 @@ export const OperacionesFormulario = () => {
         ...valoresForm,
       });
 
+      if (response.data.isSuccess && valores.email != null)
+      {
+        try{
+          await createUser(valores.email);
+        }catch(error){
+          console.error(error);
+        }
+      }
+
       return response.data;
+      
     } catch (error) {
       console.error(error);
       throw `Error al actualizar la informacion del usuario`;
+
     }
   };
 
@@ -255,10 +293,16 @@ export const Formulario = ({
   const eventosCliente =useAppSelector((state: RootState) => state.page.slots.EVENTOS_CLIENTE as clientesEventosInterface[]) ;
   const ticketsCliente =useAppSelector((state: RootState) => state.page.slots.TICKETS_CLIENTE as any[]) ;
   const clientesNotas =useAppSelector((state: RootState) => state.page.slots.NOTAS_CLIENTE as clienteNotasInterface[]) ;
-    
+  const [isOpen, setIsOpen] = useState(false);
   const [formatCLM, setformatCLM] = useState<any[]>([]);
   const [ timelineDataEventos, setTimelineDataEventos ] = useState<timeLineInterface[]>([]);
   const [ timelineDataMovimientos, setTimelineDataMovimientos ] = useState<timeLineInterface[]>([]);
+  const [ timelineDataNotas, setTimelineDataNotas ] = useState<timeLineInterface[]>([]);
+  const [activeTab, setActiveTab] = useState("general");
+  const documentos =useAppSelector((state: RootState) => state.page.slots.DOCUMENTOS as any[]) ;
+  const serviciosCliente =useAppSelector((state: RootState) => state.page.slots.SERVICIOS_CLIENTE as any[]) ;
+  const documentosCliente =useAppSelector((state: RootState) => state.page.slots.DOCUMENTOS_CLIENTE as any[]) ;
+  const isLoading = useAppSelector((state: RootState) => state.page.isLoading);
   
   const generalForm = useForm<z.infer<typeof validationSchema>>({
     resolver: zodResolver(validationSchema),
@@ -296,9 +340,9 @@ export const Formulario = ({
       id_uso_cfdi: dataModal.id_uso_cfdi,
       // password : dataModal.password,
       Servicios: dataModal.Servicios,
+      documentos: dataModal.documentos,
     },
   });
-
 
   const { control, setValue, getValues } = generalForm;
   const [selectedItems, setSelectedItems] = useState<serviciosInterface[]>([]);
@@ -312,24 +356,16 @@ export const Formulario = ({
     }
   };
 
+  const [selectedItemsDocumentos, setSelectedItemsDocumentos] = useState<any[]>([]);
+  const handleSelectItemDocumentos = (item: any) => {
+    const documentos = getValues("documentos") || [];
 
-  useEffect(() => {
-    if (dataModal.clientesServicios && dataModal.clientesServicios.length > 0) {
-     
-      const nuevosServicios = dataModal.clientesServicios
-        .filter((item: any) => !selectedItems.some((s) => s.id === item.id))
-        .map((item: any) => item.servicio); 
-        
-      if (nuevosServicios.length > 0 && selectedItems.length === 0) {
-        const updatedItems = [...selectedItems, ...nuevosServicios];
-        const uniqueItems = Array.from(new Map(updatedItems.map(item => [item.id, item])).values());
-
-        setSelectedItems(uniqueItems);
-  
-        setValue("Servicios", uniqueItems);
-      }
+    if (!selectedItemsDocumentos.some((s) => s.id === item.id)) {
+      setSelectedItemsDocumentos([...selectedItemsDocumentos, item]);
+      setValue("documentos", []);
+      setValue("documentos", [...documentos, item]);
     }
-  }, []);  
+  };
 
     const onSubmit2: SubmitHandler<z.infer<typeof validationSchema>> = async (values) => {
       console.log(values);
@@ -349,17 +385,22 @@ export const Formulario = ({
           // Verifica si 'result' existe y contiene 'zip_codes'
           if (response.data && response.data.zip_codes) {
               const zipCodes = response.data.zip_codes as formatoAPI[];
-              console.log(zipCodes);
-
+             
               setformatCLM([]);
 
                 zipCodes.map((item) => {
+                  
+                  generalForm.setValue("ciudad", item.d_ciudad || ""); 
+                  generalForm.setValue("estado", item.d_mnpio || ""); 
+                  
                     setformatCLM((prev) => [
                         ...prev, 
-                        { label: `${item.d_asenta} ${item.d_ciudad} ${item.d_mnpio} `, value: `${item.d_asenta} -${item.d_ciudad} -${item.d_mnpio} ` }
+                        { label: `${item.d_asenta} `, value: `${item.d_asenta}  ` }
                     ]);
                 });
-  
+
+
+
           }else
           {
             toast.error('No se encontraron datos para este CP');
@@ -373,22 +414,17 @@ export const Formulario = ({
     const [colonia, ciudad, estado] = value.split(" -");
   
     generalForm.setValue("colonia", colonia || ""); 
-    generalForm.setValue("ciudad", ciudad || ""); 
-    generalForm.setValue("estado", estado || ""); 
+    // generalForm.setValue("ciudad", ciudad || ""); 
+    // generalForm.setValue("estado", estado || ""); 
   
   }
 
-  function OpenModalAñadirEvento(item : any){
+  function OpenModalAñadirEvento(){
     dispatch(createSlot({ openModal: true }));
     dispatch(createSlot({ formulario: "evento" }));
   }
 
-  // function OpenModalAñadirDocumento(item : any){
-  //   dispatch(createSlot({ openModal: true }));
-  //   dispatch(createSlot({ formulario: "documento" }));
-  // }
-
-  function OpenModalAñadirNota(item : any){
+  function OpenModalAñadirNota(){
     dispatch(createSlot({ openModal: true }));
     dispatch(createSlot({ formulario: "nota" }));
   }
@@ -434,13 +470,138 @@ export const Formulario = ({
       }));
       
       
-
-    
       setTimelineDataMovimientos(transformed);
-      //console.log(ticketsCliente[0]);
     }
   }, [ticketsCliente]);
 
+  useEffect(() => {
+    if (clientesNotas && clientesNotas.length > 0) {
+    
+      const transformed = clientesNotas.map((item) => ({
+        id: item.id.toString(),
+        title: "",
+        description: (
+          <>
+            <UserAvatar userId={item.usuarioCreaId} className="rounded-full size-6" withTooltip />
+            <div className="mt-2 text-xs">
+               
+                <b>Nota:</b> {item.nota}
+              </div>
+          </>
+        ),
+        time: new Date(item.fecha_crea).toISOString(),
+      }));
+      
+      setTimelineDataNotas(transformed);
+    }
+  }, [clientesNotas]);
+
+  
+  useEffect(() => {
+    
+   
+
+    if (serviciosCliente && serviciosCliente.length > 0) {
+
+   
+        
+      if (serviciosCliente.length > 0 && selectedItems.length === 0) {
+        const updatedItems = [...selectedItems, ...serviciosCliente];
+      
+        const uniqueItems = Array.from(new Map(updatedItems.map(item => [item.id, item])).values());
+  
+        setSelectedItems(uniqueItems);
+  
+        setValue("Servicios", uniqueItems);
+      }
+    }
+    
+  }, [ serviciosCliente ]);  
+
+  useEffect(() => {
+    
+    if (documentos && documentos.length > 0 ) {
+
+        
+      if (documentos.length > 0 && selectedItemsDocumentos.length === 0) {
+        const updatedItems = [...selectedItemsDocumentos, ...documentos];
+      
+        // Elimina duplicados por id
+        let uniqueItems = Array.from(new Map(updatedItems.map(item => [item.id, item])).values());
+      
+        if (documentosCliente && documentosCliente.length > 0) {
+          uniqueItems = uniqueItems.map((item) => ({
+            ...item,
+            rutaArchivo: documentosCliente.find((x) => x.id === item.id)?.rutaArchivo ?? null,
+          }));
+        } else {
+          uniqueItems = uniqueItems.map((item) => ({
+            ...item,
+            rutaArchivo: null,
+          }));
+        }
+      
+        setSelectedItemsDocumentos(uniqueItems);
+        setValue("documentos", uniqueItems);
+      }
+    }      
+    
+
+    
+  }, [documentos, documentosCliente ]); 
+  
+  const CargaServicios = async () => {
+    
+    try {
+      const response = await axios.get(
+        `/api/clientes/getServiciosByCliente/${clienteId}`,
+        {
+          headers: { "Content-Type": "application/text" },
+        }
+      );
+      
+      if (response.data.isSuccess && Array.isArray(response.data.result)) {
+        
+        const serviciosCompletos = response.data.result as any[];
+
+        const servicios = serviciosCompletos.map(item => item.servicio);
+  
+        dispatch(createSlot({ SERVICIOS_CLIENTE: servicios }));
+      }
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  
+  const CargaDocumentos = async () => {
+    try {
+      const response = await axios.get(
+        `/api/clientes/getDocumentosByCliente/${clienteId}`,
+        {
+          headers: { "Content-Type": "application/text" },
+        }
+      );
+    
+      if (response.data.isSuccess && Array.isArray(response.data.result)) {
+        
+        const documentosCompletos = response.data.result as any[];
+     
+        const documentos = documentosCompletos.map(item => ({
+          ...item.documento,
+          rutaArchivo: item.rutaArchivo,
+        }));
+
+        
+      
+        dispatch(createSlot({ DOCUMENTOS_CLIENTE: documentos }));
+      }
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  
   const CargaEventos = async () => {
     try {
       const response = await axios.get(
@@ -504,75 +665,104 @@ export const Formulario = ({
     }
   };
   
-    useEffect(() => {
-      if (clienteId) {
-        CargaEventos();
-        CargaNotas();
-        CargaTickets();
-      }
-    }, [clienteId]);
-    const {
-      servicios: autorizadoServicios,
-      notas: autorizadoNotas,
-      eventos: autorizadoEventos,
-      fiscales: autorizadoFiscales,
-      documentos: autorizadoDocumentos,
-      movimientos: autorizadoMovimientos,
-    } = useAutorizacionesSecuenciales();
-    console.log(autorizadoFiscales)
+  useEffect(() => {
+    if (dataModal.id) {
+      setSelectedItemsDocumentos([]);
+      setSelectedItems([]);
+      CargaEventos();
+      CargaNotas();
+      CargaTickets();
+      CargaDocumentos();
+      CargaServicios();
+    }
+  }, [dataModal.id]);
+  
+  const {
+    servicios: autorizadoServicios,
+    notas: autorizadoNotas,
+    eventos: autorizadoEventos,
+    fiscales: autorizadoFiscales,
+    documentos: autorizadoDocumentos,
+    movimientos: autorizadoMovimientos,
+  } = useAutorizacionesSecuenciales();
+  
+  const handleConfirm = async () => {
+    generalForm.setValue("activo", false);
+  };
+  
+  const handleCancel = () => {};
+
+  const handleChange = (valor: any) => {
+    if(valor.value){
+    setIsOpen(true);
+    }else{
+    generalForm.setValue("activo", true);
+    }
+  };
+
+  useEffect(() => {
+    if (dataModal) {
+      const crear = async () => {
+        try {
+          const res = await dispatch(createSlot({ "correo_inicial": dataModal.email }));
+        
+        } catch (err) {
+          console.error('Error al crear slot:', err);
+        }
+      };
+      crear();
+    }
+  }, [dataModal]);
+    
+
   return (
 
     <TooltipProvider>
       <Form {...generalForm}>
         <form onSubmit={generalForm.handleSubmit(onSubmit)} >
-        <Card className="h-[600px] lg:h-[440px] w-full overflow-y-auto">
+        <Card className="h-[600px] lg:h-[440px] w-full overflow-y-auto ">
 
-          <Tabs defaultValue="general" className="w-full">
+          <Tabs defaultValue="general" className="w-full" onValueChange={setActiveTab}>
           <div className="flex flex-col">
-          <TabsList className="flex flex-wrap w-full h-full">
-              <TabsTrigger value="general">Generales</TabsTrigger>
-              <TabsTrigger value="domicilio">Domicilio</TabsTrigger>
-              
-              {autorizadoFiscales && <TabsTrigger value="fiscales">Datos fiscales</TabsTrigger>}
-              {autorizadoServicios && <TabsTrigger value="servicios">Servicios</TabsTrigger>}
+            
+            <TabsList className="flex flex-wrap w-full h-full">
+                <TabsTrigger value="general">Generales</TabsTrigger>
+                <TabsTrigger value="domicilio">Domicilio</TabsTrigger>
+                
+                {autorizadoFiscales && <TabsTrigger value="fiscales">Datos fiscales</TabsTrigger>}
+                {autorizadoServicios && dataModal.id !== undefined && <TabsTrigger value="servicios">Servicios</TabsTrigger>}
 
-              {dataModal.id !== undefined &&(
-              <>
-                 {autorizadoDocumentos && <TabsTrigger value="documentos">Documentos</TabsTrigger>}
-                 {autorizadoMovimientos && <TabsTrigger value="movimientos">Tickets </TabsTrigger>}
-                {autorizadoNotas && <TabsTrigger value="notas">Notas</TabsTrigger>}
-                {autorizadoEventos && <TabsTrigger value="eventos">Eventos</TabsTrigger>}
-              </>
-            )}
-  
+                {dataModal.id !== undefined &&(
+                <>
+                  {autorizadoDocumentos && <TabsTrigger value="documentos">Documentos</TabsTrigger>}
+                  {autorizadoMovimientos && <TabsTrigger value="movimientos">Tickets </TabsTrigger>}
+                  {autorizadoNotas && <TabsTrigger value="notas">Notas</TabsTrigger>}
+                  {autorizadoEventos && <TabsTrigger value="eventos">Eventos</TabsTrigger>}
+                </>
+              )}
+    
             </TabsList>
 
             <div className="flex-1">
               <TabsContent value="general">
 
-
-
                 <CardContent className="grid relative grid-cols-1 gap-3 py-3 sm:grid-cols-3">
-
 
                   {dataModal.id !== undefined && (<>
 
-                  
                     <FormDatepicker
                     form={generalForm}
                     name="fecha_registro"
                     label="Fecha de registro"
                   />
 
-                {!generalForm.getValues("activo") && (
-                    <FormDatepicker
-                    form={generalForm}
-                    name="fecha_final"
-                    label="Fecha final"
-                  />)}
-                  
-
-
+                  {!generalForm.getValues("activo") && (
+                      <FormDatepicker
+                      form={generalForm}
+                      name="fecha_final"
+                      label="Fecha final"
+                    />)}
+                    
                     <FormField
                       control={generalForm.control}
                       name="activo"
@@ -585,7 +775,8 @@ export const Formulario = ({
                             <Switch
                               className="!mt-0"
                               checked={field.value}
-                              onCheckedChange={field.onChange}
+                              //onChangeActivo(field); 
+                              onCheckedChange={() => { handleChange(field)}}
                             />
                           </FormControl>
                         </FormItem>
@@ -593,44 +784,53 @@ export const Formulario = ({
                     />
                     </>)}
                         
-                      </CardContent>
-                    <CardContent className="grid relative grid-cols-1 gap-3 py-3 sm:grid-cols-2">
+                </CardContent>
+                  
+                <CardContent className="grid relative grid-cols-1 gap-3 py-3 sm:grid-cols-2">
           
-                <FormInput
-                  form={generalForm}
-                  name="nombre"
-                  label="Nombre"
-                  placeholder=""
-                  className=""
-                />
-                        
-                <FormInput
-                  form={generalForm}
-                  name="nombreComercial"
-                  label="Nombre comercial"
-                  type="text"
+                  <FormInput
+                    form={generalForm}
+                    name="nombre"
+                    label="Nombre"
+                    placeholder=""
                     className=""
-                />
+                  />
+                          
+                  <FormInput
+                    form={generalForm}
+                    name="nombreComercial"
+                    label="Nombre comercial"
+                    type="text"
+                      className=""
+                  />
 
-                  </CardContent>
+                </CardContent>
                 
-                  <CardContent className="grid relative grid-cols-1 gap-3 py-3 sm:grid-cols-2">
+                <CardContent className="grid relative grid-cols-1 gap-3 py-3 sm:grid-cols-2">
 
 
-                <FormInput
-                  form={generalForm}
-                  name="rfc"
-                  label="RFC"
-                  type="text"
-                />
+                  <FormInput
+                    form={generalForm}
+                    name="rfc"
+                    label="RFC"
+                    type="text"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      generalForm.setValue("rfc", value);
+                    }}
+                  />
 
-                <FormInput
-                  form={generalForm}
-                  name="curp"
-                  label="CURP"
-                  placeholder=""
-                  type="text"
-                />
+                  <FormInput
+                    form={generalForm}
+                    name="curp"
+                    label="CURP"
+                    placeholder=""
+                    type="text"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      generalForm.setValue("curp", value);
+                    }}
+                  />
 
                   <FormInput
                     form={generalForm}
@@ -638,31 +838,36 @@ export const Formulario = ({
                     label="Teléfono"
                     placeholder=""
                     type="number"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      generalForm.setValue("telefono", value);
+                    }}
                   />
 
-                <FormInput
-                    form={generalForm}
-                    name="celular"
-                    label="Celular"
-                    placeholder=""
-                    type="number"
-                  />
 
-                <FormInput
-                    form={generalForm}
-                    name="email"
-                    label="Correo (ingreso)"
-                    placeholder=""
-                    type="email"
-                  />   
-                  
-                <FormInput
-                    form={generalForm}
-                    name="email2"
-                    label="Correo (facturas)"
-                    placeholder=""
-                    type="email"
-                  />
+                  <FormInput
+                      form={generalForm}
+                      name="celular"
+                      label="Celular"
+                      placeholder=""
+                      type="number"
+                    />
+
+                  <FormInput
+                      form={generalForm}
+                      name="email"
+                      label="Correo (ingreso)"
+                      placeholder=""
+                      type="email"
+                    />   
+                    
+                  <FormInput
+                      form={generalForm}
+                      name="email2"
+                      label="Correo (facturas)"
+                      placeholder=""
+                      type="email"
+                    />
 
                   {dataModal.id !== undefined && generalForm.getValues("activo") == false && (
                     <FormDatepicker
@@ -704,12 +909,19 @@ export const Formulario = ({
                 type="number"
               />
                   
-                <div>
-                  <FormLabel className="text-xs">Ubicación </FormLabel>
+                <div className="mt-2">
+                  <FormLabel className="text-xs">Colonia o fraccionamiento </FormLabel>
+                  {formatCLM && formatCLM.length == 0 ? (  
+                    <Input
+                      type="text"
+                      placeholder="Escribe el fraccionamiento"
+                      value={dataModal.colonia}
+                      onChange={(e) => llenarCampos(e.target.value)}
+                    />) : (
                   <Select  onValueChange={(value) => llenarCampos(value)}>
                     <SelectTrigger>
                     <SelectValue
-                    placeholder={"Selecciona una ubicación"
+                    placeholder={ dataModal.colonia ? dataModal.colonia : "Selecciona un fraccionamiento"
                     }/>
                     </SelectTrigger>
                     <SelectContent>
@@ -719,16 +931,8 @@ export const Formulario = ({
                       </SelectItem>
                     ))}
                     </SelectContent>
-                  </Select>
+                  </Select>)}
                 </div>
-
-                <FormInput
-                  form={generalForm}
-                  name="colonia"
-                  label="Colonia"
-                  placeholder=""
-                />
-
 
                 <FormInput
                   form={generalForm}
@@ -750,17 +954,27 @@ export const Formulario = ({
 
               <TabsContent value="documentos">
                 
-              <CardContent className="grid relative grid-cols-1 gap-3 py-3">
+              <CardContent className="grid relative grid-cols-1 gap-3 py-3 h-[350px] lg:h-[200px]">
+                {isLoading ? <Loading/> : documentos &&  (
+                    <SelectGrid
+                    items={documentos}
+                    labelKey="descripcion"
+                    valueKey="id"
+                    selectedItems={selectedItemsDocumentos}
+                    setSelectedItems={setSelectedItemsDocumentos}
+                    onSelect={handleSelectItemDocumentos}
+                    titulo={"Documentos"}
+                    getValues={getValues}
+                    setValue={setValue}
+                  />
+                )}
+
+                </CardContent>
               
-             
-              <div className="overflow-y-auto  h-[450px] lg:h-[300px]  rounded-sm border">
-            
-              </div>
-              </CardContent>
               </TabsContent>  
               
               <TabsContent value="movimientos">
-              <div className="overflow-y-auto h-[450px] lg:h-[300px]">
+                <div className="overflow-y-auto h-[450px] lg:h-[300px]">
                 {timelineDataMovimientos &&   timelineDataMovimientos.length >0 && (<div className="rounded-none border"><TimelineLayout timelineData={timelineDataMovimientos} /></div>)}
                 </div>
               </TabsContent>
@@ -1014,9 +1228,7 @@ export const Formulario = ({
               </TabsContent>
 
               <TabsContent value="servicios">
-              <div className="absolute right-0 bottom-0 p-4">
-                  <FormFooter handleCreateItemClose={handleCreateItemClose} form={generalForm} dataModal={dataModal} />
-                </div>
+            
               <CardContent className="grid relative grid-cols-1 gap-3 py-3">
                 {servicios &&  (
                     <SelectGrid
@@ -1037,80 +1249,44 @@ export const Formulario = ({
               </TabsContent>
 
               <TabsContent value="notas">
-
-              <CardContent className="grid relative grid-cols-1 gap-3 py-3">
-              
-              <Button type="button" onClick={(e) => OpenModalAñadirNota(e)} className="absolute top-0 right-0 p-4 w-full sm:right-6 le sm:w-1/6">+ añadir </Button>
-              <div className="overflow-y-auto mt-10  h-[450px] lg:h-[300px] rounded-sm border">
-            
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-1">
-              {clientesNotas && clientesNotas.map((nota) => (
-                <div
-                  key={nota.id}
-                  className="p-4 bg-white rounded-xl border border-gray-200 shadow-md"
-                >
-                  {/* <h2 className="mb-2 text-lg font-semibold">Folio #{nota.id}</h2> */}
-                
-                  <div className="text-sm text-gray-500">
-                     <p>
-                    <UserAvatar
-                      withTooltip
-                      userId={nota.usuarioCreaId}
-                      className="size-6"
-                      rounded="rounded-full"
-                    />
-                    
-                   
-                    <span className="font-semibold">Fecha:</span>{" "}
-                    {new Date(nota.fecha_crea).toLocaleString("es-MX", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                      hour12: false,
-                    })}
-                  </p>
-
-                  </div>
-                  <p className="mb-2 text-gray-700">{nota.nota}</p>
+              <div className="grid relative grid-cols-1 gap-3 py-3">
+              <Button type="button" onClick={(e) => OpenModalAñadirNota()} className="absolute top-0 right-0 p-4 w-full sm:right-6 le sm:w-1/6">+ añadir </Button>
+              <div className="overflow-y-auto mt-10 h-[450px] lg:h-[300px] ">
+                {timelineDataNotas &&   timelineDataNotas.length >0 && (<div className="rounded-none border"><TimelineLayout timelineData={timelineDataNotas} /></div>)}
                 </div>
-              ))}
-            </div>
-            
               </div>
-              </CardContent>
               </TabsContent>
 
               <TabsContent value="eventos">
 
-              <CardContent className="grid relative grid-cols-1 gap-3 py-3">
+              <div className="grid relative grid-cols-1 gap-3 py-3">
               
-                <Button type="button" onClick={(e) => OpenModalAñadirEvento(e)} className="absolute top-0 right-0 p-4 w-full sm:right-6 le sm:w-1/6">+ añadir </Button>
-                <div className="overflow-y-auto mt-10 h-[450px] lg:h-[300px]  rounded-sm border">
+                <Button type="button" onClick={(e) => OpenModalAñadirEvento()} className="absolute top-0 right-0 p-4 w-full sm:right-6 le sm:w-1/6">+ añadir </Button>
+                <div className="overflow-y-auto mt-10 h-[450px] lg:h-[300px] ">
                 {timelineDataEventos && timelineDataEventos.length >0 && (<div className="rounded-none border"><TimelineLayout timelineData={timelineDataEventos} /></div>)}
                 </div>
-                </CardContent>
+                </div>
 
               </TabsContent>
 
-
-
-    
-          
             </div>
             </div>
-          </Tabs>
 
+            {!["notas", "eventos","servicios", "documentos","movimientos"].includes(activeTab) && (
+              <FormFooter handleCreateItemClose={handleCreateItemClose} form={generalForm} dataModal={dataModal} />
+              )}
+                        
+            </Tabs>
+            <ConfirmationModal
+          title="¿Estás seguro?"
+          text="También se desactivarán todos los tickets, servicios, notas y eventos asociados."
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
+        />
                 
-        </Card>
-
-        
-        <div className="absolute right-0 bottom-0 p-4">
-                  <FormFooter handleCreateItemClose={handleCreateItemClose} form={generalForm} dataModal={dataModal} />
-                </div>
-                
+        </Card >
       </form>
     </Form>
     </TooltipProvider>
@@ -1164,8 +1340,7 @@ export const asignarEvento = () => {
 
           var resultado =response.data.result;
 
-          console.log(resultado)
-          
+         
           const data = {
             id: resultado.id.toString(),
             evento:{
@@ -1175,8 +1350,6 @@ export const asignarEvento = () => {
             fecha_inicio: new Date(resultado.fecha_inicio).toISOString(), 
           };
 
-          console.log(eventosCliente)
-  
           if (eventosCliente !== undefined ) {
             dispatch(
               addItemSlot({
@@ -1257,8 +1430,7 @@ export const asignarEvento = () => {
               <textarea
                 {...generalForm.register("nota")}
                 placeholder="Añade un comentario ..."
-               
-                className="p-1 mb-5 w-full h-48 text-sm rounded-md border shadow resize-none border-muted focus:outline-none focus:ring-2 focus:ring-primary"
+                className="p-1 mb-5 w-full h-48 text-sm rounded-md border shadow resize-none border-muted focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-800"
               />
               
             <div>
@@ -1356,18 +1528,15 @@ export const añadirNota = () => {
 
           var resultado =response.data.result;
 
-          console.log(resultado)
-          
+         
           const data = {
             id: resultado.id.toString(),
             nota: resultado.nota,
             clienteId: clienteId,
             usuarioCreaid: user?.id,
-            Fecha_crea: resultado.fecha_crea,
+            fecha_crea: resultado.fecha_crea,
           };
 
-          console.log(notasCliente)
-  
           if (notasCliente !== undefined ) {
             dispatch(
               addItemSlot({
@@ -1399,11 +1568,6 @@ export const añadirNota = () => {
     console.log(valores);
   };
 
- 
-
-
-
-  
     return (
     <Form {...generalForm}>
       <form onSubmit={generalForm.handleSubmit(onSubmit)} className="flex flex-col h-full">
@@ -1417,7 +1581,7 @@ export const añadirNota = () => {
                 {...generalForm.register("nota")}
                 placeholder="Añade una nota ..."
                 required
-                className="p-1 mb-5 w-full h-48 text-sm rounded-md border shadow resize-none border-muted focus:outline-none focus:ring-2 focus:ring-primary"
+                className="p-1 mb-5 w-full h-48 text-sm rounded-md border shadow resize-none border-muted focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-800"
               />
               
           </CardContent>
@@ -1453,11 +1617,11 @@ export const ReturnModal = () => {
     dispatch(deleteSlot("openModal"));
   };
 
-  const ContentComponent = formulario === "evento" ? asignarEvento : añadirNota;
+  const ContentComponent = formulario === "evento" ? asignarEvento :  añadirNota ;
 
   return (
     <ModalGenerico
-      titulo={formulario === "evento" ? "Añadir evento" : "Añadir nota"}
+      titulo={formulario === "evento" ? "Añadir evento" :  formulario === "nota" ? "Añadir nota" : "Servicios del cliente"}
       Content={ContentComponent}
       handleClose={eliminarSlots}
     />

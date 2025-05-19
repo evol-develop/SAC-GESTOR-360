@@ -50,11 +50,15 @@ export const Results = () => {
       id: "linea.descripcion",
       accessorKey: "linea.descripcion",
       header: "Línea",
+      cell: ({ row }) => 
+        row.original.lineaId ? row.original.linea.descripcion : "N/A",
     },
     {
       id: "sublinea.descripcion",
       accessorKey: "sublinea.descripcion",
       header: "Sublínea",
+      cell: ({ row }) => 
+        row.original.sublineaId ? row.original.sublinea.descripcion : "N/A",
     },
     {
       id: "id_unidad",
@@ -89,7 +93,7 @@ export const Results = () => {
         PAGE_SLOT={PAGE_SLOT}
         data={data}
         columns={columns}
-        filtro="servicio"
+        filtro="descripcion"
       />
       <DeleteDialog
         openConfirmDelete={openConfirmDelete}

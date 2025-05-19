@@ -8,6 +8,8 @@ import { es } from "date-fns/locale";
 import UserAvatar from "@/components/UserAvatar";
 import { Loading } from "@/components/Loading";
 import SinComentarios from "./sinComentarios";
+import axios from "@/lib/utils/axios";
+import { useEffect } from "react";
 
 interface ComentarioPanelProps {
   titulo: string;
@@ -38,8 +40,36 @@ const ComentarioPanel: React.FC<ComentarioPanelProps> = ({
   onEliminar,
   openComentario,
 }) => {
+
+  const [conAcceso, setConAcceso] = React.useState<boolean>(false);
+
+  const tieneAcceso =async()=>{
+
+    try {
+      const response = await axios.get(
+        `/api/departamentos/tieneAcceso/${usuarioActualId}`
+      );
+
+      console.log("response", response.data);
+
+      if (response.data.isSuccess ) {
+        setConAcceso(true);
+      }else{
+        setConAcceso(false);
+      }
+
+    } catch (err) {
+      console.error(err);
+    }
+    
+  }
+  
+  useEffect(() => {
+    tieneAcceso();
+  }, [etapaSeleccionada]);
+
   return (
-    <div className="flex relative flex-col   h-[calc(100vh-300px)] sm:h-[calc(100vh-300px)]  rounded-sm border bg-background">
+    <div className="flex relative flex-col   h-[calc(100vh-300px)] sm:h-[calc(100vh-300px)]  rounded-sm border bg-background dark:bg-background">
       <div className="text-xs text-center">{titulo}</div>
 
 
@@ -50,7 +80,7 @@ const ComentarioPanel: React.FC<ComentarioPanelProps> = ({
             <h1 className="text-xs font-bold text-center">COMENTARIOS</h1>
           )} */}
 
-          <div className="h-[calc(100vh-350px)] sm:h-[calc(100vh-350px)] overflow-auto bg-gray-50">
+          <div className="h-[calc(100vh-350px)] sm:h-[calc(100vh-350px)] overflow-auto bg-gray-50 dark:bg-gray-800">
             {comentarios && comentarios.map((step, index) => {
               const fechaValida = new Date(step.fecha);
               const fechaFormateada = !isNaN(fechaValida.getTime())
@@ -112,6 +142,8 @@ const ComentarioPanel: React.FC<ComentarioPanelProps> = ({
               );
             })}
 
+            
+
             {comentarios && comentarios.length === 0 && <SinComentarios />}
           </div>
         </>
@@ -119,9 +151,9 @@ const ComentarioPanel: React.FC<ComentarioPanelProps> = ({
         <Loading />
       )}
 
-      {(etapaActual === 1 || etapaActual - 1 === etapaSeleccionada) && (
-        <div className="absolute right-2 bottom-2">
-          <Button size="sm" className="text-xs" onClick={onResponder}>
+      {((etapaActual === 1 || etapaActual === etapaSeleccionada)  )  && (
+        <div className="absolute bottom-1 right-2">
+          <Button size="sm" className="text-xs" onClick={onResponder} disabled={!conAcceso && tipo === "CLIENTE"}>
             {comentarios && comentarios.length === 0 ? "Iniciar conversación" : "Responder"}
           </Button>
         </div>

@@ -6,10 +6,13 @@ import { Card,CardContent, CardHeader} from "@/components/ui/card";
 import Archivos from '@/components/Archivos';
 import { Button } from "@/components/ui/button";
 import { LuUndo2 } from "react-icons/lu";
+import { useAppSelector } from "@/hooks/storeHooks";
+import { RootState } from "@/store/store";
 
 const MostrarArchivos = () => {
   const navigate = useNavigate();
   const {ticketId, comentarioId } = useParams();
+  const ticketEliminado = useAppSelector((state: RootState) => state.page.slots.ticketEliminado as boolean);
 
   function volver(){
     let url =`/site/procesos/consultaTickets`;
@@ -27,8 +30,10 @@ const MostrarArchivos = () => {
 
 
   <Card>
-  <CardHeader className="flex flex-row items-center justify-between text-xs">
+  <CardHeader className="flex flex-row justify-between items-center text-xs">
 
+  {!ticketEliminado && (
+    <>
     <Button
       size="sm"
       variant="default"
@@ -42,7 +47,8 @@ const MostrarArchivos = () => {
       Ticket {" "} #{ticketId}
     </h5>
 
-    <Button
+    
+      <Button
       size="sm"
       variant="default"
       onClick={() =>  comentarios()}
@@ -50,6 +56,8 @@ const MostrarArchivos = () => {
       <span className="hidden lg:inline-block">Ver comentarios</span>
       <LuUndo2 />
     </Button>
+    </>
+    )}
     
 
   </CardHeader> 

@@ -34,7 +34,7 @@ const mapToActivityTimelineItem = <T extends Notification | Task>(
 
 export const getActivityTimeline = async (userId: string): Promise<timeLineInterface[]> => {
   try {
-    console.log(userId)
+    //console.log(userId)
     const [notifications, tasks] = await Promise.all([
       getItemsByConditionNoIdEmpresa("notifications", "senderId", "==", userId),
       getItemsByConditionNoIdEmpresa("tasks", "senderId", "==", userId),

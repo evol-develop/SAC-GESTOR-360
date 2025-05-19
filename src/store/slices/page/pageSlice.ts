@@ -81,6 +81,7 @@ export const pageSlice = createSlice({
       );
     },
 
+    
     deleteItemSlot: (state, { payload }: PayloadAction<StatePayload>) => {
       const nombreSlot = payload.state;
       state.slots[nombreSlot] = state.slots[nombreSlot].filter(
@@ -124,6 +125,6 @@ export const {
   updateItemSlot,
   setDataOnSlot,
   setIsEditing,
-  setModalSize,
+  setModalSize
 } = pageSlice.actions;
 // export const { setTitle, setErrorMessage, setIsLoading, setIsError, setIsSuccess, createSlot } = screenSlice.actions

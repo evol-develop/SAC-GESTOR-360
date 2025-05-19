@@ -72,6 +72,15 @@ const UserAvatar = ({
 
   useEffect(() => {
     if (userId && !dataUsuario) {
+
+      if (userId.includes("@")) {
+        setUser({
+          nombre: userId, // o un texto genérico si quieres
+          extra: "", // puedes mostrarlo como vacío o como userId también
+          avatar: "",
+        });
+        return;
+      }
       //console.log(userId);
       const getUser = async () => {
 
@@ -122,8 +131,8 @@ const UserAvatar = ({
       });
     } else {
       setUser({
-        nombre: userAuth?.nombre || "",
-        extra: userAuth?.role || "",
+        nombre: userAuth?.fullName || "",
+        extra: userAuth?.email || "",
         avatar: userAuth?.avatar || "",
       });
     }
